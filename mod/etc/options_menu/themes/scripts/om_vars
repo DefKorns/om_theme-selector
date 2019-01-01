@@ -1,0 +1,67 @@
+#!/bin/sh
+source /etc/preinit
+script_init
+
+sType="$sftype"
+[ "$sftype" = "hvcj" ] && sType="shonen"
+
+modtitle="themes"
+subtitle="downloads"
+downloadURL="http://hakchicloud.com/Hakchi_Themes/themes"
+themeURL="http://hakchicloud.com/Hakchi_Themes/scripts"
+preinitlauncher="$preinitpath/p8024_themeselectR"
+
+# Options Menu
+optionsMenu="$mountpoint/etc/options_menu"
+omCommands="$optionsMenu/commands"
+omScripts="$optionsMenu/scripts"
+omMod="$optionsMenu/$modtitle"
+omModCommands="$omMod/commands"
+omModScripts="$omMod/scripts"
+omModImgs="$omMod/images"
+omModFnts="$omMod/fonts"
+omModSub="$omMod/$subtitle"
+omModSubCmds="$omModSub/commands"
+omModSubScripts="$omModSub/scripts"
+# jpnSystem="$omMod/famicom"
+# jpnSystemCmds="$jpnSystem/commands"
+# jpnSystemScripts="$jpnSystem/scripts"
+# jpnString="jpn_ja/strings"
+# desktopDir="$jpnSystem/desktop"
+
+#extra Vars
+fntFix="$mountpoint/media/$modname/fonts"
+[ ! -d "$fntFix" ] && fntFix="$rootfs/usr/share/fonts"
+fntTitle="$fntFix/title"
+
+statePath="$mountpoint$profilepath/$modname"
+folderId="$(cat "$statePath/menu")"
+
+shareDir="$mountpoint/usr/share"
+uiDir="$shareDir/ui"
+# cloverTheme="$uiDir/$sftype-$sfregion"
+disableDownloads="$omModCommands/_download"
+enableDownloads="$omModCommands/c0000_download"
+gStorage="$(findGameStorage)"$
+
+themePath="$mountpoint/media/$modname/themes/$sType"
+[ ! -d "$themePath" ] && themePath="$rootfs/usr/share/themes/$sType"
+
+errorMsg="echo Error while connecting to server, please check your internet connection and try again. "
+
+# functions
+clearList() {
+	find "$omCommands" "$omScripts" -type f \
+		-not -name 'om_*' -not -name 'c0000_*' \
+		-not -name 'c9999_*' -print0 -exec rm {} \;
+}
+
+clearDownloads() {
+	find "$omModSubCmds" "$omModSubScripts" -type f \
+		-not -name 'c0000_*' -not -name 'c9999_*' \
+		-not -name 'om_*' -print0 -exec rm {} \;
+}
+
+rename() {
+	[ -f "$1" ] && mv "$1" "$2"
+}

@@ -1,0 +1,14 @@
+#!/bin/sh
+source $mountpoint/etc/options_menu/themes/scripts/setVars
+script_init
+
+# hasLang="$(find $omModSubCmds -type f -name 'c00[0-9][1-9]_*')"
+
+# wget -q --spider http://google.com
+# if [ $? -eq 0 ] && [ ! -z "$hasLang" ]; then
+	[ -f "$disableDownloads" ] && mv "$disableDownloads" "$enableDownloads"
+# else
+# 	[ -f "$enableDownloads" ] && mv "$enableDownloads" "$disableDownloads"
+# fi
+
+usleep 50000 && $optionsMenu/options --commandPath $omModCommands/ --scriptPath $omModScripts --title "Themes" &

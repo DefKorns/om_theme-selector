@@ -1,0 +1,43 @@
+#!/bin/bash
+#
+themeSelector(){
+	local cloverTheme="$mountpoint/usr/share/ui/$sftype-$sfregion"
+	local sysType="snes"
+
+	case "$sftype" in
+	hvcj)
+		cloverTheme="$mountpoint/usr/share/ui/hvc"
+	    sysType="shonen"
+	    ;;
+	nes | hvc)
+	    cloverTheme="$mountpoint/usr/share/clover-ui"
+	    sysType="nes"
+	    ;;
+	shvc)
+	    cloverTheme="$mountpoint/usr/share/ui/shvc"
+	    sysType="snes"
+	    ;;
+	esac
+    
+	local themePath="$mountpoint/media/$modname/themes/$sysType"
+	
+	[ ! -d "$themePath" ] && themePath="$rootfs/usr/share/themes/$sysType"
+	local theme="CHANGE_ME"
+	local fullPath="$themePath/$theme"
+	local customFont="$mountpoint/media/$modname/fonts"
+	[ ! -d "$customFont" ] && customFont="$rootfs/usr/share/fonts"
+
+	if [ -f "$customFont/title.backup" ] && [ ! -d "$fullPath/fonts" ]; then
+		cd "$customFont" && find . -iname "*.fnt" -type f -exec rm {} \;
+		mv "$customFont/title.backup" "$customFont/title.fnt"
+	elif [ -d "$fullPath/fonts" ] && [ ! -f "$customFont/title.backup" ] ; then
+		mv "$customFont/title.fnt" "$customFont/title.backup"
+		find "$fullPath/fonts" -iname "*.fnt" -exec cp {} "$customFont" \;
+	else
+		[ ! -f "$customFont/title.backup" ] && mv "$customFont/title.fnt" "$customFont/title.backup"
+	fi
+	 
+	 mountpoint -q "$cloverTheme" && umount "$cloverTheme"
+	  [ -n "$theme" ] && [ -d "$fullPath" ] && mount -t overlayfs -o lowerdir="$cloverTheme",upperdir="$fullPath" overlayfs "$cloverTheme"
+
+}

@@ -1,0 +1,7 @@
+#!/bin/sh
+source $mountpoint/etc/options_menu/themes/scripts/setVars
+script_init
+
+clearList
+
+$optionsMenu/options --commandPath $omModCommands/ --scriptPath $omModScripts --title "Themes" &
