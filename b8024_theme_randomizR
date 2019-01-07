@@ -46,10 +46,10 @@ theme_randomizR() {
 	local theme="$prevTheme"
 	local wavFile="$prevAudio"
 	local pID
+	local parentID
 	local parentName
 	local hasParent
 	local silentWav="$rootfs/usr/share/advanced_music_hack/bgm_boot.wav"
-
 	[ ! -d "$musicPath" ] && musicPath="$rootfs/usr/share/menu_music"
 	[ ! -d "$themePath" ] && themePath="$rootfs/usr/share/themes/$sysType"
 
@@ -87,29 +87,26 @@ theme_randomizR() {
 		elif [ -n "$themeMatch" ]; then
 			fullPath="$themePath/$getName"
 			echo "$getName" >"$statePath/lastTheme"
-			umount "$cloverAudio/bgm_boot.wav"
-			umount "$cloverAudio/bgm_home.wav"
 		elif [ -n "$hasParent" ]; then
 			fullPath="$themePath/$parentName"
 			echo "$getName" >"$statePath/lastTheme"
-			umount "$cloverAudio/bgm_boot.wav"
-			umount "$cloverAudio/bgm_home.wav"
 		else
 			while [ "$theme" == "$prevTheme" ]; do
 				theme="$(find "$themePath" -maxdepth 1 -type d | shuf | head -n1 | xargs -n 1 basename)"
 			done
 			fullPath="$themePath/$theme"
 			echo "$theme" >"$statePath/lastTheme"
-			umount "$cloverAudio/bgm_boot.wav"
-			umount "$cloverAudio/bgm_home.wav"
 		fi
 		echo "$fullPath" >"$statePath/activeTheme"
 
-		cd "$themePath/$prevTheme" && find ./* -type f | cut -c3- | while IFS= read -r uFile; do
+		cd "$themePath/$prevTheme" && find ./* -iname "*.wav" -type f | cut -c3- | while IFS= read -r uFile; do
 			umount "$cloverTheme/$uFile"
 		done
 
 		cd "$fullPath" && find . -type f | while IFS= read -r tfile; do
+			if [ "$tfile" = "./resources/sprites/nes.png" ] || [ "$tfile" = "./resources/sprites/hvc.png" ]; then
+				tfile="./resources/sprites/$sftype.png"
+			fi
 			[ -n "$theme" ] && [ -f "$fullPath/$tfile" ] && mount_bind "$fullPath/$tfile" "$cloverTheme/$tfile"
 		done
 		cd - >/dev/ || exit
