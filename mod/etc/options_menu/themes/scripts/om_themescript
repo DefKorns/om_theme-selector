@@ -84,7 +84,7 @@ themeSelector() {
 			cd "$fullPath" && find . -type f | while IFS= read -r tfile; do
 				[ -n "$theme" ] && [ -f "$fullPath/$tfile" ] && mount_bind "$fullPath/$tfile" "$cloverTheme/$tfile"
 			done
-			cd - >/dev/null || exit
+			cd - >/dev/ || exit
 		done
 	fi
 }
