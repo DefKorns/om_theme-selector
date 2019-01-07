@@ -494,5 +494,5 @@ ASALocalRun/
 
 # End of https://www.gitignore.io/api/git,osx,linux,windows,visualstudio,visualstudiocode,openframeworks+visualstudio
 out/
-Makefile
+#Makefile
 default-strings.lng
