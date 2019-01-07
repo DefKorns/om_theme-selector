@@ -1,4 +1,4 @@
 COMMAND_NAME=Download Themes
 COMMAND_TYPE=EXTERNAL
 RESTART_UI=FALSE
-COMMAND_STR=usleep 50000 && %options_path%/options --commandPath %options_path%/themes/downloads/commands/ --scriptPath %options_path%/themes/downloads/scripts --title "Download Themes" &
+COMMAND_STR=sh %script_dir%/om_getThemes

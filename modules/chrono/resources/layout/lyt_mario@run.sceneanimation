@@ -1,0 +1,164 @@
+{
+    "duration": 0.40,
+    "animations": [
+        {
+            "worldNodePath": [
+                "Sprite_Effect"
+            ],
+            "type": "float",
+            "propertyId": "LocalScaleX",
+            "keyCurves": [
+                {
+                    "time": 0,
+                    "value": 1
+                },
+                {
+                    "time": 4.616666666666666,
+                    "value": 1
+                }
+            ]
+        },
+        {
+            "worldNodePath": [
+                "N_Reverse",
+                "N_Translate"
+            ],
+            "type": "float",
+            "propertyId": "LocalPositionY",
+            "keyCurves": [
+                {
+                    "time": 0,
+                    "value": 0
+                },
+                {
+                    "time": 0.26666666666666666,
+                    "value": 0
+                }
+            ]
+        },
+        {
+            "worldNodePath": [
+                "N_Reverse"
+            ],
+            "type": "float",
+            "propertyId": "LocalScaleX",
+            "keyCurves": [
+                {
+                    "time": 0,
+                    "value": 1
+                },
+                {
+                    "time": 3.5833333333333335,
+                    "value": 1
+                }
+            ]
+        },
+        {
+            "worldNodePath": [
+                "N_Reverse",
+                "N_Translate",
+                "Sprite_Mario_0"
+            ],
+            "type": "resource",
+            "componentType": "TextureComponent",
+            "propertyId": "Texture",
+            "keyCurves": [
+                {
+                    "time": 0,
+                    "value": "82b02155-7815-4699-b99b-748c2c71d853"
+                },
+                {
+                    "time": 0.1,
+                    "value": "b5fee55a-b58a-44ab-970d-bc9abcce0594"
+                },
+                {
+                    "time": 0.2,
+                    "value": "b261de3e-6e86-48d6-a700-ded04dede5f7"
+                },
+                {
+                    "time": 0.3,
+                    "value": "b261de3e-6e86-48d6-a700-ded04deddefk"
+                },
+                {
+                    "time": 0.4,
+                    "value": "a6f94ecf-be33-420e-b898-64e5b86834f9"
+                }
+            ]
+        },
+        {
+            "worldNodePath": [
+                "N_Reverse",
+                "N_Translate",
+                "Sprite_Mario_1"
+            ],
+            "type": "resource",
+            "componentType": "TextureComponent",
+            "propertyId": "Texture",
+            "keyCurves": [
+                {
+                    "time": 0,
+                    "value": "82b02155-7815-4699-b99b-748c2c71d853"
+                },
+                {
+                    "time": 3.5833333333333335,
+                    "value": "82b02155-7815-4699-b99b-748c2c71d853"
+                }
+            ]
+        },
+        {
+            "worldNodePath": [
+                "N_Reverse",
+                "N_Translate",
+                "Sprite_Mario_0"
+            ],
+            "type": "bool",
+            "propertyId": "Visible",
+            "keyCurves": [
+                {
+                    "time": 0,
+                    "value": true
+                },
+                {
+                    "time": 2.6,
+                    "value": true
+                }
+            ]
+        },
+        {
+            "worldNodePath": [
+                "N_Reverse",
+                "N_Translate",
+                "Sprite_Mario_1"
+            ],
+            "type": "bool",
+            "propertyId": "Visible",
+            "keyCurves": [
+                {
+                    "time": 0,
+                    "value": false
+                },
+                {
+                    "time": 3.566666666666667,
+                    "value": false
+                }
+            ]
+        },
+        {
+            "worldNodePath": [
+                "Sprite_Effect"
+            ],
+            "type": "bool",
+            "propertyId": "Visible",
+            "keyCurves": [
+                {
+                    "time": 0,
+                    "value": false
+                },
+                {
+                    "time": 3.5833333333333335,
+                    "value": false
+                }
+            ]
+        }
+    ]
+}

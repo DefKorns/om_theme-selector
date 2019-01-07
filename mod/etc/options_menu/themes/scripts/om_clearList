@@ -1,7 +1,9 @@
 #!/bin/sh
-source $mountpoint/etc/options_menu/themes/scripts/setVars
+source $mountpoint/etc/options_menu/themes/scripts/om_vars
 script_init
 
 clearList
 
-$optionsMenu/options --commandPath $omModCommands/ --scriptPath $omModScripts --title "Themes" &
+mv "$enableClear" "$disableClear"
+
+$optionsMenu/options --commandPath $omModCommands/ --scriptPath $omModScripts --title "Theme Selector" &

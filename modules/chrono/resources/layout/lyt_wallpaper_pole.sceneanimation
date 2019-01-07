@@ -1,0 +1,83 @@
+{
+    "duration": 2.13333333332,
+    "animations": [
+        {
+            "worldNodePath": [
+                "Pole"
+            ],
+            "type": "resource",
+            "componentType": "TextureComponent",
+            "propertyId": "Texture",
+            "keyCurves": [
+                {
+                    "time": 0,
+                    "value": "9cfc1676-defb-4134-8a48-e8ee099d979e"
+                },
+				{
+                    "time": 0.13333333333333333,
+                    "value": "d4543dbd-defe-4171-bd87-b3007e639a2c"
+                },
+				{
+                    "time": 0.26666666666666666,
+                    "value": "ec21bbcf-defe-4893-a694-cdfb7a643dec"
+                },
+				{
+                    "time": 0.4,
+                    "value": "01e871e8-def5-4843-8236-4da34091f075"
+                },
+                {
+                    "time": 0.5333333333333333,
+                    "value": "01e871e8-0265-4843-8236-4da34091f075"
+                },
+				{
+                    "time": 0.6666666666666666,
+                    "value": "ec21bbcf-b73e-4893-a694-cdfb7a643dec"
+                },
+                {
+                    "time": 0.8,
+                    "value": "d4543dbd-ed1e-4171-bd87-b3007e639a2c"
+                },
+                {
+                    "time": 0.9333333333333333,
+                    "value": "9cfc1676-4aab-4134-8a48-e8ee099d979e"
+                },
+				{
+                    "time": 1.0666666666666667,
+                    "value": "9cfc1676-defb-4134-8a48-e8ee099d979e"
+                },
+				{
+                    "time": 1.2,
+                    "value": "d4543dbd-defe-4171-bd87-b3007e639a2c"
+                },
+				{
+                    "time": 1.3333333333333333,
+                    "value": "ec21bbcf-defe-4893-a694-cdfb7a643dec"
+                },
+                {
+                    "time": 1.46666666667,
+                    "value": "01e871e8-def5-4843-8236-4da34091f075"
+                },
+				{
+                    "time": 1.6,
+                    "value": "01e871e8-0265-4843-8236-4da34091f075"
+                },
+                {
+                    "time": 1.73333333333,
+                    "value": "ec21bbcf-b73e-4893-a694-cdfb7a643dec"
+                },
+                {
+                    "time": 1.86666666666,
+                    "value": "d4543dbd-ed1e-4171-bd87-b3007e639a2c"
+                },
+                {
+                    "time": 1.99999999999,
+                    "value": "9cfc1676-4aab-4134-8a48-e8ee099d979e"
+                },
+                {
+                    "time": 2.13333333332,
+                    "value": "9cfc1676-defb-4134-8a48-e8ee099d979e"
+                }
+            ]
+        }
+    ]
+}

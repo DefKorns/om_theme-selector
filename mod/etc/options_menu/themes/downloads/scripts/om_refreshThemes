@@ -1,0 +1,7 @@
+#!/bin/sh
+source $mountpoint/etc/options_menu/themes/scripts/om_vars
+script_init
+
+downloader
+
+$optionsMenu/options --commandPath $omModSubCmds/ --scriptPath $omModSubScripts --title "Theme Selector" &

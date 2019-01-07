@@ -1,4 +1,0 @@
-COMMAND_NAME=Get Available Themes List
-COMMAND_TYPE=EXTERNAL
-RESTART_UI=FALSE
-COMMAND_STR=sh %script_dir%/om_getThemes

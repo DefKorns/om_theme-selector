@@ -1,0 +1,20 @@
+#!/bin/bash
+fullBGM="/var/lib/hakchi/rootfs/usr/share/music/"
+
+prevAudio="none"
+[ -f "/var/saves/hakchi/tmpaudio" ] && prevAudio=$(cat "/var/saves/hakchi/tmpaudio")
+wavFile="$prevAudio"
+echo "prevAudio: $prevAudio"
+
+while [ "$wavFile" == "$prevAudio" ]; do
+	wavFile="$(find "$fullBGM" -maxdepth 1 -type f | shuf | head -n1 | xargs -n 1 basename)"
+echo "$wavFile" >"/var/saves/hakchi/tmpaudio"
+echo "wavFile: $wavFile"
+
+done
+
+#echo "$wavFile" >"/var/saves/hakchi/tmpaudio"
+
+#echo "prevAudio: $prevAudio"
+#echo "wavFile: $wavFile"
+

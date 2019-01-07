@@ -1,0 +1,13 @@
+copy "$mountpoint/etc/options_menu/themes/chmenu_original" "$rootfs/bin/chmenu"
+copy "$mountpoint/etc/options_menu/themes/fontfix_original" "$mountpoint/etc/preinit.d/b8025_fontfix"
+rm -fr "$mountpoint/$profilepath/$modname/lastTheme"
+rm -fr "$mountpoint/$profilepath/$modname/prevTheme"
+rm -fr "$mountpoint/$profilepath/$modname/activeTheme"
+rm -fr "$rootfs/usr/share/themes"
+chmod +x "$rootfs/bin/chmenu"
+rm -fr "$mountpoint/etc/preinit.d/b8024_themeselector"
+rm -fr "$mountpoint/etc/preinit.d/p8024_themeselector"
+rm -fr "$mountpoint/etc/options_menu/commands/c0090_ThemeOptions"
+rm -fr "$mountpoint/etc/options_menu/scripts/themeLoader.sh"
+rm -fr "$mountpoint/etc/options_menu/themes"
+unset cfg_OM_ThemeSelector_enabled

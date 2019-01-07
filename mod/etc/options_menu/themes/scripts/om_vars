@@ -1,15 +1,14 @@
 #!/bin/sh
 source /etc/preinit
 script_init
-
-sType="$sftype"
-[ "$sftype" = "hvcj" ] && sType="shonen"
-
+#
 modtitle="themes"
 subtitle="downloads"
-downloadURL="http://hakchicloud.com/Hakchi_Themes/themes"
-themeURL="http://hakchicloud.com/Hakchi_Themes/scripts"
-preinitlauncher="$preinitpath/p8024_themeselectR"
+themeURL="http://hakchicloud.com/Hakchi_Themes/themes"
+downloadURL="http://hakchicloud.com/Hakchi_Themes/scripts"
+preinitScript="$mountpoint/etc/preinit.d/b8024_themeselector"
+preinitLauncher="$mountpoint/etc/preinit.d/p8024_themeselector"
+fontFixDir="$mountpoint/etc/preinit.d/b8025_fontfix"
 
 # Options Menu
 optionsMenu="$mountpoint/etc/options_menu"
@@ -18,50 +17,194 @@ omScripts="$optionsMenu/scripts"
 omMod="$optionsMenu/$modtitle"
 omModCommands="$omMod/commands"
 omModScripts="$omMod/scripts"
+omModSpacer="$omModCommands/c0000_separator"
 omModImgs="$omMod/images"
 omModFnts="$omMod/fonts"
 omModSub="$omMod/$subtitle"
 omModSubCmds="$omModSub/commands"
 omModSubScripts="$omModSub/scripts"
-# jpnSystem="$omMod/famicom"
-# jpnSystemCmds="$jpnSystem/commands"
-# jpnSystemScripts="$jpnSystem/scripts"
-# jpnString="jpn_ja/strings"
-# desktopDir="$jpnSystem/desktop"
+omModSubSpacer="$omModSubCmds/c9998_separator"
 
-#extra Vars
-fntFix="$mountpoint/media/$modname/fonts"
-[ ! -d "$fntFix" ] && fntFix="$rootfs/usr/share/fonts"
-fntTitle="$fntFix/title"
+omDummy="$omModCommands/c0000_0000"
+subDummy="$omModSubCmds/c0000_0000"
 
-statePath="$mountpoint$profilepath/$modname"
-folderId="$(cat "$statePath/menu")"
-
-shareDir="$mountpoint/usr/share"
-uiDir="$shareDir/ui"
-# cloverTheme="$uiDir/$sftype-$sfregion"
-disableDownloads="$omModCommands/_download"
-enableDownloads="$omModCommands/c0000_download"
-gStorage="$(findGameStorage)"$
-
-themePath="$mountpoint/media/$modname/themes/$sType"
-[ ! -d "$themePath" ] && themePath="$rootfs/usr/share/themes/$sType"
+disableDownloads="$omModCommands/_downloadThemes"
+enableDownloads="$omModCommands/c0000_downloadThemes"
+disableClear="$omModCommands/_remove"
+enableClear="$omModCommands/c0000_remove"
 
 errorMsg="echo Error while connecting to server, please check your internet connection and try again. "
 
+#extra Vars
+usbPath="$mountpoint/media/$modname"
+nandPath="$rootfs/usr/share"
+sharePath="$mountpoint/usr/share"
+uiPath="$sharePath/ui"
+
+sType="$sftype"
+statePath="$mountpoint$profilepath/$modname"
+folderId="$(cat "$statePath/menu")"
+
+prevTheme="none"
+gStorage="$(findGameStorage)"
+
+
+themePath="$usbPath/$modtitle/$sType"
+[ ! -d "$themePath" ] && themePath="$nandPath/$modtitle/$sType"
+
+case "$sftype" in
+hvcj)
+	sType="shonen"
+	;;
+nes)
+	[ "$sfregion" = "jpn" ] && sType="hvc"
+	;;
+esac
+
 # functions
 clearList() {
-	find "$omCommands" "$omScripts" -type f \
+	find "$omModCommands" "$omModScripts" -type f \
 		-not -name 'om_*' -not -name 'c0000_*' \
-		-not -name 'c9999_*' -print0 -exec rm {} \;
+		-not -name 'c999[0-9]_*' -print0 -exec rm {} \;
+	[ -f "$omModSpacer" ] && rm "$omModSpacer"
 }
 
 clearDownloads() {
-	find "$omModSubCmds" "$omModSubScripts" -type f \
-		-not -name 'c0000_*' -not -name 'c9999_*' \
+	find "$omModSubCmds" "$omModSubScripts" "$omModSub" -type f \
+		-not -name 'c000[0-9]_*' -not -name 'c999[0-9]_*' \
 		-not -name 'om_*' -print0 -exec rm {} \;
+}
+noThemesNoClear() {
+	if [ ! -f "$omDummy" ]; then
+		mv "$enableClear" "$disableClear"
+	else
+		mv "$disableClear" "$enableClear"
+	fi
 }
 
 rename() {
 	[ -f "$1" ] && mv "$1" "$2"
+}
+
+themeLoader() {
+	cd "$themePath" && find . -mindepth 1 -maxdepth 1 -type d | xargs -n 1 basename | sort -u | while IFS= read -r theme; do
+		fullPath="$themePath/$theme"
+		xtraStuff="$fullPath/xtras"
+		resourcesPath="$fullPath/resources"
+		spriteDir="$resourcesPath/sprites"
+		scriptsPath="$resourcesPath/scripts"
+		cmdList="$omModCommands/c0001_$theme"
+		themeScript="$omModScripts/$theme"
+		themeTitle="$(echo "$theme" | sed -e 's/_/ /g' | awk '{for(i=1;i<=NF;i++){ $i=toupper(substr($i,1,1)) substr($i,2) }}1')"
+		size="$(du -sh "$fullPath" | cut -f1)"
+
+		if [ ! -f "$fullPath/info" ]; then
+			echo "NAME=$themeTitle [${size}b]" >"$fullPath/info"
+		fi
+
+		if [ ! -f "$fullPath.png" ]; then
+			[ -f "$omModSub/$theme.png" ] && ln -sf "$omModSub/$theme.png" "$fullPath.png"
+		fi
+
+		[ ! -f "$omModSpacer" ] && touch "$omModSpacer"
+		sed -r "s/CHANGE_ME/${theme}/g;" "$omModScripts/om_themescript" >"$themeScript"
+		[ -f "$cmdList" ] && rm "$cmdList"
+		touch "$cmdList"
+
+		if [ "$sftype" = "nes" ]; then
+			[ -f "$spriteDir/hvc.png" ] && rename "$spriteDir/hvc.png" "$spriteDir/nes.png"
+			[ -f "$spriteDir/hvc.json" ] && rename "$spriteDir/hvc.json" "$spriteDir/nes.json"
+			[ -f "$spriteDir/colors_hvc.lua" ] && rename "$scriptsPath/colors_hvc.lua" "$scriptsPath/colors_nes.lua"
+		elif [ "$sftype-$sfregion" = "nes-jpn" ]; then
+			[ -f "$spriteDir/nes.png" ] && rename "$spriteDir/nes.png" "$spriteDir/hvc.png"
+			[ -f "$spriteDir/nes.json" ] && rename "$spriteDir/nes.json" "$spriteDir/hvc.json"
+			[ -f "$spriteDir/colors_nes.lua" ] && rename "$scriptsPath/colors_nes.lua" "$scriptsPath/colors_hvc.lua"
+		fi
+
+		if [ "$theme" = "$sfregion" ]; then
+			echo "#!/bin/sh
+source $mountpoint/etc/options_menu/themes/scripts/om_vars
+script_init
+rm $preinitScript
+rm $preinitLauncher
+sleep 1
+hakchi reboot" >"$themeScript.sh"
+		else
+			echo "#!/bin/sh
+source $mountpoint/etc/options_menu/themes/scripts/om_vars
+script_init" >"$themeScript.sh"
+			if [ -f "$xtraStuff/thumb.png" ]; then
+				echo "sh $xtraStuff/thumbnail.sh" >>"$themeScript.sh"
+			else
+				echo "sh $xtraStuff/thumbnailfix.sh" >>"$themeScript.sh"
+			fi
+
+			echo "sed '1,2d' $themeScript > $preinitScript
+echo themeSelector > $preinitLauncher
+sleep 1
+hakchi reboot" >>"$themeScript.sh"
+		fi
+
+		cmdName="$(sed -r 's/NAME=//g' <"$fullPath/info")"
+		echo "COMMAND_NAME=$cmdName
+COMMAND_TYPE=INTERNAL
+COMMAND_STR=sh $themeScript.sh
+PREVIEW_IMAGE=$fullPath.png
+PREVIEW_IMAGE_X=590
+PREVIEW_IMAGE_Y=248" >"$cmdList"
+
+	done
+}
+downloader() {
+	cd "$omModSub" || exit
+	echo ""
+	echo "   _____ _                    ____                _           _         "
+	echo "  |_   _| |_ ___ _____ ___   |    \\ ___ _ _ _ ___| |___ ___ _| |___ ___ "
+	echo "    | | |   | -_|     | -_|  |  |  | . | | | |   | | . | .'| . | -_|  _|"
+	echo "    |_| |_|_|___|_|_|_|___|  |____/|___|_____|_|_|_|___|__,|___|___|_|  "
+	echo "                                                                        "
+	echo "								Themes by:								  "
+	echo "		gloone, DNA64, DefKorns, pushka, HyruleExplorer, Nysde and more	"
+	echo "Packaging: DefKorns"
+	echo "Category: User Interface Mod "
+	echo ""
+	echo "Checking available theme list"
+	if [ ! -e "$sType"-list.tar.gz ]; then
+		clearDownloads
+		wget -q --spider $downloadURL/"$sType"-list.tar.gz
+		if [ $? -eq 0 ]; then
+			echo ""
+			echo "Downloading Theme list..."
+			wget $downloadURL/"$sType"-list.tar.gz
+		else
+			$errorMsg
+		fi
+	else
+		echo ""
+		echo "Unpacking theme list..."
+	fi
+	echo ""
+	echo "Updating theme list."
+	tar -xzf "$sType"-list.tar.gz && rm -f *.tar.gz
+	touch "$subDummy"
+	[ ! -f "$omModSubSpacer" ] && touch "$omModSubSpacer"
+	echo "Update complete."
+}
+
+chMenu() {
+	[ -f "$omModScripts/chmenu_backup" ] && rm "$omModScripts/chmenu_backup"
+	[ -f "$rootfs/chmenu_backup" ] && rm "$rootfs/chmenu_backup"
+	[ -f "$rootfs/chmenu" ] && rm "$rootfs/chmenu"
+
+	if [ "$(cksum "$rootfs/bin/chmenu" | awk '{ print $1; }')" != "$(cksum "$omModScripts/om_chmenu" | awk '{ print $1; }')" ]; then
+		copy "$omModScripts/om_chmenu" "$rootfs/bin/chmenu"
+		chmod +x "$rootfs/bin/chmenu"
+	fi
+}
+
+fntFix(){
+	if [ ! -f "$rootfs/fonfixbackup" ]; then
+	cp -r "$fontFixDir" "$rootfs/fonfixbackup"
+		sed -i '17ilocal activeTheme=$(cat "$statePath/activeTheme")\n  fontFix_getPath0 "$activeTheme/fonts/$1" && return 0' $fontFixDir
+	fi
 }

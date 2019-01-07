@@ -1,0 +1,53 @@
+{
+    "duration": 0.45,
+    "animations": [
+        {
+            "worldNodePath": [
+                "N_Translate"
+            ],
+            "type": "float",
+            "propertyId": "LocalPositionY",
+            "keyCurves": [
+                {
+                    "time": 0,
+                    "value": 0
+                },
+                {
+                    "time": 0.31666666666666665,
+                    "value": 0
+                }
+            ]
+        },
+        {
+            "worldNodePath": [
+                "N_Translate",
+                "Sprite_Luigi_0"
+            ],
+            "type": "resource",
+            "componentType": "TextureComponent",
+            "propertyId": "Texture",
+            "keyCurves": [
+                {
+                    "time": 0,
+                    "value": "6eb4c41a-375b-4e8c-8e84-65d307e71560"
+                },
+                {
+                    "time": 0.1,
+                    "value": "4f03a872-dcef-4bca-ab71-12b9e3cc8ebd"
+                },
+                {
+                    "time": 0.2,
+                    "value": "202dc17a-c444-461e-b006-dcfec506ec6d"
+                },
+				{
+                    "time": 0.31666666666666665,
+                    "value": "202dc17a-c444-461e-defk-dcfec506ec6d"
+                },
+                {
+                    "time": 0.45,
+                    "value": "0b156eb9-872c-4bb9-891b-c4dd53500c02"
+                }
+            ]
+        }
+    ]
+}

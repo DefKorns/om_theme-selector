@@ -1,0 +1,9 @@
+#!/bin/sh
+source $mountpoint/etc/options_menu/themes/scripts/om_vars
+script_init
+
+clearDownloads
+[ -f "$subDummy" ] && rm "$subDummy"
+[ -f "$omModSubSpacer" ] && rm "$omModSubSpacer"
+#  [ ! -f "$omModSubCmds/c999[0-9]_separator" ] && touch "$omModSubCmds/c999[0-9]_separator"
+$optionsMenu/options --commandPath $omModSubCmds/ --scriptPath $omModSubScripts --title "Theme Selector" &

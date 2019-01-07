@@ -1,0 +1,6 @@
+transfer_default
+  copy "$mountpoint/etc/options_menu/themes/fontfix" "$mountpoint/etc/preinit.d/b8025_fontfix"
+  copy "$mountpoint/etc/options_menu/themes/om_chmenu" "$rootfs/bin/chmenu"
+  chmod +x "$rootfs/bin/chmenu"
+cfg_OM_ThemeSelector_enabled='y'
+return 1
