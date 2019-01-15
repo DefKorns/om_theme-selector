@@ -6,109 +6,94 @@ music_hack_bind() {
 }
 theme_randomizR() {
 	local cloverTheme="$mountpoint/usr/share/ui/$sftype-$sfregion"
-	local cloverAudio="$cloverTheme/resources/sounds/hvc"
 	sysType="$sftype"
 
 	case "$sftype" in
 	hvcj)
 		cloverTheme="$mountpoint/usr/share/ui/hvc"
-		cloverAudio="$cloverTheme/resources/sounds/hvc"
 		sysType="shonen"
 		;;
 	nes)
 		cloverTheme="$mountpoint/usr/share/clover-ui"
-		cloverAudio="$cloverTheme/resources/sounds/hvc"
 		[ "$sfregion" = "jpn" ] && sysType="hvc"
 		;;
 	snes)
-		if [ "$sfregion" = "jpn" ]; then
-			cloverTheme="$mountpoint/usr/share/ui/shvc"
-			cloverAudio="$cloverTheme/resources/sounds/hvc"
-		fi
+		[ "$sfregion" = "jpn" ] && cloverTheme="$mountpoint/usr/share/ui/shvc"
 		;;
 	esac
 
+	local cloverAudio="$cloverTheme/resources/sounds/hvc"
 	local themePath="$mountpoint/media/$modname/themes/$sysType"
-	local musicPath="$mountpoint/media/$modname/menu_music"
+	local musicPath="$mountpoint/media/$modname/music_menu"
 	statePath="$mountpoint$profilepath/$modname"
-	local folderId
-	folderId="$(cat "$statePath/menu")"
+	local folderId="$(cat "$statePath/menu")"
 	local activeFolder="CLV-S-00$folderId"
-	local prevTheme="none"
-	local prevAudio="none"
-	[ -f "$statePath/lastTheme" ] && prevTheme=$(cat "$statePath/lastTheme")
-	[ -f "$statePath/tmpaudio" ] && prevAudio=$(cat "$statePath/tmpaudio")
-	local gStorage
-	gStorage="$(findGameStorage)"
-	local getName
-	local fullPath
-	local themeMatch
+	[ -f "$statePath/lastTheme" ] && local prevTheme=$(cat "$statePath/lastTheme")
+	local gStorage="$(findGameStorage)"
 	local theme="$prevTheme"
-	local wavFile="$prevAudio"
-	local pID
-	local parentID
-	local parentName
-	local hasParent
-	local silentWav="$rootfs/usr/share/advanced_music_hack/bgm_boot.wav"
-	[ ! -d "$musicPath" ] && musicPath="$rootfs/usr/share/menu_music"
-	[ ! -d "$themePath" ] && themePath="$rootfs/usr/share/themes/$sysType"
+	local silentWav="$rootfs/usr/share/themes/bgm_boot.wav"
 
+	[ ! -d "$musicPath" ] && musicPath="$rootfs/usr/share/music_menu"
+	[ ! -d "$themePath" ] && themePath="$rootfs/usr/share/themes/$sysType"
 	find "$gStorage" -maxdepth 3 -type f -name "$activeFolder.desktop" | sort -u | while IFS= read -r desktopFile; do
 		cd "$gStorage" || exit
 		for i in $(find . -type d -name "$activeFolder" | sed "s|^\./||"); do
 			if [ "$(grep -L "Name=Back" "$i/$(basename "$i").desktop")" ]; then
-				pID="$(dirname "$i")"
+				local pID="$(dirname "$i")"
 				local parentID="CLV-S-00$pID"
 			fi
 		done
 		find "." -maxdepth 3 -type f -name "$parentID.desktop" -exec grep -L "Name=Back" {} \; >tmp
 		while IFS= read -r w; do
-			parentName="$(grep -F 'Name=' "$w" | sed -r 's/Name=//g;s/ /_/g' | awk '{print tolower($0)}')"
+			local parentName="$(grep -F 'Name=' "$w" | sed -r 's/Name=//g;s/ /_/g' | awk '{print tolower($0)}')"
 		done <tmp
 
-		hasParent="$(find "$themePath" -maxdepth 1 -type d | xargs -n 1 basename | grep -w "$parentName")"
-		getName="$(grep -F 'Name=' "$desktopFile" | sed -r '/[Bb]ack/d;s/Name=//g;s/ /_/g' | awk '{print tolower($0)}')"
-		themeMatch="$(find "$themePath" -maxdepth 1 -type d | xargs -n 1 basename | grep -w "$getName")"
+		local hasParent="$(find "$themePath" -maxdepth 1 -type d | xargs -n 1 basename | grep -w "$parentName")"
+		local getName="$(grep -F 'Name=' "$desktopFile" | sed -r '/[Bb]ack/d;s/Name=//g;s/ /_/g' | awk '{print tolower($0)}')"
+		local themeMatch="$(find "$themePath" -maxdepth 1 -type d | xargs -n 1 basename | grep -w "$getName")"
 
-		#if [ -z "$getName" ];
 		if [ "$folderId" == "000" ] && [ -d "$themePath/default" ]; then
-			while [ "$wavFile" == "$prevAudio" ]; do
-				wavFile="$(find "$musicPath" -maxdepth 1 -type f | shuf | head -n1 | xargs -n 1 basename)"
-			done
-			local bgmHome="$musicPath/$wavFile"
-			echo "$wavFile" >"$statePath/tmpaudio"
-			if [ "$sftype" = "nes" ]; then
-				music_hack_bind "$bgmHome" "$bgmHome" "$cloverAudio"
-			else
-				music_hack_bind "$silentWav" "$bgmHome" "$cloverAudio"
+			if [ -n "$(ls -A $musicPath)" ]; then
+				local wavFile="$(find "$musicPath" -maxdepth 1 -type f | shuf | head -n1 | xargs -n 1 basename)"
+				local bgmHome="$musicPath/$wavFile"
+				if [ "$sftype" = "nes" ]; then
+					[ -f "$bgmHome" ] && music_hack_bind "$bgmHome" "$bgmHome" "$cloverAudio"
+				else
+					[ -f "$bgmHome" ] && music_hack_bind "$silentWav" "$bgmHome" "$cloverAudio"
+				fi
 			fi
-			fullPath="$themePath/default"
-			echo "default" >"$statePath/lastTheme"
+			theme="default"
 		elif [ -n "$themeMatch" ]; then
-			fullPath="$themePath/$getName"
-			echo "$getName" >"$statePath/lastTheme"
+			theme="$getName"
 		elif [ -n "$hasParent" ]; then
-			fullPath="$themePath/$parentName"
-			echo "$getName" >"$statePath/lastTheme"
+			theme="$parentName"
 		else
+			if [ "$randomizer" = "1" ]; then
 			while [ "$theme" == "$prevTheme" ]; do
 				theme="$(find "$themePath" -maxdepth 1 -type d | shuf | head -n1 | xargs -n 1 basename)"
 			done
-			fullPath="$themePath/$theme"
-			echo "$theme" >"$statePath/lastTheme"
+			else
+			theme="CHANGEME"
+			fi
 		fi
+		local fullPath="$themePath/$theme"
+		echo "$theme" >"$statePath/lastTheme"
 		echo "$fullPath" >"$statePath/activeTheme"
 
-		cd "$themePath/$prevTheme" && find ./* -iname "*.wav" -type f | cut -c3- | while IFS= read -r uFile; do
-			umount "$cloverTheme/$uFile"
-		done
+		if [ "$folderId" != "000" ] || [ ! -d "$themePath/default" ]; then
+			umount "$cloverAudio/bgm_boot.wav"
+			umount "$cloverAudio/bgm_home.wav"
+		fi
 
-		cd "$fullPath" && find . -type f | while IFS= read -r tfile; do
-			if [ "$tfile" = "./resources/sprites/nes.png" ] || [ "$tfile" = "./resources/sprites/hvc.png" ]; then
-				tfile="./resources/sprites/$sftype.png"
-			fi
-			[ -n "$theme" ] && [ -f "$fullPath/$tfile" ] && mount_bind "$fullPath/$tfile" "$cloverTheme/$tfile"
-		done
+		if [ "$prevTheme" != "$sfregion" ]; then
+			cd "$themePath/$prevTheme" && find ./* -type f ! -path "./xtras/*" ! -path "./fonts/*" | cut -c3- | while IFS= read -r uFile; do
+				umount "$cloverTheme/$uFile"
+			done
+
+			cd "$fullPath" && find . -type f ! -path "./xtras/*" ! -path "./fonts/*" | while IFS= read -r tfile; do
+				mount_bind "$fullPath/$tfile" "$cloverTheme/$tfile"
+			done
+		fi
 		cd - >/dev/ || exit
 	done
 }

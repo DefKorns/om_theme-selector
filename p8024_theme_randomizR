@@ -1,0 +1,5 @@
+if [ "$(cksum "$rootfs/bin/chmenu" | awk '{ print $1; }')" != "$(cksum "$rootfs/chmenu" | awk '{ print $1; }')" ]; then
+  copy "$rootfs/chmenu" "$rootfs/bin/chmenu"
+  chmod +x "$rootfs/bin/chmenu"
+fi
+theme_randomizR
