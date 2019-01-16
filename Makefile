@@ -30,7 +30,7 @@ ifneq (,$(wildcard $(DEV_DIR)/.*))
 	# LOCALIZATION=$(DEV_DIR)/modules/language_pack/localization
 	# PATCHES=$(DEV_DIR)/modules/patches
 else
-	DEV_DIR=/f/DATA_WINDOWS/Documents/GitLab/$(MOD_FILENAME)
+	DEV_DIR=~/Documents/_projects/hmods/$(MOD_FILENAME)
 	# LANGUAGE=$(DEV_DIR)/modules/language_pack/language
 	# LOCALIZATION=$(DEV_DIR)/modules/language_pack/localization
 	# PATCHES=$(DEV_DIR)/modules/patches
@@ -70,12 +70,15 @@ tar:
 
 zip:
 	mkdir -p out/ temp/
-	$(RSYNC)
+	#$(RSYNC)
 	cd temp/; zip -r $(OUT)/$(MOD_FILENAME).zip *
 	rm -r temp/
 	@echo $(NEXT_PATCH_VERSION) > VERSION
 
 fix: hmod tar zip
+	mv out/$(MOD_FILENAME).zip out/$(MOD_FILENAME).$(GIT_COMMIT).zip
+	mv out/$(MOD_FILENAME).hmod out/$(MOD_FILENAME).$(GIT_COMMIT).hmod
+	mv out/$(MOD_FILENAME).tar.gz out/$(MOD_FILENAME).$(GIT_COMMIT).tar.gz
 	@echo $(NEXT_PATCH_VERSION) > VERSION
 
 update: fix

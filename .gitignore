@@ -497,3 +497,4 @@ out/
 #Makefile
 default-strings.lng
 default/
+temp/
