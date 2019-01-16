@@ -7,11 +7,10 @@ fntFix
 
 # hasLang="$(find $omModSubCmds -type f -name 'c00[0-9][1-9]_*')"
 
-wget -q --spider http://google.com
-if [ $? -eq 0 ]; then
-	mv "$disableDownloads" "$enableDownloads"
+if ping -q -c 1 -W 1 google.com >/dev/null; then
+  mv "$disableDownloads" "$enableDownloads"
 else
-	mv "$enableDownloads" "$disableDownloads"
+  mv "$enableDownloads" "$disableDownloads"
 fi
 
 [ -f "$omDummy" ] && rm $omDummy
