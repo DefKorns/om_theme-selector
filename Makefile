@@ -22,6 +22,7 @@ NEXT_PATCH_VERSION = $(MAJOR).$(MINOR).$(shell expr $(PATCH) + 1)-b$(BUILD)
 
 MOD_URL=`git config --get remote.origin.url`
 GIT_COMMIT := $(shell echo "`git rev-parse --short HEAD``git diff-index --quiet HEAD -- || echo '-dirty'`")
+GIT_DIRTY      = $(shell git diff --shortstat 2> /dev/null | tail -n1 )
 RSYNC = $(shell rsync -a mod/etc/options_menu/ temp/ --links --delete)
 MOD_FILENAME   = $(shell basename `pwd`)
 DEV_DIR=~/Documents/gitlab/$(MOD_FILENAME)
@@ -57,28 +58,25 @@ hmod: clean
 	
 	sed 1d mod/readme.md >> temp/readme.md
 
-	cd temp/; tar -czf $(OUT)/$(MOD_FILENAME).hmod *
+	cd temp/; tar -czf $(OUT)/$(MOD_FILENAME)-$(MOD_VER).hmod *
 	rm -r temp/
 	@echo $(NEXT_PATCH_VERSION) > VERSION
 	
 tar:
 	mkdir -p out/ temp/
 	$(RSYNC)
-	cd temp/; tar -czf $(OUT)/$(MOD_FILENAME).tar.gz *
+	cd temp/; tar -czf $(OUT)/$(MOD_FILENAME)-$(MOD_VER).tar.gz *
 	rm -r temp/
 	@echo $(NEXT_PATCH_VERSION) > VERSION
 
 zip:
 	mkdir -p out/ temp/
 	#$(RSYNC)
-	cd temp/; zip -r $(OUT)/$(MOD_FILENAME).zip *
+	cd temp/; zip -r $(OUT)/$(MOD_FILENAME)-$(MOD_VER).zip *
 	rm -r temp/
 	@echo $(NEXT_PATCH_VERSION) > VERSION
 
 fix: hmod tar zip
-	mv out/$(MOD_FILENAME).zip out/$(MOD_FILENAME).$(GIT_COMMIT).zip
-	mv out/$(MOD_FILENAME).hmod out/$(MOD_FILENAME).$(GIT_COMMIT).hmod
-	mv out/$(MOD_FILENAME).tar.gz out/$(MOD_FILENAME).$(GIT_COMMIT).tar.gz
 	@echo $(NEXT_PATCH_VERSION) > VERSION
 
 update: fix
