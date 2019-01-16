@@ -1,0 +1,34 @@
+#!/bin/sh
+source $mountpoint/etc/options_menu/themes/scripts/om_vars
+script_init
+if [ -f "$b_file" ]; then
+	if grep -q "om_themerandomizer=\"0\"" "$b_file"; then
+		sed -r -i 's/ \[X\]//g' $themeSetting
+	else
+		if grep -q "om_themerandomizer=\"1\"" "$b_file"; then
+			if grep -q "[X]" $themeSetting; then
+				sed -r -i 's/\[X\] //g' $themeSetting
+			else
+				sed -r -i "1 s|$| [X]|" $themeSetting
+			fi
+		else
+			sed -r -i 's/ \[X\]//g' $themeSetting
+		fi
+	fi
+
+	if grep -q "om_audiorandomizer=\"0\"" "$b_file"; then
+		sed -r -i 's/ \[X\]//g' $audioSetting
+	else
+		if grep -q "om_audiorandomizer=\"1\"" "$b_file"; then
+			if grep -q "[X]" $themeSetting; then
+				sed -r -i 's/\[X\] //g' $audioSetting
+			else
+				sed -r -i "1 s|$| [X]|" $audioSetting
+			fi
+		else
+			sed -r -i 's/ \[X\]//g' $audioSetting
+		fi
+	fi
+fi
+
+$optionsMenu/options --commandPath $omModSettingsCmds/ --scriptPath $omModSettingsScripts --title "Theme Selector" &

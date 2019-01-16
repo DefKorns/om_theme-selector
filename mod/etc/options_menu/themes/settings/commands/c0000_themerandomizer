@@ -1,0 +1,4 @@
+COMMAND_NAME=Theme Randomizer
+COMMAND_TYPE=EXTERNAL
+RESTART_UI=FALSE
+COMMAND_STR=usleep 50000 && sh %script_dir%/om_theme &

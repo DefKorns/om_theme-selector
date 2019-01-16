@@ -14,8 +14,8 @@ fontFix_getPath0(){
 }
 
 fontFix_getPath(){
-  local activeTheme=$(cat "$statePath/activeTheme")
-  fontFix_getPath0 "$activeTheme/fonts/$1" && return 0
+  local active_theme=$(cat "$mountpoint$profilepath/$modname/activeTheme")
+  fontFix_getPath0 "$active_theme/fonts/$1" && return 0
   fontFix_getPath0 "$mountpoint/media/$modname/fonts/$1" && return 0
   fontFix_getPath0 "$installpath/fonts/$1" ] && return 0
   fontFix_getPath0 "$rootfs/usr/share/fonts/$1" ] && return 0

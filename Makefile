@@ -120,9 +120,9 @@ info:
 	@echo "next major version: $(NEXT_MAJOR_VERSION)"
 	@echo "next minor version: $(NEXT_MINOR_VERSION)"
 	@echo "next patch version: $(NEXT_PATCH_VERSION)"
-	@echo "Language: $(LANGUAGE)"
-	@echo "Localization: $(LOCALIZATION)"
-	@echo "Patches: $(PATCHES)"
+	# @echo "Language: $(LANGUAGE)"
+	# @echo "Localization: $(LOCALIZATION)"
+	# @echo "Patches: $(PATCHES)"
 
 clean:
 	-rm -rf out/ temp/
