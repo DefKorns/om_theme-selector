@@ -37,11 +37,11 @@ themeSelector() {
 	local gStorage="$(findGameStorage)"
 	local theme="CHANGEME"
 	local silentWav="$rootfs/usr/share/themes/bgm_boot.wav"
-	local themeFile="$rootfs/overlaythemes"
+	local thmOverlay="$mountpoint/etc/options_menu/themes/scripts/om_overlay"
 
 	[ ! -d "$musicPath" ] && musicPath="$rootfs/usr/share/music_menu"
 	[ ! -d "$themePath" ] && themePath="$rootfs/usr/share/themes/$sysType"
-	if grep -q -w "$theme" "$themeFile"; then
+	if grep -q -w "$theme" "$thmOverlay"; then
 		fullPath="$themePath/$theme"
 		echo "$theme" >"$statePath/lastTheme"
 		echo "$fullPath" >"$statePath/activeTheme"

@@ -27,7 +27,6 @@ omModSettings="$omMod/settings"
 omModSettingsCmds="$omModSettings/commands"
 omModSettingsScripts="$omModSettings/scripts"
 
-
 omDummy="$omModCommands/c0000_0000"
 subDummy="$omModSubCmds/c0000_0000"
 
@@ -39,7 +38,6 @@ disableSettings="$omModCommands/_options"
 enableSettings="$omModCommands/c0000_options"
 audioSetting="$omModSettingsCmds/c0000_audiorandomizer"
 themeSetting="$omModSettingsCmds/c0000_themerandomizer"
-
 
 # SHARED
 usb_path="$mountpoint/media/$modname"
@@ -77,9 +75,9 @@ clearDownloads() {
 }
 noThemesNoClear() {
 	if [ ! -f "$omDummy" ]; then
-		mv "$enableClear" "$disableClear"
+		[ -f "$enableClear"] && mv "$enableClear" "$disableClear"
 	else
-		mv "$disableClear" "$enableClear"
+		[ -f "$disableClear"] && mv "$disableClear" "$enableClear"
 	fi
 }
 
@@ -113,13 +111,13 @@ themeLoader() {
 		touch "$cmd_list"
 
 		if [ "$sftype" = "nes" ]; then
-			[ -f "$sprite_path/hvc.png" ] && rename "$sprite_path/hvc.png" "$sprite_path/nes.png"
-			[ -f "$sprite_path/hvc.json" ] && rename "$sprite_path/hvc.json" "$sprite_path/nes.json"
-			[ -f "$sprite_path/colors_hvc.lua" ] && rename "$script_path/colors_hvc.lua" "$script_path/colors_nes.lua"
+			rename "$sprite_path/hvc.png" "$sprite_path/nes.png"
+			rename "$sprite_path/hvc.json" "$sprite_path/nes.json"
+			rename "$script_path/colors_hvc.lua" "$script_path/colors_nes.lua"
 		elif [ "$sftype-$sfregion" = "nes-jpn" ]; then
-			[ -f "$sprite_path/nes.png" ] && rename "$sprite_path/nes.png" "$sprite_path/hvc.png"
-			[ -f "$sprite_path/nes.json" ] && rename "$sprite_path/nes.json" "$sprite_path/hvc.json"
-			[ -f "$sprite_path/colors_nes.lua" ] && rename "$script_path/colors_nes.lua" "$script_path/colors_hvc.lua"
+			rename "$sprite_path/nes.png" "$sprite_path/hvc.png"
+			rename "$sprite_path/nes.json" "$sprite_path/hvc.json"
+			rename "$script_path/colors_nes.lua" "$script_path/colors_hvc.lua"
 		fi
 
 		if [ "$thm" = "$sfregion" ]; then
