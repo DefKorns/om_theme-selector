@@ -152,14 +152,17 @@ hakchi reboot" >"$thm_script.sh"
 source $mountpoint/etc/options_menu/themes/scripts/om_vars
 script_init" >"$thm_script.sh"
 			if [ -f "$xtras/thumb.png" ]; then
-				echo "sh $xtras/thumbnail.sh" >>"$thm_script.sh"
+echo "find \"$gStorage\" -path \"*_small.png*\" | while read -r file; do
+[ -f \"\$file\" ] && cp \"\$file\" \"\$file\"_backup && cp \"$xtras/thumb.png\" \"\$file\"
+done" >>"$thm_script.sh"
+				# echo "sh $xtras/thumbnail.sh" >>"$thm_script.sh"
 			else
-				echo "sh $xtras/thumbnailfix.sh" >>"$thm_script.sh"
+			echo "sh $omModScripts/om_restorethumb" >>"$thm_script.sh"
 			fi
 
 			echo "sed '1,2d' $thm_script > $b_file
 echo themeSelector > $p_file
-find $mountpoint/etc/preinit.d/ -type f -name \"*randomizR\" -exec rm -f {} \;
+# find $mountpoint/etc/preinit.d/ -type f -name \"*randomizR\" -exec rm -f {} \;
 sleep 1
 hakchi reboot" >>"$thm_script.sh"
 		fi
