@@ -1,6 +1,31 @@
+#
+#  Copyright 2019 DefKorns (https://gitlab.com/DefKorns/om_theme-selector/LICENSE)
+#
+#  This program is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+#
+mkdir -p "$rootfs/usr/share/music_menu"
+if [ -d "$rootfs/usr/share/menu_music" ]; then
+	[ -d "$rootfs/usr/share/menu_music" ] && mv "$rootfs/usr/share/menu_music"/* "$rootfs/usr/share/music_menu"
+fi
+
+ls -1 /var/lib/hakchi/hmod/* | grep -e "andomiz" -e "advanced_music_hack" | sed -r 's/\/var\/lib\/hakchi\/hmod\/uninstall-//g' | while read -r uninstall; do
+	hakchi pack_uninstall "$uninstall"
+done
 transfer_default
-  copy "$mountpoint/etc/options_menu/themes/fontfix" "$mountpoint/etc/preinit.d/b8025_fontfix"
-  copy "$mountpoint/etc/options_menu/themes/om_chmenu" "$rootfs/bin/chmenu"
-  chmod +x "$rootfs/bin/chmenu"
+copy "$mountpoint/etc/options_menu/themes/scripts/om_fontfix" "$mountpoint/etc/preinit.d/b8025_fontfix"
+copy "$mountpoint/etc/options_menu/themes/scripts/om_chmenu" "$rootfs/bin/chmenu"
+chmod +x "$rootfs/bin/chmenu"
+
 cfg_OM_ThemeSelector_enabled='y'
 return 1

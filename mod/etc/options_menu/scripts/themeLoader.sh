@@ -1,4 +1,20 @@
 #!/bin/sh
+#
+#  Copyright 2019 DefKorns (https://gitlab.com/DefKorns/om_theme-selector/LICENSE)
+#  
+#  This program is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#  
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#  
+#  You should have received a copy of the GNU General Public License
+#  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+#
 source $mountpoint/etc/options_menu/themes/scripts/om_vars
 script_init
 
@@ -6,25 +22,25 @@ chMenu
 fntFix
 
 if ping -q -c 1 -W 1 google.com >/dev/null; then
-  [ -f "$disableDownloads" ] && mv "$disableDownloads" "$enableDownloads"
+  rename "$disableDownloads" "$enableDownloads"
 else
-  [ -f "$enableDownloads" ] && mv "$enableDownloads" "$disableDownloads"
+  rename "$enableDownloads" "$disableDownloads"
 fi
 
-[ -f "$omDummy" ] && rm "$omDummy"
+remove "$omDummy"
 
 if [ "$(ls -A $themePath)" ]; then
 	touch "$omDummy"
 	themeLoader
 else
-	[ -f "$omModSpacer" ] && rm "$omModSpacer"
+	remove "$omModSpacer"
 fi
 noThemesNoClear
 
 if [ -f "$b_file" ] && [ -f "$p_file" ]; then
-	[ -f "$disableSettings" ] && mv "$disableSettings" "$enableSettings"
+	rename "$disableSettings" "$enableSettings"
 else
-	[ -f "$enableSettings" ] && mv "$enableSettings" "$disableSettings"
+	rename "$enableSettings" "$disableSettings"
 fi
 
 usleep 50000 && $optionsMenu/options --commandPath $omModCommands/ --scriptPath $omModScripts --title "Theme Selector" &

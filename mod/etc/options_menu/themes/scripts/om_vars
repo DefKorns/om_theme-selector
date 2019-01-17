@@ -1,4 +1,20 @@
 #!/bin/sh
+#
+#  Copyright 2019 DefKorns (https://gitlab.com/DefKorns/om_theme-selector/LICENSE)
+#  
+#  This program is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#  
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#  
+#  You should have received a copy of the GNU General Public License
+#  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+#
 source /etc/preinit
 script_init
 #
@@ -61,13 +77,21 @@ theme_path="$usb_path/$modtitle/$s_type"
 errorMsg="echo Error while connecting to server, please check your internet connection and try again. "
 
 # functions
+rename() {
+	[ -f "$1" ] && mv "$1" "$2"
+}
+remove() {
+	[ -f "$1" ] && rm -rf "$1"
+}
+link(){
+	[ -f "$1" ] && ln -sf "$1" "$2"
+}
 clearList() {
 	find "$omModCommands" "$omModScripts" -type f \
 		-not -name 'om_*' -not -name 'c0000_*' \
 		-not -name 'c999[0-9]_*' -print0 -exec rm {} \;
-	[ -f "$omModSpacer" ] && rm "$omModSpacer"
+	remove "$omModSpacer"
 }
-
 clearDownloads() {
 	find "$omModSubCmds" "$omModSubScripts" "$omModSub" -type f \
 		-not -name 'c000[0-9]_*' -not -name 'c999[0-9]_*' \
@@ -75,16 +99,11 @@ clearDownloads() {
 }
 noThemesNoClear() {
 	if [ ! -f "$omDummy" ]; then
-		[ -f "$enableClear"] && mv "$enableClear" "$disableClear"
+		rename "$enableClear" "$disableClear"
 	else
-		[ -f "$disableClear"] && mv "$disableClear" "$enableClear"
+		rename "$disableClear" "$enableClear"
 	fi
 }
-
-rename() {
-	[ -f "$1" ] && mv "$1" "$2"
-}
-
 themeLoader() {
 	cd "$theme_path" && find . -mindepth 1 -maxdepth 1 -type d | xargs -n 1 basename | sort -u | while IFS= read -r thm; do
 		full_path="$theme_path/$thm"
@@ -102,12 +121,12 @@ themeLoader() {
 		fi
 
 		if [ ! -f "$full_path.png" ]; then
-			[ -f "$omModSub/$thm.png" ] && ln -sf "$omModSub/$thm.png" "$full_path.png"
+			link "$omModSub/$thm.png" "$full_path.png"
 		fi
 
 		[ ! -f "$omModSpacer" ] && touch "$omModSpacer"
 		sed -r "s/theme=\"CHANGEME\"/theme=\"${thm}\"/g;" "$omModScripts/om_themescript" >"$thm_script"
-		[ -f "$cmd_list" ] && rm "$cmd_list"
+		remove "$cmd_list"
 		touch "$cmd_list"
 
 		if [ "$sftype" = "nes" ]; then
@@ -124,8 +143,8 @@ themeLoader() {
 			echo "#!/bin/sh
 source $mountpoint/etc/options_menu/themes/scripts/om_vars
 script_init
-rm $b_file
-rm $p_file
+remove $b_file
+remove $p_file
 sleep 1
 hakchi reboot" >"$thm_script.sh"
 		else
@@ -192,8 +211,7 @@ downloader() {
 }
 
 chMenu() {
-	[ -f "$rootfs/chmenu_backup" ] && rm "$rootfs/chmenu_backup"
-	[ -f "$rootfs/chmenu" ] && rm "$rootfs/chmenu"
+	remove "$rootfs/chmenu"
 
 	if [ "$(cksum "$chmenu_dir" | awk '{ print $1; }')" != "$(cksum "$omModScripts/om_chmenu" | awk '{ print $1; }')" ]; then
 		cp -r "$omModScripts/om_chmenu" "$chmenu_dir"
@@ -202,7 +220,7 @@ chMenu() {
 }
 
 fntFix() {
-	[ -f "$rootfs/fontfix" ] && rm "$rootfs/fontfix"
+	remove "$rootfs/fontfix"
 
 	if [ "$(cksum "$fntfix_dir" | awk '{ print $1; }')" != "$(cksum "$omModScripts/om_fontfix" | awk '{ print $1; }')" ]; then
 		cp -r "$omModScripts/om_fontfix" "$fntfix_dir"
