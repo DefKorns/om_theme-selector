@@ -18,6 +18,7 @@
 source $mountpoint/etc/options_menu/themes/scripts/om_vars
 script_init
 
-find "$gStorage" -path "*_small.png*" | while read file; do
-	[ -f "$file" ] && cp "$file" "$file"_backup && cp "$theme_path/THEMENAME/xtras/thumb.png" "$file"
+find "$gStorage" -path "*_small.png*" | while read -r file; do
+	copier "$file" "$file"_backup 
+	copier "$theme_path/THEMENAME/xtras/thumb.png" "$file"
 done

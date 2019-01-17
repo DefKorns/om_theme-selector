@@ -1,17 +1,17 @@
 #!/bin/sh
 #
 #  Copyright 2019 DefKorns (https://gitlab.com/DefKorns/om_theme-selector/LICENSE)
-#  
+#
 #  This program is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation, either version 3 of the License, or
 #  (at your option) any later version.
-#  
+#
 #  This program is distributed in the hope that it will be useful,
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU General Public License for more details.
-#  
+#
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
@@ -23,7 +23,7 @@ themeURL="http://hakchicloud.com/Hakchi_Themes/themes"
 downloadURL="http://hakchicloud.com/Hakchi_Themes/scripts"
 b_file="$mountpoint/etc/preinit.d/b8024_themeselector"
 p_file="$mountpoint/etc/preinit.d/p8024_themeselector"
-fntfix_dir="$mountpoint/etc/preinit.d/b8025_fontfix"
+b_fntfix="$mountpoint/etc/preinit.d/b8025_fontfix"
 
 # Options Menu
 optionsMenu="$mountpoint/etc/options_menu"
@@ -74,7 +74,8 @@ esac
 theme_path="$usb_path/$modtitle/$s_type"
 [ ! -d "$theme_path" ] && theme_path="$nand_path/$modtitle/$s_type"
 
-errorMsg="echo Error while connecting to server, please check your internet connection and try again. "
+noNet="echo Error while connecting to server, please check your internet connection and try again. "
+noPkg="echo The package you resquested isn't available at the moment, please try again later or contact @DefKorns"
 
 # functions
 rename() {
@@ -83,8 +84,11 @@ rename() {
 remove() {
 	[ -f "$1" ] && rm -rf "$1"
 }
-link(){
+link() {
 	[ -f "$1" ] && ln -sf "$1" "$2"
+}
+copier() {
+	[ -f "$1" ] && cp -r "$1" "$2"
 }
 clearList() {
 	find "$omModCommands" "$omModScripts" -type f \
@@ -152,12 +156,13 @@ hakchi reboot" >"$thm_script.sh"
 source $mountpoint/etc/options_menu/themes/scripts/om_vars
 script_init" >"$thm_script.sh"
 			if [ -f "$xtras/thumb.png" ]; then
-echo "find \"$gStorage\" -path \"*_small.png*\" | while read -r file; do
-[ -f \"\$file\" ] && cp \"\$file\" \"\$file\"_backup && cp \"$xtras/thumb.png\" \"\$file\"
+				echo "find \"$gStorage\" -path \"*_small.png*\" | while read -r file; do
+copier \"\$file\" \"\$file\"_backup 
+copier \"$xtras/thumb.png\" \"\$file\"
 done" >>"$thm_script.sh"
 				# echo "sh $xtras/thumbnail.sh" >>"$thm_script.sh"
 			else
-			echo "sh $omModScripts/om_restorethumb" >>"$thm_script.sh"
+				echo "sh $omModScripts/om_restorethumb" >>"$thm_script.sh"
 			fi
 
 			echo "sed '1,2d' $thm_script > $b_file
@@ -199,7 +204,11 @@ downloader() {
 			echo "Downloading Theme list..."
 			wget $downloadURL/"$s_type"-list.tar.gz
 		else
-			$errorMsg
+			if ping -q -c 1 -W 1 google.com >/dev/null; then
+				$noNet
+			else
+				$noPkg
+			fi
 		fi
 	else
 		echo ""
@@ -217,15 +226,14 @@ chMenu() {
 	remove "$rootfs/chmenu"
 
 	if [ "$(cksum "$chmenu_dir" | awk '{ print $1; }')" != "$(cksum "$omModScripts/om_chmenu" | awk '{ print $1; }')" ]; then
-		cp -r "$omModScripts/om_chmenu" "$chmenu_dir"
+		copier "$omModScripts/om_chmenu" "$chmenu_dir"
 		chmod +x "$chmenu_dir"
 	fi
 }
 
 fntFix() {
 	remove "$rootfs/fontfix"
-
-	if [ "$(cksum "$fntfix_dir" | awk '{ print $1; }')" != "$(cksum "$omModScripts/om_fontfix" | awk '{ print $1; }')" ]; then
-		cp -r "$omModScripts/om_fontfix" "$fntfix_dir"
+	if [ "$(cksum "$b_fntfix" | awk '{ print $1; }')" != "$(cksum "$omModScripts/om_fontfix" | awk '{ print $1; }')" ]; then
+		copier "$omModScripts/om_fontfix" "$b_fntfix"
 	fi
 }

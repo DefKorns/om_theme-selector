@@ -2,17 +2,17 @@
 #
 #
 #  Copyright 2019 DefKorns (https://gitlab.com/DefKorns/om_theme-selector/LICENSE)
-#  
+#
 #  This program is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation, either version 3 of the License, or
 #  (at your option) any later version.
-#  
+#
 #  This program is distributed in the hope that it will be useful,
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU General Public License for more details.
-#  
+#
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
@@ -27,7 +27,7 @@ music_hack_bind() {
 }
 themeSelector() {
 	local cloverTheme="$mountpoint/usr/share/ui/$sftype-$sfregion"
-	sysType="$sftype"
+	local sysType="$sftype"
 
 	case "$sftype" in
 	hvcj)
@@ -45,22 +45,22 @@ themeSelector() {
 
 	local cloverAudio="$cloverTheme/resources/sounds/hvc"
 	local themePath="$mountpoint/media/$modname/themes/$sysType"
-	local musicPath="$mountpoint/media/$modname/music_menu"
-	statePath="$mountpoint$profilepath/$modname"
+	local statePath="$mountpoint$profilepath/$modname"
 	local folderId="$(cat "$statePath/menu")"
 	local activeFolder="CLV-S-00$folderId"
-	[ -f "$statePath/lastTheme" ] && local prevTheme=$(cat "$statePath/lastTheme")
+	local last_theme="$statePath/lastTheme"
+	local selected_theme="$statePath/activeTheme"
+	local thmOverlay="$mountpoint/etc/options_menu/themes/scripts/om_overlay"
+	[ -f "$last_theme" ] && local prevTheme=$(cat "$last_theme")
 	local gStorage="$(findGameStorage)"
 	local theme="CHANGEME"
-	local silentWav="$rootfs/usr/share/themes/bgm_boot.wav"
-	local thmOverlay="$mountpoint/etc/options_menu/themes/scripts/om_overlay"
+	
+	local fullPath="$themePath/$theme"
 
-	[ ! -d "$musicPath" ] && musicPath="$rootfs/usr/share/music_menu"
 	[ ! -d "$themePath" ] && themePath="$rootfs/usr/share/themes/$sysType"
 	if grep -q -w "$theme" "$thmOverlay"; then
-		fullPath="$themePath/$theme"
-		echo "$theme" >"$statePath/lastTheme"
-		echo "$fullPath" >"$statePath/activeTheme"
+		echo "$theme" >"$last_theme"
+		echo "$fullPath" >"$selected_theme"
 		mountpoint -q "$cloverTheme" && umount "$cloverTheme"
 		[ -d "$fullPath" ] && mount -t overlayfs -o lowerdir="$cloverTheme",upperdir="$fullPath" overlayfs "$cloverTheme"
 	else
@@ -76,6 +76,7 @@ themeSelector() {
 			while IFS= read -r w; do
 				local parentName="$(grep -F 'Name=' "$w" | sed -r 's/Name=//g;s/ /_/g' | awk '{print tolower($0)}')"
 			done <tmp
+			[ -f tmp ] && rm tmp
 
 			local hasParent="$(find "$themePath" -maxdepth 1 -type d | xargs -n 1 basename | grep -w "$parentName")"
 			local getName="$(grep -F 'Name=' "$desktopFile" | sed -r '/[Bb]ack/d;s/Name=//g;s/ /_/g' | awk '{print tolower($0)}')"
@@ -83,6 +84,10 @@ themeSelector() {
 
 			if [ "$folderId" == "000" ] && [ -d "$themePath/default" ]; then
 				if [ "$om_audiorandomizer" = "1" ]; then
+					local silentWav="$rootfs/usr/share/themes/bgm_boot.wav"
+					local musicPath="$mountpoint/media/$modname/music_menu"
+					[ ! -d "$musicPath" ] && musicPath="$rootfs/usr/share/music_menu"
+
 					if [ -n "$(ls -A $musicPath)" ]; then
 						local wavFile="$(find "$musicPath" -maxdepth 1 -type f | shuf | head -n1 | xargs -n 1 basename)"
 						local bgmHome="$musicPath/$wavFile"
@@ -110,9 +115,9 @@ themeSelector() {
 					fi
 				fi
 			fi
-			local fullPath="$themePath/$theme"
-			echo "$theme" >"$statePath/lastTheme"
-			echo "$fullPath" >"$statePath/activeTheme"
+			fullPath="$themePath/$theme"
+			echo "$theme" >"$last_theme"
+			echo "$fullPath" >"$selected_theme"
 
 			if [ "$folderId" != "000" ] || [ ! -d "$themePath/default" ]; then
 				umount "$cloverAudio/bgm_boot.wav"
