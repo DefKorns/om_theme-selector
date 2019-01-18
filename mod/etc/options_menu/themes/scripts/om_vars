@@ -46,8 +46,8 @@ omModSettingsScripts="$omModSettings/scripts"
 omDummy="$omModCommands/c0000_0000"
 subDummy="$omModSubCmds/c0000_0000"
 
-disableDownloads="$omModCommands/_downloadThemes"
-enableDownloads="$omModCommands/c0000_downloadThemes"
+disableDownloads="$omModCommands/_download"
+enableDownloads="$omModCommands/c0000_download"
 disableClear="$omModCommands/_remove"
 enableClear="$omModCommands/c0000_remove"
 disableSettings="$omModCommands/_options"
@@ -83,26 +83,32 @@ noPkg="echo The package you resquested isn't available at the moment, please try
 rename() {
 	[ -f "$1" ] && mv "$1" "$2"
 }
+
 remove() {
 	[ -f "$1" ] && rm -rf "$1"
 }
+
 link() {
 	[ -f "$1" ] && ln -sf "$1" "$2"
 }
+
 copier() {
 	[ -f "$1" ] && cp -r "$1" "$2"
 }
+
 clearList() {
 	find "$omModCommands" "$omModScripts" -type f \
 		-not -name 'om_*' -not -name 'c0000_*' \
 		-not -name 'c999[0-9]_*' -not -name '_*' -print0 -exec rm {} \;
 	remove "$omModSpacer"
 }
+
 clearDownloads() {
 	find "$omModSubCmds" "$omModSubScripts" "$omModSub" -type f \
 		-not -name 'c000[0-9]_*' -not -name 'c999[0-9]_*' \
 		-not -name 'om_*' -not -name '_*' -print0 -exec rm {} \;
 }
+
 noThemesNoClear() {
 	if [ ! -f "$omDummy" ]; then
 		rename "$enableClear" "$disableClear"
@@ -110,6 +116,7 @@ noThemesNoClear() {
 		rename "$disableClear" "$enableClear"
 	fi
 }
+
 themeLoader() {
 	cd "$theme_path" && find . -mindepth 1 -maxdepth 1 -type d | xargs -n 1 basename | sort -u | while IFS= read -r thm; do
 		full_path="$theme_path/$thm"
@@ -184,6 +191,7 @@ PREVIEW_IMAGE_Y=248" >"$cmd_list"
 
 	done
 }
+
 downloader() {
 	cd "$omModSub" || exit
 	echo ""
@@ -226,7 +234,6 @@ downloader() {
 
 chMenu() {
 	remove "$rootfs/chmenu"
-
 	if [ "$(cksum "$chmenu_dir" | awk '{ print $1; }')" != "$(cksum "$omModScripts/om_chmenu" | awk '{ print $1; }')" ]; then
 		copier "$omModScripts/om_chmenu" "$chmenu_dir"
 		chmod +x "$chmenu_dir"

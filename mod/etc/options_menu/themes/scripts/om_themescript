@@ -45,6 +45,7 @@ themeSelector() {
 
 	local cloverAudio="$cloverTheme/resources/sounds/hvc"
 	local themePath="$mountpoint/media/$modname/themes/$sysType"
+	[ ! -d "$themePath" ] && themePath="$rootfs/usr/share/themes/$sysType"
 	local statePath="$mountpoint$profilepath/$modname"
 	local folderId="$(cat "$statePath/menu")"
 	local activeFolder="CLV-S-00$folderId"
@@ -54,10 +55,8 @@ themeSelector() {
 	[ -f "$last_theme" ] && local prevTheme=$(cat "$last_theme")
 	local gStorage="$(findGameStorage)"
 	local theme="CHANGEME"
-	
 	local fullPath="$themePath/$theme"
 
-	[ ! -d "$themePath" ] && themePath="$rootfs/usr/share/themes/$sysType"
 	if grep -q -w "$theme" "$thmOverlay"; then
 		echo "$theme" >"$last_theme"
 		echo "$fullPath" >"$selected_theme"
