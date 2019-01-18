@@ -63,6 +63,7 @@ ui_path="$share_path/ui"
 s_type="$sftype"
 root_bin="$rootfs/bin"
 chmenu_dir="$root_bin/chmenu"
+
 case "$sftype" in
 hvcj)
 	s_type="shonen"
@@ -73,6 +74,7 @@ nes)
 esac
 theme_path="$usb_path/$modtitle/$s_type"
 [ ! -d "$theme_path" ] && theme_path="$nand_path/$modtitle/$s_type"
+has_theme="$(ls -1 "$theme_path/$s_type".*.tar.gz 2>/dev/null | wc -l)"
 
 noNet="echo Error while connecting to server, please check your internet connection and try again. "
 noPkg="echo The package you resquested isn't available at the moment, please try again later or contact @DefKorns"
@@ -93,13 +95,13 @@ copier() {
 clearList() {
 	find "$omModCommands" "$omModScripts" -type f \
 		-not -name 'om_*' -not -name 'c0000_*' \
-		-not -name 'c999[0-9]_*' -print0 -exec rm {} \;
+		-not -name 'c999[0-9]_*' -not -name '_*' -print0 -exec rm {} \;
 	remove "$omModSpacer"
 }
 clearDownloads() {
 	find "$omModSubCmds" "$omModSubScripts" "$omModSub" -type f \
 		-not -name 'c000[0-9]_*' -not -name 'c999[0-9]_*' \
-		-not -name 'om_*' -print0 -exec rm {} \;
+		-not -name 'om_*' -not -name '_*' -print0 -exec rm {} \;
 }
 noThemesNoClear() {
 	if [ ! -f "$omDummy" ]; then

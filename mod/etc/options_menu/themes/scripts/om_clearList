@@ -22,5 +22,6 @@ script_init
 clearList
 
 rename "$enableClear" "$disableClear"
+rename "$disableRefresh" "$enableRefresh"
 
 $optionsMenu/options --commandPath $omModCommands/ --scriptPath $omModScripts --title "Theme Selector" &
