@@ -14,17 +14,17 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
-copy "$mountpoint/etc/options_menu/themes/scripts/om_chmenu_og" "$rootfs/bin/chmenu"
-copy "$mountpoint/etc/options_menu/themes/scripts/om_fontfix_og" "$mountpoint/etc/preinit.d/b8025_fontfix"
+copy "$rootfs/etc/options_menu/themes/scripts/om_chmenu_og" "$rootfs/bin/chmenu"
+copy "$rootfs/etc/options_menu/themes/scripts/om_fontfix_og" "$rootfs/etc/preinit.d/b8025_fontfix"
 rm -fr "$mountpoint/$profilepath/$modname/lastTheme"
 rm -fr "$mountpoint/$profilepath/$modname/prevTheme"
 rm -fr "$mountpoint/$profilepath/$modname/activeTheme"
 rm -fr "$rootfs/usr/share/themes"
 rm -fr "$rootfs/usr/share/music_menu"
 chmod +x "$rootfs/bin/chmenu"
-rm -fr "$mountpoint/etc/preinit.d/b8024_themeselector"
-rm -fr "$mountpoint/etc/preinit.d/p8024_themeselector"
-rm -fr "$mountpoint/etc/options_menu/commands/c0090_ThemeOptions"
-rm -fr "$mountpoint/etc/options_menu/scripts/themeLoader.sh"
-rm -fr "$mountpoint/etc/options_menu/themes"
+rm -fr "$rootfs/etc/preinit.d/b8024_themeselector"
+rm -fr "$rootfs/etc/preinit.d/p8024_themeselector"
+rm -fr "$rootfs/etc/options_menu/commands/c0090_ThemeOptions"
+rm -fr "$rootfs/etc/options_menu/scripts/themeLoader.sh"
+rm -fr "$rootfs/etc/options_menu/themes"
 unset cfg_OM_ThemeSelector_enabled
