@@ -14,17 +14,40 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
-om_themes="$rootfs/etc/options_menu/themes/scripts"
-mkdir -p "$rootfs/usr/share/music_menu"
-if [ -d "$rootfs/usr/share/menu_music" ]; then
-	[ -d "$rootfs/usr/share/menu_music" ] && mv "$rootfs/usr/share/menu_music"/* "$rootfs/usr/share/music_menu"
-fi
+move() {
+	[ -f "$1" ] && mv "$1" "$2"
+}
 
-ls -1 "$mountpoint/var/lib/hakchi/hmod/"* | grep -e "andomiz" -e "advanced_music_hack" | sed -r 's/\/var\/lib\/hakchi\/hmod\/uninstall-//g' | while read -r uninstall; do
-	hakchi pack_uninstall "$uninstall"
-done
+del() {
+	[ -f "$1" ] && rm -rf "$1"
+}
+om_themes="$rootfs/etc/options_menu/themes/scripts"
+usr_share="$rootfs/usr/share"
+pre_initd="$rootfs/etc/preinit.d"
+hmod_dir="$mountpoint/var/lib/hakchi/hmod"
+
+mkdir -p "$usr_share/music_menu"
+move "$usr_share/menu_music"/* "$usr_share/music_menu"
+move "$usr_share/advanced_music_hack/bgm_boot.wav" "$usr_share/themes/bgm_boot.wav"
+del "$pre_initd/bb223_advanced_music_hack"
+del "$pre_initd/pb223_advanced_music_hack"
+[ -d "$usr_share/menu_music" ] && rm -rf "$usr_share/menu_music"
+[ -d "$usr_share/advanced_music_hack" ] && rm -rf "$usr_share/advanced_music_hack"
+del "$pre_initd/p8024_theme_randomizR"
+del "$pre_initd/b8024_theme_randomizR"
+del "$rootfs/chmenu"
+del "$rootfs/fontfix"
+del "$rootfs/chmenu"
+del "$rootfs/chmenu_backup"
+del "$rootfs/b8025_fontfix_backup"
+
+find "$hmod_dir" -type f -name "*andomiz*" -print0 -exec rm -f {} \;
+find "$hmod_dir" -type f -name "*advanced_music_hack" -print0 -exec rm -f {} \;
+# Marks this mod as uninstalled
+unset cfg_theme_randomizR_enabled
+
 transfer_default
-copy "$om_themes/om_fontfix" "$rootfs/etc/preinit.d/b8025_fontfix"
+copy "$om_themes/om_fontfix" "$pre_initd/b8025_fontfix"
 copy "$om_themes/om_chmenu" "$rootfs/bin/chmenu"
 chmod +x "$rootfs/bin/chmenu"
 
