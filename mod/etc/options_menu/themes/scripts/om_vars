@@ -126,6 +126,7 @@ themeLoader() {
 		script_path="$resource_path/scripts"
 		cmd_list="$omModCommands/c0001_$thm"
 		thm_script="$omModScripts/$thm"
+		hadThumb="$theme_path/thumb"
 		thm_title="$(echo "$thm" | sed -e 's/_/ /g' | awk '{for(i=1;i<=NF;i++){ $i=toupper(substr($i,1,1)) substr($i,2) }}1')"
 		size="$(du -sh "$full_path" | cut -f1)"
 
@@ -154,6 +155,22 @@ themeLoader() {
 
 		if [ "$thm" = "$sfregion" ]; then
 			echo "#!/bin/sh
+#
+#  Copyright 2019 DefKorns (https://gitlab.com/DefKorns/om_theme-selector/LICENSE)
+#
+#  This program is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+#
 source $mountpoint/etc/options_menu/themes/scripts/om_vars
 script_init
 remove $b_file
@@ -162,21 +179,38 @@ sleep 1
 hakchi reboot" >"$thm_script.sh"
 		else
 			echo "#!/bin/sh
+#
+#  Copyright 2019 DefKorns (https://gitlab.com/DefKorns/om_theme-selector/LICENSE)
+#
+#  This program is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+#
 source $mountpoint/etc/options_menu/themes/scripts/om_vars
 script_init" >"$thm_script.sh"
 			if [ -f "$xtras/thumb.png" ]; then
 				echo "find \"$gStorage\" -path \"*_small.png*\" | while read -r file; do
-copier \"\$file\" \"\$file\"_backup 
-copier \"$xtras/thumb.png\" \"\$file\"
+copier \"$file\" \"$file\"_backup 
+copier \"$xtras/thumb.png\" \"$file\"
+touch \"$hadThumb\"
 done" >>"$thm_script.sh"
-				# echo "sh $xtras/thumbnail.sh" >>"$thm_script.sh"
 			else
-				echo "sh $omModScripts/om_restorethumb" >>"$thm_script.sh"
+				echo "if [ -f \"$hadThumb\" ]; then
+sh $omModScripts/om_restorethumb
+rm \"$hadThumb\" 
+fi" >>"$thm_script.sh"
 			fi
-
 			echo "sed '1,2d' $thm_script > $b_file
 echo themeSelector > $p_file
-# find $mountpoint/etc/preinit.d/ -type f -name \"*randomizR\" -exec rm -f {} \;
 sleep 1
 hakchi reboot" >>"$thm_script.sh"
 		fi
@@ -246,3 +280,4 @@ fntFix() {
 		copier "$omModScripts/om_fontfix" "$b_fntfix"
 	fi
 }
+

@@ -27,7 +27,8 @@ if [ $has_theme != 0 ]; then
 	done
 fi
 
-if ping -q -c 1 -W 1 google.com >/dev/null; then
+nc -z 8.8.8.8 53  >/dev/null 2>&1
+if [ $? -eq 0 ]; then
 	rename "$disableDownloads" "$enableDownloads"
 else
 	rename "$enableDownloads" "$disableDownloads"

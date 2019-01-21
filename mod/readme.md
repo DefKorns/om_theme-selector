@@ -1,21 +1,12 @@
-# Theme Randomizer
+# Options Menu - Theme Selector
 **This modification is only for use with [CompCom's](https://github.com/CompCom) Options Menu.**
-### Version: v1.0.10
-
-## HMOD NOT COMPATIBLE WITH EXTERNAL UI NOR ADVANCED MUSIC HACK
+## HMOD NOT COMPATIBLE WITH EXTERNAL UI. PREVIOUS VERSIONS OF THEME RANDOMIZER AND ADVANCED MUSIC HACK WILL BE UNINSTALLED.
 
 ### What is it?
-This Hakchi2 module (HMOD) adds the ability to switch themes randomly and OnTheFly, simply by changing folders or the most wonderful thing.... simply by custom folder. Now you can have your specific theme too!
-
-### What do you mean?
-*Here's an example* 
-
-`Click the image below to view it on YouTube.`
-
-[![Theme Randomizer - Demo](https://imghost.io/images/2018/10/09/20181009_002350_0000.png)](https://www.youtube.com/watch?v=W5gK7_0wfi0 "Theme Randomizer - Demo")
+This [Options Menu](https://github.com/CompCom/OptionsMenu/releases/latest) module gives you the possibility to choose your favorite theme to apply it on your NESCE or SNESCE. 
+As it's (Theme RandomizR) it also allows you to the enable the random theme option, and system folders for a better customization of your console. 
 
 ### How do i use it
-*First of all you'll need themes, and they must follow the structure of the default ui, i'll provide 3 themes as example* 
 
 **NAND**
 
@@ -40,6 +31,10 @@ Just give it the same name as your folder (lower snake_case). Eg: game folder: `
 Add a theme as before but name it `default` in order to make it you home menu theme. 
 That simple.
 
+### Requirements
+*  [Hakchi CE v3.5.0 >=](https://github.com/TeamShinkansen/hakchi2/releases/latest)
+*  [Options Menu v.1.3.0](https://github.com/CompCom/OptionsMenu/releases/tag/1.3.0)
+
 ### Notes
 
 **MAX 60 Themes** more will lead to booting issues + **C8**
@@ -48,13 +43,12 @@ Not compatible with custom on theme custom fonts, if you want to use custom font
 Enjoy it as much as i did making it.
 
 
-### Credits and Thanks
-- [DefKorns](https://www.reddit.com/user/defkorns) - Coding
+### Credits
+- [DefKorns](https://www.reddit.com/user/defkorns)
 
-- [CompComDev (aka CompCom)](https://www.reddit.com/u/CompComDev) - Code revisioning/improving
-- [DanTheMan827](https://www.reddit.com/user/DanTheMan827) - Code revisioning/improving
-- [madmonkey](https://github.com/madmonkey1907) - Code revisioning/improving
-- [Swingflip (Wanker)](https://www.reddit.com/u/Swingflip) - Code revisioning and busting my balls
-
-and 
-- [HakchiResources Team](https://hakchiresources.com/) - Great community
+### Thanks
+- [CompCom](https://www.reddit.com/u/CompComDev)
+- [DanTheMan827](https://www.reddit.com/user/DanTheMan827)
+- [ModMyClassic](https://modmyclassic.com/)
+- [PaPer_Dj](https://github.com/PaPer-DJ)
+- [Swingflip](https://www.reddit.com/u/Swingflip)

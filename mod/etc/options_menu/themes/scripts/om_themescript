@@ -105,11 +105,13 @@ themeSelector() {
 			else
 				if [ "$om_themerandomizer" = "1" ]; then
 					theme="$prevTheme"
-					while [ "$theme" == "$prevTheme" ]; do
+					local n="0"
+					while [ "$theme" == "$prevTheme" ] && [ "$n" -lt 3 ]; do
+						n=$(( n + 1 ))
 						theme="$(find "$themePath" -maxdepth 1 -type d | shuf | head -n1 | xargs -n 1 basename)"
 					done
 				else
-					if [ $theme = "CHANGEME" ]; then
+					if [ "$theme" = "CHANGEME" ]; then
 						theme="$(find "$themePath" -maxdepth 1 -type d | shuf | head -n1 | xargs -n 1 basename)"
 					fi
 				fi
