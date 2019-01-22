@@ -117,6 +117,16 @@ noThemesNoClear() {
 	fi
 }
 
+netChecker() {
+	if ! nc -z 8.8.8.8 53 >/dev/null 2>&1; then
+		# nc -z 8.8.8.8 53 >/dev/null 2>&1
+		# if [ $? -eq 0 ]; then
+		$noPkg
+	else
+		$noNet
+	fi
+}
+
 themeLoader() {
 	cd "$theme_path" && find . -mindepth 1 -maxdepth 1 -type d | xargs -n 1 basename | sort -u | while IFS= read -r thm; do
 		full_path="$theme_path/$thm"
@@ -242,18 +252,12 @@ downloader() {
 	echo "Checking available theme list"
 	if [ ! -e "$s_type"-list.tar.gz ]; then
 		clearDownloads
-		wget -q --spider $downloadURL/"$s_type"-list.tar.gz
-		if [ $? -eq 0 ]; then
+		if wget -q --spider $downloadURL/"$s_type"-list.tar.gz >/dev/null 2>&1; then
 			echo ""
 			echo "Downloading Theme list..."
 			wget $downloadURL/"$s_type"-list.tar.gz
 		else
-			nc -z 8.8.8.8 53 >/dev/null 2>&1
-			if [ $? -eq 0 ]; then
-				$noNet
-			else
-				$noPkg
-			fi
+			netChecker
 		fi
 	else
 		echo ""
