@@ -7,6 +7,9 @@ MOD_CATEGORY := User Interface
 LAST_TAG_COMMIT = $(shell git rev-list --tags --max-count=1)
 LAST_TAG = $(shell git describe --tags $(LAST_TAG_COMMIT) )
 TAG_PREFIX = "v"
+CURRENT_BRANCH = $(shell git rev-parse --abbrev-ref HEAD)
+GIT_REMOTES    = $(shell git remote | xargs echo )
+GIT_DIRTY      = $(shell git diff --shortstat 2> /dev/null | tail -n1 )
 GET_VER    = $(shell  git describe --tags $(LAST_TAG_COMMIT) | sed "s/^$(TAG_PREFIX)//")
 #MOD_VER  = $(shell [ -f VERSION ] && head VERSION || echo "0.0.1")
 MOD_VER  = $(shell [ -f VERSION ] && head VERSION || echo $(GET_VER))
@@ -52,7 +55,7 @@ hmod: clean
 	
 	sed 1d mod/readme.md >> temp/readme.md
 
-	cd temp/; tar -czf $(OUT)/$(MOD_FILENAME)-$(MOD_VER).hmod *
+	cd temp/; tar -czf $(OUT)/$(MOD_FILENAME)-$(MOD_VER)-dirty.hmod *
 	rm -r temp/
 	@echo $(NEXT_PATCH_VERSION) > VERSION
 	
@@ -95,5 +98,20 @@ info:
 
 clean:
 	-rm -rf out/ temp/
+
+up:
+	$(if $(GIT_DIRTY), $(error "Unable to pull subtree(s): Dirty Git repository"))
+	@for elem in $(GIT_SUBTREE_REPOS); do \
+		url=`echo $$elem | cut -d '|' -f 1`; \
+		repo=`basename $$url .git`; \
+		path=`echo $$repo | tr '-' '/'`; \
+		br=`echo $$elem | cut -d '|' -f 2`;  \
+		[ "$$br" == "$$url" ] && br='master'; \
+		echo -e "\n===> pulling changes into subtree '$$path' using remote '$$repo/$$br'"; \
+		echo -e "     \__ fetching remote '$$repo'"; \
+		git fetch $$repo; \
+		echo -e "     \__ pulling changes"; \
+		git subtree pull --prefix $$path --squash $${repo} $${br}; \
+	done
 
 .PHONY: clean
