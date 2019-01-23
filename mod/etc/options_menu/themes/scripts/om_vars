@@ -72,6 +72,7 @@ nes)
 	[ "$sfregion" = "jpn" ] && s_type="hvc"
 	;;
 esac
+system="$(echo "$s_type" | awk '{print toupper($0)}')"
 theme_path="$usb_path/$modtitle/$s_type"
 [ ! -d "$theme_path" ] && theme_path="$nand_path/$modtitle/$s_type"
 has_theme="$(ls -1 "$theme_path/$s_type".*.tar.gz 2>/dev/null | wc -l)"
@@ -284,4 +285,30 @@ fntFix() {
 	if [ "$(cksum "$b_fntfix" | awk '{ print $1; }')" != "$(cksum "$omModScripts/om_fontfix" | awk '{ print $1; }')" ]; then
 		copier "$omModScripts/om_fontfix" "$b_fntfix"
 	fi
+}
+
+themeGenerator() {
+echo "Packaging: DefKorns"
+echo "Category: User Interface Mod "
+echo ""
+echo "Checking selected theme files."
+echo ""
+full_title="$(grep -F 'NAME=' "$omModSubCmds/c0010_$theme_name" | sed -e 's/.*=\(.*\)\[.*/\1/')"
+full_path="$theme_path/$theme_name"
+cd "$theme_path" || exit
+
+if wget -q --spider "$themeURL/$system.$theme_name.tar.gz" >/dev/null 2>&1; then
+	echo "Downloading..."
+	wget "$themeURL/$system.$theme_name.tar.gz"
+	echo ""
+	echo "Installing Theme."
+	link "$omModSub/$theme_name.png" "$full_path.png"
+	tar -xzvf "$system.$theme_name.tar.gz" && rm -f ./*.tar.gz
+	echo ""
+	size="$(du -sh "$full_path" | cut -f1)"
+	echo "NAME=$full_title [${size}b]" >"$full_path/info"
+	echo "Installation complete."
+else
+	netChecker
+fi
 }

@@ -27,14 +27,8 @@ RSYNC = $(shell rsync -a mod/etc/options_menu/ temp/ --links --delete)
 MOD_FILENAME   = $(shell basename `pwd`)
 DEV_DIR=~/Documents/gitlab/$(MOD_FILENAME)
 ifneq (,$(wildcard $(DEV_DIR)/.*))
-	# LANGUAGE=$(DEV_DIR)/modules/language_pack/language
-	# LOCALIZATION=$(DEV_DIR)/modules/language_pack/localization
-	# PATCHES=$(DEV_DIR)/modules/patches
 else
 	DEV_DIR=~/Documents/_projects/hmods/$(MOD_FILENAME)
-	# LANGUAGE=$(DEV_DIR)/modules/language_pack/language
-	# LOCALIZATION=$(DEV_DIR)/modules/language_pack/localization
-	# PATCHES=$(DEV_DIR)/modules/patches
 endif
 
 OUT=$(DEV_DIR)/out
@@ -85,29 +79,6 @@ update: fix
 upgrade: update
 	@echo $(NEXT_MAJOR_VERSION) > VERSION
 
-# customlang:
-# 	@if [ ! -d $(OUT)/customlangs ]; then mkdir -p $(OUT)/customlangs temp/; fi
-# 	find $(LANGUAGE)/. -mindepth 1 -maxdepth 1 -type d | xargs -n 1 basename | while IFS= read -r system; do \
-# 	find $(LANGUAGE)/$$system/. -mindepth 1 -maxdepth 1 -type d | xargs -n 1 basename | while IFS= read -r country; do \
-# 	rsync -a $(LANGUAGE)/$$system/$$country/ temp/ --links --delete ; \
-# 	cd temp/; tar -czf $(OUT)/customlangs/$$system-$$country.tar.gz *; \
-# 	cd .. && rm -r temp/ ; \
-# 	done \
-# 	done
-
-# localization:
-# 	find $(LOCALIZATION)/. -mindepth 1 -maxdepth 1 -type d | xargs -n 1 basename | while IFS= read -r console; do \
-# 	cd $(LOCALIZATION)/"$$console" ; \
-# 	tar -czf $(OUT)/"$$console"-localization.tar.gz * ;\
-# 	done
-
-# patches:
-# 	@if [ ! -d $(OUT) ]; then mkdir -p $(OUT); fi
-# 	find $(PATCHES)/. -mindepth 1 -maxdepth 1 -type d | xargs -n 1 basename | while IFS= read -r console; do \
-# 	cd $(PATCHES)/"$$console" ; \
-# 	tar -czf $(OUT)/"$$console"-patches.tar.gz * ;\
-# 	done
-
 upload:
 	rm -f $(OUT)/$(MOD_FILENAME).*
 	rsync -e ssh --progress --exclude 'rsync*' --exclude 'src' -avzzp out/* defkorns@hakchicloud.com:/var/www/html/Hakchi_Themes/options_menu
@@ -121,9 +92,6 @@ info:
 	@echo "next major version: $(NEXT_MAJOR_VERSION)"
 	@echo "next minor version: $(NEXT_MINOR_VERSION)"
 	@echo "next patch version: $(NEXT_PATCH_VERSION)"
-	# @echo "Language: $(LANGUAGE)"
-	# @echo "Localization: $(LOCALIZATION)"
-	# @echo "Patches: $(PATCHES)"
 
 clean:
 	-rm -rf out/ temp/
