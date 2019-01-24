@@ -89,7 +89,7 @@ themeSelector() {
 				theme="$parentName"
 			else
 				if [ "$om_themerandomizer" = "1" ]; then
-					local isInFile="$(cat "$thmOverlay" | grep -c "$theme")"
+				local isInFile="$(cat "$thmOverlay" | grep -c "$theme")"
 					theme="$prevTheme"
 					local n="0"
 					while [ "$theme" == "$prevTheme" ] || [ "$isInFile" -ne 0 ] && [ "$n" -lt 3 ]; do
