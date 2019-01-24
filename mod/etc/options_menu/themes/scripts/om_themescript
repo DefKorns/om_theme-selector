@@ -82,6 +82,31 @@ themeSelector() {
 			local themeMatch="$(find "$themePath" -maxdepth 1 -type d | xargs -n 1 basename | grep -w "$getName")"
 
 			if [ "$folderId" == "000" ] && [ -d "$themePath/default" ]; then
+				theme="default"
+			elif [ -n "$themeMatch" ]; then
+				theme="$getName"
+			elif [ -n "$hasParent" ]; then
+				theme="$parentName"
+			else
+				if [ "$om_themerandomizer" = "1" ]; then
+					local isInFile="$(cat "$thmOverlay" | grep -c "$theme")"
+					theme="$prevTheme"
+					local n="0"
+					while [ "$theme" == "$prevTheme" ] || [ "$isInFile" -ne 0 ] && [ "$n" -lt 3 ]; do
+						n=$((n + 1))
+						theme="$(find "$themePath" -maxdepth 1 -type d | shuf | head -n1 | xargs -n 1 basename)"
+					done
+				else
+					if [ "$theme" = "CHANGEME" ]; then
+						theme="$(find "$themePath" -maxdepth 1 -type d | shuf | head -n1 | xargs -n 1 basename)"
+					fi
+				fi
+			fi
+			fullPath="$themePath/$theme"
+			echo "$theme" >"$last_theme"
+			echo "$fullPath" >"$selected_theme"
+
+			if [ "$folderId" = "000" ]; then
 				if [ "$om_audiorandomizer" = "1" ]; then
 					local silentWav="$rootfs/usr/share/themes/bgm_boot.wav"
 					local musicPath="$mountpoint/media/$modname/music_menu"
@@ -97,30 +122,7 @@ themeSelector() {
 						fi
 					fi
 				fi
-				theme="default"
-			elif [ -n "$themeMatch" ]; then
-				theme="$getName"
-			elif [ -n "$hasParent" ]; then
-				theme="$parentName"
 			else
-				if [ "$om_themerandomizer" = "1" ]; then
-					theme="$prevTheme"
-					local n="0"
-					while [ "$theme" == "$prevTheme" ] && [ "$n" -lt 3 ]; do
-						n=$(( n + 1 ))
-						theme="$(find "$themePath" -maxdepth 1 -type d | shuf | head -n1 | xargs -n 1 basename)"
-					done
-				else
-					if [ "$theme" = "CHANGEME" ]; then
-						theme="$(find "$themePath" -maxdepth 1 -type d | shuf | head -n1 | xargs -n 1 basename)"
-					fi
-				fi
-			fi
-			fullPath="$themePath/$theme"
-			echo "$theme" >"$last_theme"
-			echo "$fullPath" >"$selected_theme"
-
-			if [ "$folderId" != "000" ] || [ "$theme" != "default" ]; then #[ ! -d "$themePath/default" ]; then
 				umount "$cloverAudio/bgm_boot.wav"
 				umount "$cloverAudio/bgm_home.wav"
 			fi
