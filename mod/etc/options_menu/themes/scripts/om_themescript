@@ -120,7 +120,7 @@ themeSelector() {
 			echo "$theme" >"$last_theme"
 			echo "$fullPath" >"$selected_theme"
 
-			if [ "$folderId" != "000" ] || [ ! -d "$themePath/default" ]; then
+			if [ "$folderId" != "000" ] || [ "$theme" != "default" ]; then #[ ! -d "$themePath/default" ]; then
 				umount "$cloverAudio/bgm_boot.wav"
 				umount "$cloverAudio/bgm_home.wav"
 			fi
