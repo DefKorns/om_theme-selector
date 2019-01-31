@@ -1,28 +1,29 @@
 # Options Menu - Theme Selector
 **This modification is only for use with [CompCom's](https://github.com/CompCom) Options Menu.**
-## HMOD NOT COMPATIBLE WITH EXTERNAL UI. PREVIOUS VERSIONS OF THEME RANDOMIZER AND ADVANCED MUSIC HACK WILL BE UNINSTALLED.
+### HMOD NOT COMPATIBLE WITH EXTERNAL UI.<br/>PREVIOUS VERSIONS OF THEME RANDOMIZER AND ADVANCED MUSIC HACK WILL BE UNINSTALLED.
 
 ### What is it?
-This [Options Menu](https://github.com/CompCom/OptionsMenu/releases/latest) module gives you the possibility to choose your favorite theme to apply it on your NESCE or SNESCE. 
-As it's (Theme RandomizR) it also allows you to the enable the random theme option, and system folders for a better customization of your console. 
+This [Options Menu](https://github.com/CompCom/OptionsMenu/releases/latest) module gives you the possibility to choose your favorite theme and apply it on your NESCE or SNESCE.<br/>
+It includes all the features of it's predecessor and much more
 
-### How do i use it
+[![Theme Selector](https://i.imgur.com/MdkuFm9.png)](https://i.imgur.com/OOfe3Aj.png)
+### Features
+*  Graphical interface to allow you to select themes
+*  Download themes directy from the internet (Wi-Fi mod required)
+*  Theme randomizer (Off by default)
+*  Audio randomizer on home folder (Off by default)
+*  Set theme per folder (keeping the same the per sub-folder)
+*  Custom fonts per theme
+*  Select a theme for the entire system
+*  Select a theme just for the home folder
+*  Custom icons for Option Menu
 
-**NAND**
+### Can i use it with NAND
+Well, yes. But this mod was designed for USB-HOST, as the themes may include audio files and they may get over 10mb.
 
-- Add your themes to `/var/lib/hakchi/usr/share/themes/consoletype`.
-- Install Hmod
-
-
-**USB/SD**
-
-- Install Hmod
-- Add your themes folders to `MEDIA:\hakchi\themes\consoletype`.
-
-*consoletype is just `nes`, `snes`  or `shonen`*
-
-### Specific Themes, what is that?
+### Set them per folder, what is that?
 If you are like me and have tons of games organized with tons of system folders... Wouldn't be nice if you could have a theme associated with each system? Now you can, just create your own theme and add it to the HMOD or directly to your USB/SD theme folder.
+On this version all subfolders, will keep the parent theme.
 
 ### Ok and how will the system load the theme?
 Just give it the same name as your folder (lower snake_case). Eg: game folder: `Nintendo - Nintendo Entertainment System` theme folder: `nintendo_-_nintendo_entertainment_system`.
@@ -34,19 +35,28 @@ That simple.
 ### Requirements
 *  [Hakchi CE v3.5.0 >=](https://github.com/TeamShinkansen/hakchi2/releases/latest)
 *  [Options Menu v.1.3.0](https://github.com/CompCom/OptionsMenu/releases/tag/1.3.0)
+*  [Hakchi Wi-Fi mod (WPA Supplicant)](https://hakchi.net/hakchi/hmods/wpa-supplicant.hmod)
+
+### How do i use it
+
+**NAND or USB/SD**
+
+- Install Hmod
+- Download the themes and enjoy
+
+on NAND themes will be on `/var/lib/hakchi/usr/share/themes/consoletype`
+on USB/SD themes will be on `MEDIA:\hakchi\themes\consoletype`
+
+*consoletype is just `nes`, `snes`  or `shonen`*
 
 ### Notes
-
-**MAX 60 Themes** more will lead to booting issues + **C8**
-Not compatible with custom on theme custom fonts, if you want to use custom fonts use DTM hmod. 
-
 Enjoy it as much as i did making it.
 
-
 ### Credits
-- [DefKorns](https://www.reddit.com/user/defkorns)
+- [DefKorns](https://gitlab.com/DefKorns)
 
 ### Thanks
+- [Advokaten](https://gitlab.com/advokaten)
 - [CompCom](https://www.reddit.com/u/CompComDev)
 - [DanTheMan827](https://www.reddit.com/user/DanTheMan827)
 - [ModMyClassic](https://modmyclassic.com/)
