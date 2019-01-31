@@ -1,6 +1,5 @@
 #!/bin/bash
 #
-#
 #  Copyright 2019 DefKorns (https://gitlab.com/DefKorns/om_theme-selector/LICENSE)
 #
 #  This program is free software: you can redistribute it and/or modify
@@ -89,17 +88,19 @@ themeSelector() {
 				theme="$parentName"
 			else
 				if [ "$om_themerandomizer" = "1" ]; then
-				local isInFile="$(cat "$thmOverlay" | grep -c "$theme")"
 					theme="$prevTheme"
 					local n="0"
-					while [ "$theme" == "$prevTheme" ] || [ "$isInFile" -ne 0 ] && [ "$n" -lt 3 ]; do
+					while [ "$theme" == "$prevTheme" ] && [ "$n" -lt 3 ]; do
 						n=$((n + 1))
 						theme="$(find "$themePath" -maxdepth 1 -type d | shuf | head -n1 | xargs -n 1 basename)"
+						while [ "$theme" == "chrono" ]; do
+							theme="$(find "$themePath" -maxdepth 1 -type d | shuf | head -n1 | xargs -n 1 basename)"
+						done
 					done
-				else
-					if [ "$theme" = "CHANGEME" ]; then
-						theme="$(find "$themePath" -maxdepth 1 -type d | shuf | head -n1 | xargs -n 1 basename)"
-					fi
+					# else
+					# 	if [ "$theme" = "CHANGEME" ]; then
+					# 		theme="$(find "$themePath" -maxdepth 1 -type d | shuf | head -n1 | xargs -n 1 basename)"
+					# 	fi
 				fi
 			fi
 			fullPath="$themePath/$theme"
@@ -128,7 +129,7 @@ themeSelector() {
 			fi
 
 			if [ "$prevTheme" != "$sfregion" ]; then
-				cd "$themePath/$prevTheme" && find ./* -type f ! -path "./xtras/*" ! -path "./fonts/*" | cut -c3- | while IFS= read -r uFile; do
+				cd "$themePath/$prevTheme" && find ./* -type f ! -name "*.wav" ! -path "./xtras/*" ! -path "./fonts/*" | cut -c3- | while IFS= read -r uFile; do
 					umount "$cloverTheme/$uFile"
 				done
 
