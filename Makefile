@@ -24,7 +24,7 @@ NEXT_MINOR_VERSION = $(MAJOR).$(shell expr $(MINOR) + 1).0-b$(BUILD)
 NEXT_PATCH_VERSION = $(MAJOR).$(MINOR).$(shell expr $(PATCH) + 1)-b$(BUILD)
 
 MOD_URL=`git config --get remote.origin.url`
-GIT_COMMIT := $(shell echo "`git rev-parse --short HEAD``git diff-index --quiet HEAD -- || echo '-dirty'`")
+GIT_COMMIT := $(shell echo "`git rev-parse --short HEAD``git diff-index --quiet HEAD --`")
 GIT_DIRTY      = $(shell git diff --shortstat 2> /dev/null | tail -n1 )
 RSYNC = $(shell rsync -a mod/etc/options_menu/ temp/ --links --delete)
 MOD_FILENAME   = $(shell basename `pwd`)
@@ -36,7 +36,7 @@ endif
 
 OUT=$(DEV_DIR)/out
 
-all: hmod tar zip customlang localization patches
+all: hmod tar zip
 deploy: customlang localization patches upload
 
 hmod: clean
