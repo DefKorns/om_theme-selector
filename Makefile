@@ -55,7 +55,7 @@ hmod: clean
 	
 	sed 1d mod/readme.md >> temp/readme.md
 
-	cd temp/; tar -czf $(OUT)/$(MOD_FILENAME)-$(MOD_VER)-dirty.hmod *
+	cd temp/; tar -czf $(OUT)/$(MOD_FILENAME)-$(MOD_VER).hmod *
 	rm -r temp/
 	@echo $(NEXT_PATCH_VERSION) > VERSION
 	
@@ -97,7 +97,7 @@ info:
 	@echo "next patch version: $(NEXT_PATCH_VERSION)"
 
 clean:
-	-rm -rf out/ temp/
+	rm -rf out/ temp/
 
 up:
 	$(if $(GIT_DIRTY), $(error "Unable to pull subtree(s): Dirty Git repository"))

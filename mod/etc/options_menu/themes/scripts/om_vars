@@ -267,6 +267,9 @@ downloader() {
 	echo ""
 	echo "Updating theme list."
 	tar -xzf "$s_type"-list.tar.gz && rm -f *.tar.gz
+	remove "$omModSubCmds/c0010_snesce-$sfregion"
+	remove "$omModSubScripts/getSnes$sfregion"
+	remove "$omModSub/$sfregion.png"
 	touch "$subDummy"
 	[ ! -f "$omModSubSpacer" ] && touch "$omModSubSpacer"
 	echo "Update complete."
