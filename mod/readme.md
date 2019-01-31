@@ -21,7 +21,7 @@ It includes all the features of it's predecessor and much more
 ### Can i use it with NAND
 Well, yes. But this mod was designed for USB-HOST, as the themes may include audio files and they may get over 10mb.
 
-### Set them per folder, what is that?
+### Set theme per folder, what is that?
 If you are like me and have tons of games organized with tons of system folders... Wouldn't be nice if you could have a theme associated with each system? Now you can, just create your own theme and add it to the HMOD or directly to your USB/SD theme folder.
 On this version all subfolders, will keep the parent theme.
 
@@ -31,6 +31,9 @@ Just give it the same name as your folder (lower snake_case). Eg: game folder: `
 ### What if i want a specific theme on my main menu?
 Add a theme as before but name it `default` in order to make it you home menu theme. 
 That simple.
+
+### I own a Famicom/Shonen/Super Famicom, can i install this?
+The mod is compatible with all Nintendo Classic consoles including all regions.
 
 ### Requirements
 *  [Hakchi CE v3.5.0 >=](https://github.com/TeamShinkansen/hakchi2/releases/latest)
@@ -45,7 +48,7 @@ That simple.
 - Download the themes and enjoy
 
 on NAND themes will be on `/var/lib/hakchi/usr/share/themes/consoletype`
-on USB/SD themes will be on `MEDIA:\hakchi\themes\consoletype`
+on USB/SD themes will be on `/media/hakchi/themes/consoletype`
 
 *consoletype is just `nes`, `snes`  or `shonen`*
 
