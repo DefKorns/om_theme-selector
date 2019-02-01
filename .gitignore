@@ -494,8 +494,13 @@ ASALocalRun/
 
 # End of https://www.gitignore.io/api/git,osx,linux,windows,visualstudio,visualstudiocode,openframeworks+visualstudio
 out/
-#Makefile
+Makefile
 default-strings.lng
 default/
 temp/
 mod/etc/options_menu/themes/scripts/b8024_themeselector
+modules/*
+p8024_theme_randomizR
+*.psd
+b8024_theme_randomizR
+gameboy_color.png
