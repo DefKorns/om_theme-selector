@@ -1,9 +1,0 @@
-#!/bin/bash
-theme="chrono"
-File="/var/lib/hakchi/rootfs/lulu"
-
-if grep -q -w "$theme" "$File"; then
-  echo "Theme was found"
-else
-echo "nothing to see here"
-fi
