@@ -28,7 +28,7 @@ GIT_COMMIT := $(shell echo "`git rev-parse --short HEAD``git diff-index --quiet 
 GIT_DIRTY      = $(shell git diff --shortstat 2> /dev/null | tail -n1 )
 RSYNC = $(shell rsync -a mod/etc/options_menu/ temp/ --links --delete)
 MOD_FILENAME   = $(shell basename `pwd`)
-DEV_DIR=~/Documents/gitlab/$(MOD_FILENAME)
+DEV_DIR=~/Documents/github/$(MOD_FILENAME)
 ifneq (,$(wildcard $(DEV_DIR)/.*))
 else
 	DEV_DIR=~/Documents/_projects/hmods/$(MOD_FILENAME)
@@ -37,7 +37,7 @@ endif
 OUT=$(DEV_DIR)/out
 
 all: hmod tar zip
-deploy: customlang localization patches upload
+deploy: upload
 
 hmod: clean
 	mkdir -p out/ temp/
@@ -57,21 +57,18 @@ hmod: clean
 
 	cd temp/; tar -czf $(OUT)/$(MOD_FILENAME)-$(MOD_VER).hmod *
 	rm -r temp/
-	@echo $(NEXT_PATCH_VERSION) > VERSION
 	
 tar:
 	mkdir -p out/ temp/
 	$(RSYNC)
 	cd temp/; tar -czf $(OUT)/$(MOD_FILENAME)-$(MOD_VER).tar.gz *
 	rm -r temp/
-	@echo $(NEXT_PATCH_VERSION) > VERSION
 
 zip:
 	mkdir -p out/ temp/
-	#$(RSYNC)
+	$(RSYNC)
 	cd temp/; zip -r $(OUT)/$(MOD_FILENAME)-$(MOD_VER).zip *
 	rm -r temp/
-	@echo $(NEXT_PATCH_VERSION) > VERSION
 
 fix: hmod tar zip
 	@echo $(NEXT_PATCH_VERSION) > VERSION
