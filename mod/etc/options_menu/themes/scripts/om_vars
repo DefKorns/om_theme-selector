@@ -42,6 +42,7 @@ omModSubSpacer="$omModSubCmds/c9998_separator"
 omModSettings="$omMod/settings"
 omModSettingsCmds="$omModSettings/commands"
 omModSettingsScripts="$omModSettings/scripts"
+omModSubImgs="$omModSub/images"
 
 omDummy="$omModCommands/c0000_0000"
 subDummy="$omModSubCmds/c0000_0000"
@@ -54,6 +55,10 @@ disableSettings="$omModCommands/_options"
 enableSettings="$omModCommands/c0000_options"
 audioSetting="$omModSettingsCmds/c0000_audiorandomizer"
 themeSetting="$omModSettingsCmds/c0000_themerandomizer"
+disableAudioSetting="$omModSettingsCmds/_audiorandomizer"
+disableThemeSetting="$omModSettingsCmds/_themerandomizer"
+
+thm_chk="$mountpoint$profilepath/$modname/activeTheme"
 
 # SHARED
 usb_path="$mountpoint/media/$modname"
@@ -76,7 +81,7 @@ esac
 system="$(echo "$s_type" | awk '{print toupper($0)}')"
 theme_path="$usb_path/$modtitle/$s_type"
 [ ! -d "$theme_path" ] && theme_path="$nand_path/$modtitle/$s_type"
-has_theme="$(ls -1 "$theme_path/$s_type".*.tar.gz 2>/dev/null | wc -l)"
+has_theme="$(ls -1 "$theme_path/$system".*.tar.gz 2>/dev/null | wc -l)"
 
 noNet="echo Error while connecting to server, please check your internet connection and try again. "
 noPkg="echo The package you resquested isn't available at the moment, please try again later or contact @DefKorns"
@@ -139,7 +144,7 @@ themeLoader() {
 		cmd_list="$omModCommands/c0001_$thm"
 		thm_script="$omModScripts/$thm"
 		hadThumb="$theme_path/thumb"
-		thm_title="$(echo "$thm" | sed -e 's/_/ /g' | awk '{for(i=1;i<=NF;i++){ $i=toupper(substr($i,1,1)) substr($i,2) }}1')"
+		thm_title="$(echo "$thm" | sed -e 's/_/ /g' | awk '{for(i=1;i<=NF;i++){$i=toupper(substr($i,1,1))substr($i,2)}}1')"
 		size="$(du -sh "$full_path" | cut -f1)"
 
 		if [ ! -f "$full_path/info" ]; then
@@ -147,7 +152,7 @@ themeLoader() {
 		fi
 
 		if [ ! -f "$full_path.png" ]; then
-			link "$omModSub/$thm.png" "$full_path.png"
+			link "$omModSubImgs/$thm.png" "$full_path.png"
 		fi
 
 		[ ! -f "$omModSpacer" ] && touch "$omModSpacer"
@@ -282,11 +287,11 @@ themeGenerator() {
 		wget "$themeURL/$system.$theme_name.tar.gz"
 		echo ""
 		echo "Installing Theme."
-		link "$omModSub/$theme_name.png" "$full_path.png"
+		link "$omModSubImgs/$theme_name.png" "$full_path.png"
 		tar -xzvf "$system.$theme_name.tar.gz" && rm -f ./*.tar.gz
 		echo ""
 		size="$(du -sh "$full_path" | cut -f1)"
-		echo "NAME=$full_title [${size}b]" >"$full_path/info"
+		echo "NAME=$full_title[${size}b]" >"$full_path/info"
 		echo "Installation complete."
 	else
 		netChecker

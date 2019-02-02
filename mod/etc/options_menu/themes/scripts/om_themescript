@@ -93,7 +93,7 @@ themeSelector() {
 					while [ "$theme" == "$prevTheme" ] && [ "$n" -lt 3 ]; do
 						n=$((n + 1))
 						theme="$(find "$themePath" -maxdepth 1 -type d | shuf | head -n1 | xargs -n 1 basename)"
-						while [ "$theme" == "chrono" ]; do
+						while [ "$theme" == "chrono_trigger" ]; do
 							theme="$(find "$themePath" -maxdepth 1 -type d | shuf | head -n1 | xargs -n 1 basename)"
 						done
 					done

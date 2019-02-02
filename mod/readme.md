@@ -63,5 +63,5 @@ Enjoy it as much as i did making it.
 - [CompCom](https://www.reddit.com/u/CompComDev)
 - [DanTheMan827](https://www.reddit.com/user/DanTheMan827)
 - [ModMyClassic](https://modmyclassic.com/)
-- [PaPer_Dj](https://github.com/PaPer-DJ)
+- [PaPer_DJ](https://github.com/PaPer-DJ)
 - [Swingflip](https://www.reddit.com/u/Swingflip)
