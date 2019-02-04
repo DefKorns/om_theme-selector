@@ -66,4 +66,6 @@ Enjoy it as much as i did making it.
 - [ModMyClassic](https://modmyclassic.com/)
 - [PaPer_DJ](https://github.com/PaPer-DJ)
 - [Patton Plays](https://www.youtube.com/channel/UCO91Nlt9y8svZF8VjEKpkmQ)
+- [Scrubmacher](https://www.reddit.com/user/Scrubmacher)
 - [Swingflip](https://github.com/swingflip)
+- [ThanosRD](https://github.com/ThanosRD)
