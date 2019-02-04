@@ -16,7 +16,7 @@
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 om_themerandomizer="0"
-om_audiorandomizer="1"
+om_audiorandomizer="0"
 
 music_hack_bind() {
 	([ -f "$1" ] && [ -f "$2" ] && [ -f "$3/bgm_boot.wav" ] && [ -f "$3/bgm_home.wav" ]) || return 1
@@ -97,10 +97,6 @@ themeSelector() {
 							theme="$(find "$themePath" -maxdepth 1 -type d | shuf | head -n1 | xargs -n 1 basename)"
 						done
 					done
-					# else
-					# 	if [ "$theme" = "CHANGEME" ]; then
-					# 		theme="$(find "$themePath" -maxdepth 1 -type d | shuf | head -n1 | xargs -n 1 basename)"
-					# 	fi
 				fi
 			fi
 			fullPath="$themePath/$theme"
