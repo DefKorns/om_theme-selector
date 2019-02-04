@@ -9,7 +9,7 @@ It includes all the features of it's predecessor and much more
 ![Theme Selector](https://i.imgur.com/OOfe3Aj.png)
 ### Features
 *  Graphical interface to allow you to select themes
-*  Download themes directy from the internet (Wi-Fi mod required)
+*  Download themes directy from the internet (**Wi-Fi mod required**)
 *  Theme randomizer (Off by default)
 *  Audio randomizer on home folder (Off by default)
 *  Set theme per folder (keeping the same the per sub-folder)
