@@ -19,6 +19,7 @@ source /etc/preinit
 script_init
 #
 modtitle="themes"
+omTitle="Theme Selector"
 themeURL="http://hakchicloud.com/Hakchi_Themes/themes"
 downloadURL="http://hakchicloud.com/Hakchi_Themes/scripts"
 b_file="$mountpoint/etc/preinit.d/b8024_themeselector"
@@ -42,7 +43,7 @@ omModSubSpacer="$omModSubCmds/c9998_separator"
 omModSettings="$omMod/settings"
 omModSettingsCmds="$omModSettings/commands"
 omModSettingsScripts="$omModSettings/scripts"
-omModSubImgs="$omModSub/images"
+thmPreview="$omModSub/images"
 
 omDummy="$omModCommands/c0000_0000"
 subDummy="$omModSubCmds/c0000_0000"
@@ -57,7 +58,6 @@ audioSetting="$omModSettingsCmds/c0000_audiorandomizer"
 themeSetting="$omModSettingsCmds/c0000_themerandomizer"
 disableAudioSetting="$omModSettingsCmds/_audiorandomizer"
 disableThemeSetting="$omModSettingsCmds/_themerandomizer"
-
 thm_chk="$mountpoint$profilepath/$modname/activeTheme"
 
 # SHARED
@@ -126,8 +126,6 @@ noThemesNoClear() {
 
 netChecker() {
 	if ! nc -z 8.8.8.8 53 >/dev/null 2>&1; then
-		# nc -z 8.8.8.8 53 >/dev/null 2>&1
-		# if [ $? -eq 0 ]; then
 		$noPkg
 	else
 		$noNet
@@ -152,7 +150,11 @@ themeLoader() {
 		fi
 
 		if [ ! -f "$full_path.png" ]; then
-			link "$omModSubImgs/$thm.png" "$full_path.png"
+			if [ -d "usb_path" ]; then
+				copier "$thmPreview/$thm.png" "$full_path.png"
+			else
+				link "$thmPreview/$thm.png" "$full_path.png"
+			fi
 		fi
 
 		[ ! -f "$omModSpacer" ] && touch "$omModSpacer"
@@ -252,6 +254,7 @@ downloader() {
 	remove "$omModSubCmds/c0010_snesce-$sfregion"
 	remove "$omModSubScripts/getSnes$sfregion"
 	remove "$omModSub/$sfregion.png"
+	remove "$omModSub/snesce-$sfregion.png"
 	touch "$subDummy"
 	[ ! -f "$omModSubSpacer" ] && touch "$omModSubSpacer"
 	echo "Update complete."
@@ -287,7 +290,11 @@ themeGenerator() {
 		wget "$themeURL/$system.$theme_name.tar.gz"
 		echo ""
 		echo "Installing Theme."
-		link "$omModSubImgs/$theme_name.png" "$full_path.png"
+		if [ -d "usb_path" ]; then
+			copier "$thmPreview/$theme_name.png" "$full_path.png"
+		else
+			link "$thmPreview/$theme_name.png" "$full_path.png"
+		fi
 		tar -xzvf "$system.$theme_name.tar.gz" && rm -f ./*.tar.gz
 		echo ""
 		size="$(du -sh "$full_path" | cut -f1)"

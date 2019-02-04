@@ -22,4 +22,4 @@ remove $b_file
 remove $p_file
 hakchi reboot
 
-$optionsMenu/options --commandPath $omModSettingsCmds/ --scriptPath $omModSettingsScripts --title "Theme Selector" &
+$optionsMenu/options --commandPath $omModSettingsCmds/ --scriptPath $omModSettingsScripts --title "$omTitle" &

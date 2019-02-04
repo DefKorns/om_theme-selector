@@ -21,4 +21,4 @@ script_init
 if [ ! -f "$subDummy" ]; then
 downloader
 fi
-$optionsMenu/options --commandPath $omModSubCmds/ --scriptPath $omModSubScripts --title "Theme Selector" &
+$optionsMenu/options --commandPath $omModSubCmds/ --scriptPath $omModSubScripts --title "$omTitle" &

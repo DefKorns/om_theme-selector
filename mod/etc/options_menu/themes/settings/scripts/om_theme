@@ -32,4 +32,4 @@ else
 	sed -r -i 's/ \[X\]//g' $themeSetting
 fi
 
-$optionsMenu/options --commandPath $omModSettingsCmds/ --scriptPath $omModSettingsScripts --title "Theme Selector" &
+$optionsMenu/options --commandPath $omModSettingsCmds/ --scriptPath $omModSettingsScripts --title "$omTitle" &

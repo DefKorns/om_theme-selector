@@ -22,4 +22,4 @@ clearDownloads
 remove "$subDummy"
 remove "$omModSubSpacer"
 
-$optionsMenu/options --commandPath $omModSubCmds/ --scriptPath $omModSubScripts --title "Theme Selector" &
+$optionsMenu/options --commandPath $omModSubCmds/ --scriptPath $omModSubScripts --title "$omTitle" &

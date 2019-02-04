@@ -58,4 +58,4 @@ else
 	rename "$disableThemeSetting" "$themeSetting"
 fi
 
-usleep 50000 && $optionsMenu/options --commandPath $omModCommands/ --scriptPath $omModScripts --title "Theme Selector" &
+usleep 50000 && $optionsMenu/options --commandPath $omModCommands/ --scriptPath $omModScripts --title "$omTitle" &

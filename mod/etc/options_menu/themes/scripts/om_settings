@@ -47,4 +47,4 @@ if [ -f "$b_file" ]; then
 	fi
 fi
 
-$optionsMenu/options --commandPath $omModSettingsCmds/ --scriptPath $omModSettingsScripts --title "Theme Selector" &
+$optionsMenu/options --commandPath $omModSettingsCmds/ --scriptPath $omModSettingsScripts --title "$omTitle" &

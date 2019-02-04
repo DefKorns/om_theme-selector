@@ -25,4 +25,4 @@ else
 	sed -r -i 's/om_audiorandomizer=\"1\"/om_audiorandomizer=\"0\"/g' $b_file
 	sed -r -i 's/ \[X\]//g' $audioSetting
 fi
-$optionsMenu/options --commandPath $omModSettingsCmds/ --scriptPath $omModSettingsScripts --title "Theme Selector" &
+$optionsMenu/options --commandPath $omModSettingsCmds/ --scriptPath $omModSettingsScripts --title "$omTitle" &
