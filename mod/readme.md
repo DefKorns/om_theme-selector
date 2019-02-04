@@ -60,8 +60,10 @@ Enjoy it as much as i did making it.
 
 ### Thanks
 - [Advokaten](https://gitlab.com/advokaten)
-- [CompCom](https://www.reddit.com/u/CompComDev)
-- [DanTheMan827](https://www.reddit.com/user/DanTheMan827)
+- [BsLeNuL](https://github.com/bslenul)
+- [CompCom](https://github.com/CompCom)
+- [DanTheMan827](https://github.com/DanTheMan827)
 - [ModMyClassic](https://modmyclassic.com/)
 - [PaPer_DJ](https://github.com/PaPer-DJ)
-- [Swingflip](https://www.reddit.com/u/Swingflip)
+- [Patton Plays](https://www.youtube.com/channel/UCO91Nlt9y8svZF8VjEKpkmQ)
+- [Swingflip](https://github.com/swingflip)
