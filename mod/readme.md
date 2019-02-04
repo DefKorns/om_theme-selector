@@ -6,7 +6,8 @@
 This [Options Menu](https://github.com/CompCom/OptionsMenu/releases/latest) module gives you the possibility to choose your favorite theme and apply it on your NESCE or SNESCE.<br/>
 It includes all the features of it's predecessor and much more
 
-[![Theme Selector](https://i.imgur.com/MdkuFm9.png)](https://i.imgur.com/OOfe3Aj.png)
+`Click the image below to view it on YouTube.`
+[![Theme Selector - Demo](https://i.imgur.com/MUWqYCV.png)](https://youtu.be/yRUbGssu8ko "Theme Selector - Demo")
 ### Features
 *  Graphical interface to allow you to select themes
 *  Download themes directy from the internet (Wi-Fi mod required)
