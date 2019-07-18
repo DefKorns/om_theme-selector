@@ -117,7 +117,7 @@ clearList() {
 
 clearDownloads() {
 	find "$omModSubCmds" "$omModSubScripts" "$omModSub" -type f \
-		-not -name 'c000[0-9]_*' -not -name 'c999[0-9]_*' \
+		-not -name 'c000[0-8]_*' -not -name 'c999[0-9]_*' \
 		-not -name 'om_*' -not -name '_*' -print0 -exec rm {} \;
 }
 

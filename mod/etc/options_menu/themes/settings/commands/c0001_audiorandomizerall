@@ -1,7 +1,7 @@
-COMMAND_NAME=   Only Audioless Themes [X]
+COMMAND_NAME=   All Folders (Only Audioless Themes)
 COMMAND_TYPE=EXTERNAL
 RESTART_UI=FALSE
 COMMAND_STR=usleep 50000 && sh %script_dir%/om_amh &
-PREVIEW_IMAGE=/etc/options_menu/images/audio.png
+PREVIEW_IMAGE=/etc/options_menu/images/audioall.png
 PREVIEW_IMAGE_X=810
 PREVIEW_IMAGE_Y=262
