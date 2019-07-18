@@ -57,21 +57,18 @@ hmod: clean
 
 	cd temp/; tar -czf $(OUT)/$(MOD_FILENAME)-$(MOD_VER).hmod *
 	rm -r temp/
-	@echo $(NEXT_PATCH_VERSION) > VERSION
 	
 tar:
 	mkdir -p out/ temp/
 	$(RSYNC)
 	cd temp/; tar -czf $(OUT)/$(MOD_FILENAME)-$(MOD_VER).tar.gz *
 	rm -r temp/
-	@echo $(NEXT_PATCH_VERSION) > VERSION
 
 zip:
 	mkdir -p out/ temp/
 	#$(RSYNC)
 	cd temp/; zip -r $(OUT)/$(MOD_FILENAME)-$(MOD_VER).zip *
 	rm -r temp/
-	@echo $(NEXT_PATCH_VERSION) > VERSION
 
 fix: hmod tar zip
 	@echo $(NEXT_PATCH_VERSION) > VERSION

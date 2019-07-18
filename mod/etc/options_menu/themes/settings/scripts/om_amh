@@ -18,12 +18,16 @@
 source $mountpoint/etc/options_menu/themes/scripts/om_vars
 script_init
 
-if grep -q "om_audiorandomizer=\"0\"" "$b_file"; then
+
+if grep -q "om_advmusichack=\"0\"" "$b_file"; then
+	sed -r -i 's/om_advmusichack=\"0\"/om_advmusichack=\"1\"/g' $b_file
 	sed -r -i 's/om_audiorandomizer=\"0\"/om_audiorandomizer=\"1\"/g' $b_file
+	sed -r -i 's/ \[X\]//g' $audioSetting
 	sed -r -i "1 s|$| [X]|" $audioSetting
+	sed -r -i "1 s|$| [X]|" $advancedMusicHack
 else
-	sed -r -i 's/om_audiorandomizer=\"1\"/om_audiorandomizer=\"0\"/g' $b_file
 	sed -r -i 's/om_advmusichack=\"1\"/om_advmusichack=\"0\"/g' $b_file
+	sed -r -i 's/om_audiorandomizer=\"1\"/om_audiorandomizer=\"0\"/g' $b_file
 	sed -r -i 's/ \[X\]//g' $audioSetting
 	sed -r -i 's/ \[X\]//g' $advancedMusicHack
 fi

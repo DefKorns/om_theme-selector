@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#  Copyright 2019 DefKorns (https://gitlab.com/DefKorns/om_theme-selector/LICENSE)
+#  Copyright 2019 DefKorns (https://github.com/DefKorns/om_theme-selector/LICENSE)
 #
 #  This program is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -27,7 +27,7 @@ if [ $has_theme != 0 ]; then
 	done
 fi
 
-nc -z 8.8.8.8 53  >/dev/null 2>&1
+nc -z 8.8.8.8 53 >/dev/null 2>&1
 if [ $? -eq 0 ]; then
 	rename "$disableDownloads" "$enableDownloads"
 else
@@ -51,4 +51,16 @@ else
 	rename "$enableSettings" "$disableSettings"
 fi
 
-usleep 50000 && $optionsMenu/options --commandPath $omModCommands/ --scriptPath $omModScripts --title "Theme Selector" &
+while IFS='' read -r advThm || [ -n "$advThm" ]; do
+    if grep -q "$advThm" "$thm_chk"; then
+	rename "$audioSetting" "$disableAudioSetting"
+	rename "$themeSetting" "$disableThemeSetting"
+	rename "$advancedMusicHack" "$disableAdvancedMusicHack"
+else
+	rename "$disableAudioSetting" "$audioSetting"
+	rename "$disableThemeSetting" "$themeSetting"
+	rename "$disableAdvancedMusicHack" "$advancedMusicHack"
+fi
+done < "$thmOverlay"
+
+usleep 50000 && $optionsMenu/options --commandPath $omModCommands/ --scriptPath $omModScripts --title "$omTitle" &

@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#  Copyright 2019 DefKorns (https://gitlab.com/DefKorns/om_theme-selector/LICENSE)
+#  Copyright 2019 DefKorns (https://github.com/DefKorns/om_theme-selector/LICENSE)
 #
 #  This program is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -19,6 +19,7 @@ source /etc/preinit
 script_init
 #
 modtitle="themes"
+omTitle="Theme Selector"
 themeURL="http://hakchicloud.com/Hakchi_Themes/themes"
 downloadURL="http://hakchicloud.com/Hakchi_Themes/scripts"
 b_file="$mountpoint/etc/preinit.d/b8024_themeselector"
@@ -42,6 +43,7 @@ omModSubSpacer="$omModSubCmds/c9998_separator"
 omModSettings="$omMod/settings"
 omModSettingsCmds="$omModSettings/commands"
 omModSettingsScripts="$omModSettings/scripts"
+thmPreview="$omModSub/images"
 
 omDummy="$omModCommands/c0000_0000"
 subDummy="$omModSubCmds/c0000_0000"
@@ -52,8 +54,16 @@ disableClear="$omModCommands/_remove"
 enableClear="$omModCommands/c0000_remove"
 disableSettings="$omModCommands/_options"
 enableSettings="$omModCommands/c0000_options"
-audioSetting="$omModSettingsCmds/c0000_audiorandomizer"
+audioSetting="$omModSettingsCmds/c0001_audiorandomizer"
 themeSetting="$omModSettingsCmds/c0000_themerandomizer"
+disableAudioSetting="$omModSettingsCmds/_audiorandomizer"
+disableThemeSetting="$omModSettingsCmds/_themerandomizer"
+thm_chk="$mountpoint$profilepath/$modname/activeTheme"
+advancedMusicHack="$omModSettingsCmds/c0001_audiorandomizerall"
+disableAdvancedMusicHack="$omModSettingsCmds/_audiorandomizerall"
+# uninstaller="$omModCommands/c0000_options2"
+# uninstallerOff="$omModCommands/_options2"
+thmOverlay="$omModScripts/om_overlay"
 
 # SHARED
 usb_path="$mountpoint/media/$modname"
@@ -63,6 +73,7 @@ ui_path="$share_path/ui"
 s_type="$sftype"
 root_bin="$rootfs/bin"
 chmenu_dir="$root_bin/chmenu"
+gStorage="$(findGameStorage)"
 
 case "$sftype" in
 hvcj)
@@ -75,7 +86,7 @@ esac
 system="$(echo "$s_type" | awk '{print toupper($0)}')"
 theme_path="$usb_path/$modtitle/$s_type"
 [ ! -d "$theme_path" ] && theme_path="$nand_path/$modtitle/$s_type"
-has_theme="$(ls -1 "$theme_path/$s_type".*.tar.gz 2>/dev/null | wc -l)"
+has_theme="$(ls -1 "$theme_path/$system".*.tar.gz 2>/dev/null | wc -l)"
 
 noNet="echo Error while connecting to server, please check your internet connection and try again. "
 noPkg="echo The package you resquested isn't available at the moment, please try again later or contact @DefKorns"
@@ -120,8 +131,6 @@ noThemesNoClear() {
 
 netChecker() {
 	if ! nc -z 8.8.8.8 53 >/dev/null 2>&1; then
-		# nc -z 8.8.8.8 53 >/dev/null 2>&1
-		# if [ $? -eq 0 ]; then
 		$noPkg
 	else
 		$noNet
@@ -138,7 +147,7 @@ themeLoader() {
 		cmd_list="$omModCommands/c0001_$thm"
 		thm_script="$omModScripts/$thm"
 		hadThumb="$theme_path/thumb"
-		thm_title="$(echo "$thm" | sed -e 's/_/ /g' | awk '{for(i=1;i<=NF;i++){ $i=toupper(substr($i,1,1)) substr($i,2) }}1')"
+		thm_title="$(echo "$thm" | sed -e 's/_/ /g' | awk '{for(i=1;i<=NF;i++){$i=toupper(substr($i,1,1))substr($i,2)}}1')"
 		size="$(du -sh "$full_path" | cut -f1)"
 
 		if [ ! -f "$full_path/info" ]; then
@@ -146,11 +155,20 @@ themeLoader() {
 		fi
 
 		if [ ! -f "$full_path.png" ]; then
-			link "$omModSub/$thm.png" "$full_path.png"
+			if [ -d "usb_path" ]; then
+				copier "$thmPreview/$thm.png" "$full_path.png"
+			else
+				link "$thmPreview/$thm.png" "$full_path.png"
+			fi
 		fi
 
 		[ ! -f "$omModSpacer" ] && touch "$omModSpacer"
+		if grep -q -w "$thm" "$thmOverlay"; then
+		# if [ "$thm" = "chrono_trigger" ]; then
+		sed -r "s/theme=\"CHANGEME\"/theme=\"${thm}\"/g;" "$omModScripts/om_overlaythmcript" >"$thm_script"
+		else
 		sed -r "s/theme=\"CHANGEME\"/theme=\"${thm}\"/g;" "$omModScripts/om_themescript" >"$thm_script"
+		fi
 		remove "$cmd_list"
 		touch "$cmd_list"
 
@@ -164,34 +182,9 @@ themeLoader() {
 			rename "$script_path/colors_nes.lua" "$script_path/colors_hvc.lua"
 		fi
 
-		if [ "$thm" = "$sfregion" ]; then
-			echo "#!/bin/sh
+		echo "#!/bin/sh
 #
-#  Copyright 2019 DefKorns (https://gitlab.com/DefKorns/om_theme-selector/LICENSE)
-#
-#  This program is free software: you can redistribute it and/or modify
-#  it under the terms of the GNU General Public License as published by
-#  the Free Software Foundation, either version 3 of the License, or
-#  (at your option) any later version.
-#
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU General Public License for more details.
-#
-#  You should have received a copy of the GNU General Public License
-#  along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#
-source $mountpoint/etc/options_menu/themes/scripts/om_vars
-script_init
-remove $b_file
-remove $p_file
-sleep 1
-hakchi reboot" >"$thm_script.sh"
-		else
-			echo "#!/bin/sh
-#
-#  Copyright 2019 DefKorns (https://gitlab.com/DefKorns/om_theme-selector/LICENSE)
+#  Copyright 2019 DefKorns (https://github.com/DefKorns/om_theme-selector/LICENSE)
 #
 #  This program is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -208,23 +201,22 @@ hakchi reboot" >"$thm_script.sh"
 #
 source $mountpoint/etc/options_menu/themes/scripts/om_vars
 script_init" >"$thm_script.sh"
-			if [ -f "$xtras/thumb.png" ]; then
-				echo "find \"$gStorage\" -path \"*_small.png*\" | while read -r file; do
-copier \"$file\" \"$file\"_backup 
-copier \"$xtras/thumb.png\" \"$file\"
+		if [ -f "$xtras/thumb.png" ]; then
+			echo "find \"$gStorage\" -path \"*_small.png*\" | while read -r file; do
+copier \"\$file\" \"\$file\"_backup 
+copier \"$xtras/thumb.png\" \"\$file\"
 touch \"$hadThumb\"
 done" >>"$thm_script.sh"
-			else
-				echo "if [ -f \"$hadThumb\" ]; then
+		else
+			echo "if [ -f \"$hadThumb\" ]; then
 sh $omModScripts/om_restorethumb
 rm \"$hadThumb\" 
 fi" >>"$thm_script.sh"
-			fi
-			echo "sed '1,2d' $thm_script > $b_file
+		fi
+		echo "sed '1,2d' $thm_script > $b_file
 echo themeSelector > $p_file
 sleep 1
 hakchi reboot" >>"$thm_script.sh"
-		fi
 
 		cmdName="$(sed -r 's/NAME=//g' <"$full_path/info")"
 		echo "COMMAND_NAME=$cmdName
@@ -270,6 +262,7 @@ downloader() {
 	remove "$omModSubCmds/c0010_snesce-$sfregion"
 	remove "$omModSubScripts/getSnes$sfregion"
 	remove "$omModSub/$sfregion.png"
+	remove "$omModSub/snesce-$sfregion.png"
 	touch "$subDummy"
 	[ ! -f "$omModSubSpacer" ] && touch "$omModSubSpacer"
 	echo "Update complete."
@@ -291,27 +284,31 @@ fntFix() {
 }
 
 themeGenerator() {
-echo "Packaging: DefKorns"
-echo "Category: User Interface Mod "
-echo ""
-echo "Checking selected theme files."
-echo ""
-full_title="$(grep -F 'NAME=' "$omModSubCmds/c0010_$theme_name" | sed -e 's/.*=\(.*\)\[.*/\1/')"
-full_path="$theme_path/$theme_name"
-cd "$theme_path" || exit
+	echo "Packaging: DefKorns"
+	echo "Category: User Interface Mod "
+	echo ""
+	echo "Checking selected theme files."
+	echo ""
+	full_title="$(grep -F 'NAME=' "$omModSubCmds/c0010_$theme_name" | sed -e 's/.*=\(.*\)\[.*/\1/')"
+	full_path="$theme_path/$theme_name"
+	cd "$theme_path" || exit
 
-if wget -q --spider "$themeURL/$system.$theme_name.tar.gz" >/dev/null 2>&1; then
-	echo "Downloading..."
-	wget "$themeURL/$system.$theme_name.tar.gz"
-	echo ""
-	echo "Installing Theme."
-	link "$omModSub/$theme_name.png" "$full_path.png"
-	tar -xzvf "$system.$theme_name.tar.gz" && rm -f ./*.tar.gz
-	echo ""
-	size="$(du -sh "$full_path" | cut -f1)"
-	echo "NAME=$full_title [${size}b]" >"$full_path/info"
-	echo "Installation complete."
-else
-	netChecker
-fi
+	if wget -q --spider "$themeURL/$system.$theme_name.tar.gz" >/dev/null 2>&1; then
+		echo "Downloading..."
+		wget "$themeURL/$system.$theme_name.tar.gz"
+		echo ""
+		echo "Installing Theme."
+		if [ -d "usb_path" ]; then
+			copier "$thmPreview/$theme_name.png" "$full_path.png"
+		else
+			link "$thmPreview/$theme_name.png" "$full_path.png"
+		fi
+		tar -xzvf "$system.$theme_name.tar.gz" && rm -f ./*.tar.gz
+		echo ""
+		size="$(du -sh "$full_path" | cut -f1)"
+		echo "NAME=$full_title[${size}b]" >"$full_path/info"
+		echo "Installation complete."
+	else
+		netChecker
+	fi
 }

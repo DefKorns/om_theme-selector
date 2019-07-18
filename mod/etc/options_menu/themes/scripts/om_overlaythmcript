@@ -1,0 +1,48 @@
+#!/bin/bash
+#
+#  Copyright 2019 DefKorns (https://github.com/DefKorns/om_theme-selector/LICENSE)
+#
+#  This program is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+#
+themeSelector() {
+	local cloverTheme="$mountpoint/usr/share/ui/$sftype-$sfregion"
+	local sysType="$sftype"
+	
+	case "$sftype" in
+	hvcj)
+		cloverTheme="$mountpoint/usr/share/ui/hvc"
+		sysType="shonen"
+		;;
+	nes)
+		cloverTheme="$mountpoint/usr/share/clover-ui"
+		[ "$sfregion" = "jpn" ] && sysType="hvc"
+		;;
+	snes)
+		[ "$sfregion" = "jpn" ] && cloverTheme="$mountpoint/usr/share/ui/shvc"
+		;;
+	esac
+
+	local themePath="$mountpoint/media/$modname/themes/$sysType"
+	[ ! -d "$themePath" ] && themePath="$rootfs/usr/share/themes/$sysType"
+	local statePath="$mountpoint$profilepath/$modname"
+	local last_theme="$statePath/lastTheme"
+	local selected_theme="$statePath/activeTheme"
+	local theme="CHANGEME"
+	local fullPath="$themePath/$theme"
+
+		echo "$theme" >"$last_theme"
+		echo "$fullPath" >"$selected_theme"
+		mountpoint -q "$cloverTheme" && umount "$cloverTheme"
+		[ -d "$fullPath" ] && mount -t overlayfs -o lowerdir="$cloverTheme",upperdir="$fullPath" overlayfs "$cloverTheme"
+}
