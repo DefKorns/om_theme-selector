@@ -52,15 +52,21 @@ else
 fi
 
 while IFS='' read -r advThm || [ -n "$advThm" ]; do
-    if grep -q "$advThm" "$thm_chk"; then
-	rename "$audioSetting" "$disableAudioSetting"
-	rename "$themeSetting" "$disableThemeSetting"
-	rename "$advancedMusicHack" "$disableAdvancedMusicHack"
+	if grep -q "$advThm" "$thm_chk"; then
+		rename "$audioSetting" "$disableAudioSetting"
+		rename "$themeSetting" "$disableThemeSetting"
+		rename "$advancedMusicHack" "$disableAdvancedMusicHack"
+	else
+		rename "$disableAudioSetting" "$audioSetting"
+		rename "$disableThemeSetting" "$themeSetting"
+		rename "$disableAdvancedMusicHack" "$advancedMusicHack"
+	fi
+done <"$thmOverlay"
+
+if [ "$sftype" = "nes" ]; then
+	rename "$themeGenerator" "$disablethemeGenerator"
 else
-	rename "$disableAudioSetting" "$audioSetting"
-	rename "$disableThemeSetting" "$themeSetting"
-	rename "$disableAdvancedMusicHack" "$advancedMusicHack"
+	rename "$disablethemeGenerator" "$themeGenerator"
 fi
-done < "$thmOverlay"
 
 usleep 50000 && $optionsMenu/options --commandPath $omModCommands/ --scriptPath $omModScripts --title "$omTitle" &

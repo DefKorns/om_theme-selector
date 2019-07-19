@@ -1,0 +1,7 @@
+COMMAND_NAME=Secondary Character
+COMMAND_TYPE=EXTERNAL
+RESTART_UI=FALSE
+COMMAND_STR=usleep 50000 && sh %script_dir%/om_luigi &
+PREVIEW_IMAGE=/etc/options_menu/images/luigi.png
+PREVIEW_IMAGE_X=810
+PREVIEW_IMAGE_Y=262
