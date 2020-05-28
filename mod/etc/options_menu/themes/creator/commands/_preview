@@ -1,0 +1,7 @@
+COMMAND_NAME=   Preview custom theme
+COMMAND_TYPE=EXTERNAL
+RESTART_UI=FALSE
+COMMAND_STR=sh %script_dir%/om_preview &
+PREVIEW_IMAGE=/etc/options_menu/images/reboot.png
+PREVIEW_IMAGE_X=810
+PREVIEW_IMAGE_Y=262

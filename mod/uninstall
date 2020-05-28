@@ -1,5 +1,6 @@
+#!/bin/sh
 #
-#  Copyright 2019 DefKorns (https://gitlab.com/DefKorns/om_theme-selector/LICENSE)
+#  Copyright (c) 2020 DefKorns (https://defkorns.github.io/LICENSE)
 #  
 #  This program is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -19,12 +20,15 @@ copy "$rootfs/etc/options_menu/themes/scripts/om_fontfix_og" "$rootfs/etc/preini
 rm -fr "$mountpoint/$profilepath/$modname/lastTheme"
 rm -fr "$mountpoint/$profilepath/$modname/prevTheme"
 rm -fr "$mountpoint/$profilepath/$modname/activeTheme"
+rm -fr "$mountpoint/$profilepath/$modname/om_advmusichack"
+rm -fr "$mountpoint/$profilepath/$modname/om_audiorandomizer"
+rm -fr "$mountpoint/$profilepath/$modname/om_themerandomizer"
 rm -fr "$rootfs/usr/share/themes"
 rm -fr "$rootfs/usr/share/music_menu"
 chmod +x "$rootfs/bin/chmenu"
 rm -fr "$rootfs/etc/preinit.d/b8024_themeselector"
 rm -fr "$rootfs/etc/preinit.d/p8024_themeselector"
 rm -fr "$rootfs/etc/options_menu/commands/c0090_ThemeOptions"
-rm -fr "$rootfs/etc/options_menu/scripts/themeLoader.sh"
+rm -fr "$rootfs/etc/options_menu/scripts/om_themeselector"
 rm -fr "$rootfs/etc/options_menu/themes"
 unset cfg_OM_ThemeSelector_enabled

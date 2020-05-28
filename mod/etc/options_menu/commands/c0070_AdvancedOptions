@@ -1,7 +1,0 @@
-COMMAND_NAME=Advanced Options
-COMMAND_TYPE=EXTERNAL
-RESTART_UI=FALSE
-COMMAND_STR=usleep 50000 && %options_path%/options --commandPath %options_path%/advanced_commands/ --title "Advanced Options" &
-PREVIEW_IMAGE=/etc/options_menu/images/advanced.png
-PREVIEW_IMAGE_X=810
-PREVIEW_IMAGE_Y=262

@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#  Copyright 2019 DefKorns (https://github.com/DefKorns/om_theme-selector/LICENSE)
+#  Copyright (c) 2020 DefKorns (https://defkorns.github.io/LICENSE)
 #
 #  This program is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -18,14 +18,16 @@
 source $mountpoint/etc/options_menu/themes/scripts/om_vars
 script_init
 
-if grep -q "om_audiorandomizer=\"0\"" "$b_file"; then
-	sed -r -i 's/om_audiorandomizer=\"0\"/om_audiorandomizer=\"1\"/g' $b_file
-	sed -r -i "1 s|$| [X]|" $audioSetting
+if [ ! -f "$om_audiorandomizer" ]; then
+  [ "$1" = "-amh" ] && touch "$om_advmusichack"
+  touch "$om_audiorandomizer"
+  [ "$1" = "-amh" ] && switchOff "$enableAudioSetting"
+  switchOn "$enableAudioSetting"
+  [ "$1" = "-amh" ] && switchOn "$enableAdvancedMusicHack"
 else
-	sed -r -i 's/om_audiorandomizer=\"1\"/om_audiorandomizer=\"0\"/g' $b_file
-	sed -r -i 's/om_advmusichack=\"1\"/om_advmusichack=\"0\"/g' $b_file
-	sed -r -i 's/ \[X\]//g' $audioSetting
-	sed -r -i 's/ \[X\]//g' $advancedMusicHack
+  remove "$om_audiorandomizer" "$om_advmusichack"
+  switchOff "$enableAudioSetting"
+  switchOff "$enableAdvancedMusicHack"
 fi
 
 $optionsMenu/options --commandPath $omModSettingsCmds/ --scriptPath $omModSettingsScripts --title "$omTitle" &

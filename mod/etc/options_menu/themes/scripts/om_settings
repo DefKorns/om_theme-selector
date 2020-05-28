@@ -1,50 +1,51 @@
 #!/bin/sh
 #
-#  Copyright 2019 DefKorns (https://github.com/DefKorns/om_theme-selector/LICENSE)
-#  
+#  Copyright (c) 2020 DefKorns (https://defkorns.github.io/LICENSE)
+#
 #  This program is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation, either version 3 of the License, or
 #  (at your option) any later version.
-#  
+#
 #  This program is distributed in the hope that it will be useful,
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU General Public License for more details.
-#  
+#
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 source $mountpoint/etc/options_menu/themes/scripts/om_vars
 script_init
-if [ -f "$b_file" ]; then
-	if grep -q "om_themerandomizer=\"0\"" "$b_file"; then
-		sed -r -i 's/ \[X\]//g' $themeSetting
-	else
-		if grep -q "om_themerandomizer=\"1\"" "$b_file"; then
-			if grep -q "[X]" $themeSetting; then
-				sed -r -i 's/\[X\] //g' $themeSetting
-			else
-				sed -r -i "1 s|$| [X]|" $themeSetting
-			fi
-		else
-			sed -r -i 's/ \[X\]//g' $themeSetting
-		fi
-	fi
 
-	if grep -q "om_audiorandomizer=\"0\"" "$b_file"; then
-		sed -r -i 's/ \[X\]//g' $audioSetting
-	else
-		if grep -q "om_audiorandomizer=\"1\"" "$b_file"; then
-			if grep -q "[X]" $audioSetting; then
-				sed -r -i 's/\[X\] //g' $audioSetting
-			else
-				sed -r -i "1 s|$| [X]|" $audioSetting
-			fi
-		else
-			sed -r -i 's/ \[X\]//g' $audioSetting
-		fi
-	fi
+if [ -f "$b_file" ]; then
+  if [ ! -f "$om_themerandomizer" ]; then
+    switchOff "$enableThemeSetting"
+  else
+    if [ -f "$om_themerandomizer" ]; then
+      if grep -q "[X]" "$enableThemeSetting"; then
+        switchOff "$enableThemeSetting"
+      else
+        switchOn "$enableThemeSetting"
+      fi
+    else
+      switchOff "$enableThemeSetting"
+    fi
+  fi
+
+  if [ ! -f "$om_audiorandomizer" ]; then
+    switchOff "$enableAudioSetting"
+  else
+    if [ -f "$om_audiorandomizer" ]; then
+      if grep -q "[X]" "$enableAudioSetting"; then
+        switchOff "$enableAudioSetting"
+      else
+        switchOn "$enableAudioSetting"
+      fi
+    else
+      switchOff "$enableAudioSetting"
+    fi
+  fi
 fi
 
 $optionsMenu/options --commandPath $omModSettingsCmds/ --scriptPath $omModSettingsScripts --title "$omTitle" &

@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#  Copyright 2019 DefKorns (https://github.com/DefKorns/om_theme-selector/LICENSE)
+#  Copyright (c) 2020 DefKorns (https://defkorns.github.io/LICENSE)
 #
 #  This program is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -18,40 +18,6 @@
 source $mountpoint/etc/options_menu/themes/scripts/om_vars
 script_init
 
-cd "$omModWall/assets" && find . -mindepth 1 -maxdepth 1 -type d | xargs -n 1 basename | sort -u | while IFS= read -r sprite; do
-	full_path="$omModWall/assets/$sprite"
-	cmd_list="$omModWall/commands/c0000_$sprite"
-	sprite_script="$omModWall/scripts/$sprite"
-	thm_title="$(echo "$sprite" | sed -e 's/_/ /g' | awk '{for(i=1;i<=NF;i++){$i=toupper(substr($i,1,1))substr($i,2)}}1')"
-	touch "$cmd_list"
-
-	cmdName="$thm_title"
-	echo "COMMAND_NAME=$cmdName
-COMMAND_TYPE=INTERNAL
-COMMAND_STR=sh $sprite_script.sh
-PREVIEW_IMAGE=$full_path/wall.png
-PREVIEW_IMAGE_X=590
-PREVIEW_IMAGE_Y=248" >"$cmd_list"
-
-done
-cd "$theme_path" && find . -mindepth 1 -maxdepth 1 -type d | xargs -n 1 basename | sort -u | while IFS= read -r tema; do
-	full_path="$theme_path/$tema"
-	cmd_list="$omModWall/commands/c0000_$tema"
-	tema_script="$omModWall/scripts/$tema"
-	resource_path="$full_path/resources"
-	walpaper_path="$resource_path/layout/asset/sprite/wallpaper"
-	thm_title="$(echo "$tema" | sed -e 's/_/ /g' | awk '{for(i=1;i<=NF;i++){$i=toupper(substr($i,1,1))substr($i,2)}}1')"
-
-	touch "$cmd_list"
-
-	cmdName="$(sed -r 's/NAME=//g' <"$full_path/info" | awk '{$NF="";sub(/[ \t]+$/,"")}1')"
-	echo "COMMAND_NAME=$cmdName
-COMMAND_TYPE=INTERNAL
-COMMAND_STR=sh $tema_script.sh
-PREVIEW_IMAGE=$walpaper_path/wall.png
-PREVIEW_IMAGE_X=590
-PREVIEW_IMAGE_Y=248" >"$cmd_list"
-
-done
+find_diy_asset wall
 
 $optionsMenu/options --commandPath $omModWall/commands/ --scriptPath $omModWall/scripts --title "$omTitle" &

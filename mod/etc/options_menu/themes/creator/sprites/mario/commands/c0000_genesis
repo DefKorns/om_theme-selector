@@ -1,0 +1,8 @@
+COMMAND_NAME=Genesis
+COMMAND_TYPE=INTERNAL
+COMMAND_STR=sh /etc/options_menu/themes/creator/sprites/mario/scripts/genesis.sh
+PREVIEW_IMAGE=/media/hakchi/themes/snes/genesis/resources/layout/asset/sprite/mario/mario_run01.png
+PREVIEW_IMAGE_X=920
+PREVIEW_IMAGE_Y=275
+PREVIEW_IMAGE_WIDTH=0
+PREVIEW_IMAGE_HEIGHT=250

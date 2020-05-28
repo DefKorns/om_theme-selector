@@ -1,0 +1,145 @@
+#!/bin/sh
+# shellcheck disable=SC2154,SC1091,SC2034,SC2068
+#  Copyright (c) 2020 DefKorns (https://defkorns.github.io/LICENSE)
+#
+#  This program is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+#
+source /etc/preinit
+script_short_init
+
+# PATHS
+nand_path="$rootfs/usr/share"
+share_path="$mountpoint/usr/share"
+ui_path="$share_path/ui"
+cloverui_path="$share_path/clover-ui/"
+string_path="resources/strings"
+root_bin="$rootfs/bin"
+usb_path="$mountpoint/media/$modname"
+font_dir="$usb_path/fonts"
+state_path="$mountpoint$profilepath/$modname"
+[ ! -d "$font_dir" ] && font_dir="$nand_path/fonts"
+
+
+system="$sftype"
+s_type="$system"
+core="$sftype"
+case "$sftype" in
+hvcj)
+  system="shonen"
+  s_type="$system"
+  system_string="$ui_path/hvc/$string_path"
+  core="nes"
+  ;;
+nes)
+  if [ "$sfregion" = "jpn" ]; then
+    system="hvc"
+    s_type="$system"
+    system_string="$cloverui_path/$string_path"
+  fi
+  ;;
+snes)
+  system_string="$ui_path/$sftype-$sfregion/$string_path"
+  if [ "$sfregion" = "jpn" ]; then
+    system="shvc"
+    system_string="$ui_path/$system/$string_path"
+  fi
+  ;;
+esac
+
+
+# OM PATHS
+optionsMenu="$mountpoint/etc/options_menu"
+omCommands="$optionsMenu/commands"
+omScripts="$optionsMenu/scripts"
+omImages="$optionsMenu/images"
+# MESSAGES
+noNetErr="echo Error while connecting to server, please check your internet connection and try again. "
+noPkgErr="echo The package you resquested isn't available at the moment, please try again later."
+
+# FUNCTIONS
+gStorage="$(findGameStorage)"
+
+rename() {
+  [ -f "$1" ] && mv "$1" "$2"
+}
+
+remove() {
+  for f in $@; do
+    [ -f "$f" ] && rm -rf "$f"
+  done
+}
+
+link() {
+  [ -f "$1" ] && ln -sf "$1" "$2"
+}
+
+copier() {
+  [ -f "$1" ] && cp -r "$1" "$2"
+}
+
+create() {
+  [ ! -f "$1" ] && touch "$1"
+}
+
+enable_cmds() {
+  for arg in $@; do
+    in="disable$arg"
+    out="enable$arg"
+    # shellcheck disable=SC2086
+    eval "rename "\$$in" "\$$out""
+  done
+}
+
+disable_cmds() {
+  for arg in $@; do
+    in="enable$arg"
+    out="disable$arg"
+    # shellcheck disable=SC2086
+    eval "rename "\$$in" "\$$out""
+  done
+}
+
+netChecker() {
+  if ! nc -z 8.8.8.8 53 >/dev/null 2>&1; then
+    $noPkgErr
+  else
+    $noNetErr
+  fi
+}
+
+toggleDownloads() {
+  nc -z 8.8.8.8 53 >/dev/null 2>&1
+  if [ $? -eq 0 ]; then
+    enable_cmds "Downloads"
+  else
+    disable_cmds "Downloads"
+  fi
+}
+
+switchOff() {
+  for item in $@; do
+    [ -f "$item" ] && sed -r -i 's/ \[X\]//g' "$item"
+  done
+
+}
+
+switchOn() {
+  for item in $@; do
+    [ -f "$item" ] && sed -r -i "1 s|$| [X]|" "$item"
+  done
+}
+
+overlayFS() {
+  [ -d "$1" ] && mount -t overlayfs -o lowerdir="$2",upperdir="$1" overlayfs "$2"
+}

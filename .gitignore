@@ -499,3 +499,7 @@ default-strings.lng
 default/
 temp/
 mod/etc/options_menu/themes/scripts/b8024_themeselector
+mod-/
+out--/
+mod/etc/options_menu/themes-old/
+modules/

@@ -1,0 +1,8 @@
+COMMAND_NAME=Frogman
+COMMAND_TYPE=INTERNAL
+COMMAND_STR=sh /etc/options_menu/themes/creator/sprites/mario/scripts/Frogman.sh
+PREVIEW_IMAGE=/etc/options_menu/themes/creator/sprites/mario/assets/Frogman/mario_run01.png
+PREVIEW_IMAGE_X=920
+PREVIEW_IMAGE_Y=275
+PREVIEW_IMAGE_WIDTH=0
+PREVIEW_IMAGE_HEIGHT=250

@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#  Copyright 2019 DefKorns (https://github.com/DefKorns/om_theme-selector/LICENSE)
+#  Copyright (c) 2020 DefKorns (https://defkorns.github.io/LICENSE)
 #
 #  This program is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -18,43 +18,6 @@
 source $mountpoint/etc/options_menu/themes/scripts/om_vars
 script_init
 
-cd "$omModMario/assets" && find . -mindepth 1 -maxdepth 1 -type d | xargs -n 1 basename | sort -u | while IFS= read -r sprite; do
-	full_path="$omModMario/assets/$sprite"
-	cmd_list="$omModMario/commands/c0000_$sprite"
-	sprite_script="$omModMario/scripts/$sprite"
-	thm_title="$(echo "$sprite" | sed -e 's/_/ /g' | awk '{for(i=1;i<=NF;i++){$i=toupper(substr($i,1,1))substr($i,2)}}1')"
-	remove "$cmd_list"
-	touch "$cmd_list"
-
-	cmdName="$thm_title"
-	echo "COMMAND_NAME=$cmdName
-COMMAND_TYPE=INTERNAL
-COMMAND_STR=sh $sprite_script.sh
-PREVIEW_IMAGE=$full_path/mario_run01.png
-PREVIEW_IMAGE_X=590
-PREVIEW_IMAGE_Y=248" >"$cmd_list"
-
-done
-cd "$theme_path" && find . -mindepth 1 -maxdepth 1 -type d | xargs -n 1 basename | sort -u | while IFS= read -r tema; do
-	full_path="$theme_path/$tema"
-	cmd_list="$omModMario/commands/c0000_$tema"
-	tema_script="$omModMario/scripts/$tema"
-	resource_path="$full_path/resources"
-	mario_path="$resource_path/layout/asset/sprite/mario"
-	thm_title="$(echo "$tema" | sed -e 's/_/ /g' | awk '{for(i=1;i<=NF;i++){$i=toupper(substr($i,1,1))substr($i,2)}}1')"
-
-	if [ -d "$mario_path" ]; then
-		remove "$cmd_list"
-		touch "$cmd_list"
-		cmdName="$(sed -r 's/NAME=//g' <"$full_path/info" | awk '{$NF="";sub(/[ \t]+$/,"")}1')"
-		echo "COMMAND_NAME=$cmdName
-COMMAND_TYPE=INTERNAL
-COMMAND_STR=sh $tema_script.sh
-PREVIEW_IMAGE=$mario_path/mario_run01.png
-PREVIEW_IMAGE_X=590
-PREVIEW_IMAGE_Y=248" >"$cmd_list"
-	fi
-
-done
+find_diy_asset mario
 
 $optionsMenu/options --commandPath $omModMario/commands/ --scriptPath $omModMario/scripts --title "$omTitle" &
