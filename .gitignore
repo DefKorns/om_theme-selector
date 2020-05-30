@@ -503,3 +503,10 @@ mod-/
 out--/
 mod/etc/options_menu/themes-old/
 modules/
+mod/etc/options_menu/themes/scripts/scripts/*
+mod/etc/options_menu/themes/scripts/80s_neon*
+mod/etc/options_menu/themes/scripts/ghost*
+
+mod/etc/options_menu/themes/scripts/images/
+mod/etc/options_menu/themes/scripts/commands/c0009_*
+mod/etc/options_menu/themes/scripts/commands/c0010_*

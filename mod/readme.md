@@ -37,7 +37,7 @@ The mod is compatible with all Nintendo Classic consoles including all regions.
 
 ### Requirements
 *  [Hakchi CE v3.5.0 >=](https://github.com/TeamShinkansen/hakchi2/releases/latest)
-*  [Options Menu v.1.3.0](https://github.com/CompCom/OptionsMenu/releases/tag/1.3.0)
+*  [Options Menu v.1.3.4](https://github.com/CompCom/OptionsMenu/releases/latest)
 *  [Hakchi Wi-Fi mod (WPA Supplicant)](https://hakchi.net/hakchi/hmods/wpa-supplicant.hmod)
 
 ### How do i use it
@@ -57,6 +57,7 @@ Enjoy it as much as i did making it.
 
 ### Credits
 - [DefKorns](https://gitlab.com/DefKorns)
+- [DanTheMan827](https://www.reddit.com/user/DanTheMan827) (packed.png extractor)
 
 ### Thanks
 - [Advokaten](https://gitlab.com/advokaten)

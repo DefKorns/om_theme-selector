@@ -16,7 +16,7 @@
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 source /etc/preinit
-script_short_init
+script_init
 
 # PATHS
 nand_path="$rootfs/usr/share"
