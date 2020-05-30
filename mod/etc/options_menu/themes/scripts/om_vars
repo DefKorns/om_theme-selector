@@ -32,7 +32,7 @@ omMod="$optionsMenu/$modtitle"
 omModCommands="$omMod/commands"
 omModScripts="$omMod/scripts"
 omModImgs="$omMod/images" # verify
-omModFnts="$omMod/fonts" # verify
+omModFnts="$omMod/fonts"  # verify
 omModSub="$omMod/downloads"
 omModSubCmds="$omModSub/commands"
 omModSubScripts="$omModSub/scripts"
@@ -58,6 +58,7 @@ omModLicense="$omModScripts/om_license"
 
 thmPreview="$omModSub/images"
 omThemeScript="$omModScripts/om_themescript"
+omOverlayThemeScript="$omModScripts/om_overlaythmcript"
 thmOverlay="$omModScripts/om_overlay"
 
 om_themerandomizer="$state_path/om_themerandomizer"
@@ -78,11 +79,11 @@ disableClear="$omModCommands/_remove"
 enableSettings="$omModCommands/c0000_options"
 disableSettings="$omModCommands/_options"
 enableAudioSetting="$omModSettingsCmds/c0001_audiorandomizer"
-enableThemeSetting="$omModSettingsCmds/c0000_themerandomizer"
 disableAudioSetting="$omModSettingsCmds/_audiorandomizer"
-disableThemeSetting="$omModSettingsCmds/_themerandomizer"
-enableAdvancedMusicHack="$omModSettingsCmds/c000_audiorandomizerall"
+enableAdvancedMusicHack="$omModSettingsCmds/c0001_audiorandomizerall"
 disableAdvancedMusicHack="$omModSettingsCmds/_audiorandomizerall"
+enableThemeSetting="$omModSettingsCmds/c0000_themerandomizer"
+disableThemeSetting="$omModSettingsCmds/_themerandomizer"
 enableThemeGenerator="$omModCommands/c0000_generatetheme"
 disableThemeGenerator="$omModCommands/_generatetheme"
 enableDiY="$omModGenCmds/c0000_apply"
@@ -174,20 +175,16 @@ themeLoader() {
       echo "NAME=$thm_title [${size}b]" >"$full_path/info"
     fi
 
-    # if [ ! -f "$full_path.png" ]; then
-    #   if [ -d "$usb_path" ]; then
-    #     copier "$thmPreview/$thm.png" "$full_path.png"
-    #   else
-    #     link "$thmPreview/$thm.png" "$full_path.png"
-    #   fi
-    # fi
+    if [ ! -f "$full_path.png" ]; then
+      if [ -d "$usb_path" ]; then
+        copier "$thmPreview/$thm.png" "$full_path.png"
+      else
+        link "$thmPreview/$thm.png" "$full_path.png"
+      fi
+    fi
 
     create "$omModSpacer"
-    if grep -q -w "$thm" "$thmOverlay"; then
-      sed -r "s/theme=\"CHANGEME\"/theme=\"${thm}\"/g;" "$omModScripts/om_overlaythmcript" >"$thm_script"
-    else
-      sed -r "s/theme=\"CHANGEME\"/theme=\"${thm}\"/g;" "$omThemeScript" >"$thm_script"
-    fi
+
     remove "$cmd_list"
     touch "$cmd_list"
 
@@ -198,9 +195,12 @@ themeLoader() {
         src="nes"
         dest="hvc"
       fi
-      rename "$sprite_path/$src.png" "$sprite_path/$dest.png"
-      rename "$sprite_path/$src.json" "$sprite_path/$dest.json"
-      rename "$script_path/colors_$src.lua" "$script_path/colors_$dest.lua"
+
+      for ext in "png" "json"; do
+        rename "${sprite_path}/${src}.${ext}" "${sprite_path}/${dest}.${ext}"
+      done
+
+      rename "${script_path}/colors_${src}.lua" "${script_path}/colors_${dest}.lua"
     fi
 
     copy "$omModLicense" "$thm_script.sh"
@@ -212,14 +212,28 @@ touch \"$hadThumb\"
 done" >>"$thm_script.sh"
     else
       echo "if [ -f \"$hadThumb\" ]; then
-sh $omModScripts/om_restorethumb
-rm \"$hadThumb\" 
+  sh $omModScripts/om_restorethumb
+  rm \"$hadThumb\" 
 fi" >>"$thm_script.sh"
     fi
-    echo "sed '1,2d' $thm_script > $b_file
-echo themeSelector > $p_file
-sleep 1
-hakchi reboot" >>"$thm_script.sh"
+
+    if grep -q -w "$thm" "$thmOverlay"; then
+      echo "sed '1,2d' \"$omOverlayThemeScript\" >\"$b_file\"
+  [ ! -f \"$p_file\" ] && echo themeSelector >\"$p_file\"
+sed -i \"s/theme=\\\"CHANGEME\\\"/theme=\\\"${thm}\\\"/g;\" \"$b_file\"
+
+" >>"$thm_script.sh"
+    else
+      echo "sed '1,2d' \"$omThemeScript\" >\"$b_file\"
+  [ ! -f \"$p_file\" ] && echo themeSelector >\"$p_file\"
+sed -i \"s/theme=\\\"CHANGEME\\\"/theme=\\\"${thm}\\\"/g;\" \"$b_file\"
+
+" >>"$thm_script.sh"
+    fi
+
+    echo "sleep 1
+    hakchi reboot" >>"$thm_script.sh"
+
     preview_image="$thmPreview/$thm.png"
 
     [ ! -f "$preview_image" ] && preview_image="$optionsMenu/images/default_preview.png"
@@ -265,24 +279,32 @@ downloader() {
 
 injectFile() {
   for scrpt in $@; do
-    injected_file="${scrpt}_file"
-    if ! grep -q "# themeselector" "$injected_file"; then
-      [ "$scrpt" = "chmenu" ] && sed -i '/^overmount_games.*/i  # themeselector fix \
-themeSelector \
-fontFix' "$injected_file"
+    case "$scrpt" in
+    chmenu)
+      injected_file="$chmenu_file"
+      ;;
+    fontfix)
+      injected_file="$fontfix_file"
+      ;;
+    esac
 
-      [ "$scrpt" = "fontfix" ] && sed -i '/^fontFix_getPath().*/a  # themeselector \
+    if ! grep -q "# themeselector" "$injected_file"; then
+      if [ "$scrpt" = "chmenu" ]; then
+        # shellcheck disable=SC1004
+        sed -i '/^overmount_games.*/a  # themeselector fix \
+themeSelector \
+fontFix' "/var/lib/hakchi/rootfs/bin/chmenu"
+      fi
+
+      if [ "$scrpt" = "fontfix" ]; then
+        # shellcheck disable=SC1004,SC2016
+        sed -i '/^fontFix_getPath().*/a  # themeselector \
   if [ -f "$mountpoint$profilepath/$modname/activeTheme" ]; then \
     active_theme=$(cat "$mountpoint$profilepath/$modname/activeTheme") \
     fontFix_getPath0 "$active_theme/fonts/$1" && return 0 \
-  fi' "$injected_file"
+  fi' "$mountpoint/etc/preinit.d/b8025_fontfix"
+      fi
     fi
-    # local injected_file="${scrpt}_file"
-    # remove "$rootfs/$scrpt"
-    # if [ "$(eval "cksum "\$$injected_file"" | awk '{ print $1; }')" != "$(cksum "$omModScripts/om_$scrpt" | awk '{ print $1; }')" ]; then
-    #   eval "copier "$omModScripts/om_$scrpt" "\$$injected_file""
-    #   [ "$scrpt" = "chmenu" ] && chmod +x "$chmenu_file"
-    # fi
   done
 }
 
@@ -298,44 +320,45 @@ loadThemeList() {
   fi
 }
 # verify themeGenerator function
+
+
 themeGenerator() {
   echo "Packaging: DefKorns"
   echo "Category: User Interface Mod "
   echo ""
   echo "Checking selected theme files."
   echo ""
-  full_title="$(grep -F 'NAME=' "$omModSubCmds/c0010_$theme_name" | sed -e 's/.*=\(.*\)\[.*/\1/')"
-  full_path="$theme_path/$theme_name"
-  cd "$theme_path" || exit
+  theme_name="${1}"
+  full_title="$(grep -F 'NAME=' "${omModSubCmds}/c0010_${theme_name}" | sed -e 's/.*=\(.*\)\[.*/\1/')"
+  full_path="${theme_path}/${theme_name}"
+  cd "${theme_path}" || exit
 
-  if [ "$theme_name" = "all" ]; then
-    theme_pkg="$downloadURL/$sftype-all"
-  else
-    theme_pkg="$themeURL/$system.$theme_name.tar.gz"
-  fi
+  theme_pkg="${themeURL}/${system}.${theme_name}.tar.gz"
+  [ "${theme_name}" = "all" ] && theme_pkg="${downloadURL}/${sftype}-all"
 
-  if wget -q --spider "$theme_pkg" >/dev/null 2>&1; then
+  if wget -q --spider "${theme_pkg}" >/dev/null 2>&1; then
     echo "Downloading..."
-    wget "$theme_pkg"
-    if [ "$theme_name" = "all" ]; then
+    wget "${theme_pkg}"
+    if [ "${theme_name}" = "all" ]; then
       while IFS= read -r t; do
         echo "$t"
         echo ""
-        theme_pkg="$themeURL/$system.$t.tar.gz"
-        wget "$theme_pkg"
-        tar -xzvf "$system.$t.tar.gz" && remove "$system.$t.tar.gz"
-      done <"$sftype-all"
+        theme_pkg="${themeURL}/${system}.${t}.tar.gz"
+        wget "${theme_pkg}"
+        tar -xzvf "${system}.${t}.tar.gz" && remove "${system}.${t}.tar.gz"
+      done <"${sftype}-all"
     fi
-    [ -f "$system.$theme_name.tar.gz" ] && tar -xzvf "$system.$theme_name.tar.gz" && rm -f ./*.tar.gz
-    remove "$sftype-all"
+    [ -f "${system}.${theme_name}.tar.gz" ] && tar -xzvf "${system}.${theme_name}.tar.gz" && rm -f ./*.tar.gz
+    remove "${sftype}-all"
     remove_regional_theme
     echo ""
-    size="$(du -sh "$full_path" | cut -f1)"
-    echo "NAME=${full_title}[${size}b]" >"$full_path/info"
+    size="$(du -sh "${full_path}" | cut -f1)"
+    echo "NAME=${full_title}[${size}b]" >"${full_path}/info"
     echo "Installation complete."
   else
     netChecker
   fi
+
 }
 
 find_diy_asset() {
@@ -382,43 +405,46 @@ find_diy_asset() {
     -not -name 'c0000_*' -not -name '_*' -print0 -exec rm {} \;
 
   for p in $paths_to_search; do
-    cd "$p" && find . -mindepth 1 -maxdepth 1 -type d | xargs -n 1 basename | sort -u | while IFS= read -r asset_name; do
+    if [ "$(ls -A "$p")" ]; then
+      cd "$p" && find . -mindepth 1 -maxdepth 1 -type d | xargs -n 1 basename | sort -u | while IFS= read -r asset_name; do
 
-      has_sprite="0"
-      full_asset_path="$p/$asset_name"
-      json="$omModSprites/$1_$asset_name.json"
-      resource_path="$full_asset_path/resources"
+        has_sprite="0"
+        full_asset_path="$p/$asset_name"
+        json="$omModSprites/$1_$asset_name.json"
+        resource_path="$full_asset_path/resources"
 
-      [ -f "$full_asset_path/$diy_file" ] && has_sprite="1"
-      [ -f "$resource_path/$asset_path/$diy_file" ] && has_sprite="1"
+        [ -f "$full_asset_path/$diy_file" ] && has_sprite="1"
+        [ -f "$resource_path/$asset_path/$diy_file" ] && has_sprite="1"
 
-      if [ $has_sprite = "1" ] && [ "$asset_name" = "${asset_name#diy_theme}" ]; then
-        cmd_file="$diy_sprite/commands/c0000_$asset_name"
-        sprite_script="$diy_sprite/scripts/$asset_name"
-        cmd_name="$(echo "$asset_name" | sed -e 's/_/ /g' | awk '{for(i=1;i<=NF;i++){$i=toupper(substr($i,1,1))substr($i,2)}}1')"
+        if [ $has_sprite = "1" ] && [ "$asset_name" = "${asset_name#diy_theme}" ]; then
+          cmd_file="$diy_sprite/commands/c0000_$asset_name"
+          sprite_script="$diy_sprite/scripts/$asset_name"
+          cmd_name="$(echo "$asset_name" | sed -e 's/_/ /g' | awk '{for(i=1;i<=NF;i++){$i=toupper(substr($i,1,1))substr($i,2)}}1')"
 
-        if [ "$p" = "$theme_path" ]; then
-          cmd_name="$(sed -r 's/NAME=//g' <"$full_asset_path/info" | awk '{$NF="";sub(/[ \t]+$/,"")}1')"
-          full_asset_path="$resource_path/$asset_path"
-        fi
+          if [ "$p" = "$theme_path" ]; then
+            cmd_name="$(sed -r 's/NAME=//g' <"$full_asset_path/info" | awk '{$NF="";sub(/[ \t]+$/,"")}1')"
+            full_asset_path="$resource_path/$asset_path"
+          fi
 
-        preview_image="$full_asset_path/$diy_file"
-        temp_preview="$omModSprites/$1/$1_$asset_name.png"
+          preview_image="$full_asset_path/$diy_file"
+          echo "preview_image: $preview_image"
+          echo "diy_file: $diy_file"
+          temp_preview="$omModSprites/$1/assets/$1_$asset_name.png"
 
-        [ "$chars" = "1" ] && temp_preview="$preview_image"
+          [ "$chars" = "1" ] && temp_preview="$preview_image"
 
-        if [ -n "$json" ] && [ ! -f "$temp_preview" ]; then
-          decodepng "$omModSprites/loading.png" >/dev/fb0
-          sed -r "s/changeme/${1}_${asset_name}/g;" "$om_default_json" >"$json"
-          pngpack-upx u "$json" "$preview_image" "$omModSprites/$1/"
-          preview_image="$temp_preview"
-          remove "$json"
-          usleep 1000
-        fi
+          if [ -n "$json" ] && [ ! -f "$temp_preview" ]; then
+            decodepng "$omModSprites/loading.png" >/dev/fb0
+            sed -r "s/changeme/${1}_${asset_name}/g;" "$om_default_json" >"$json"
+            pngpack-upx u "$json" "$preview_image" "$omModSprites/$1/assets/"
+            preview_image="$temp_preview"
+            remove "$json"
+            usleep 1000
+          fi
 
-        if [ ! -f "$cmd_file" ]; then
-          touch "$cmd_file"
-          echo "COMMAND_NAME=$cmd_name
+          if [ ! -f "$cmd_file" ]; then
+            touch "$cmd_file"
+            echo "COMMAND_NAME=$cmd_name
 COMMAND_TYPE=INTERNAL
 COMMAND_STR=sh $sprite_script.sh
 PREVIEW_IMAGE=$preview_image
@@ -426,11 +452,12 @@ PREVIEW_IMAGE_X=920
 PREVIEW_IMAGE_Y=275
 PREVIEW_IMAGE_WIDTH=$preview_w
 PREVIEW_IMAGE_HEIGHT=$preview_h" >"$cmd_file"
+          fi
+          copy "$omModLicense" "$sprite_script.sh"
+          echo "diySpriteSelector \"$full_asset_path\" \"$asset_path\" \"$asset\"" >>"$sprite_script.sh"
         fi
-        copy "$omModLicense" "$sprite_script.sh"
-        echo "diySpriteSelector \"$full_asset_path\" \"$asset_path\" \"$asset\"" >>"$sprite_script.sh"
-      fi
-    done
+      done
+    fi
   done
 }
 
@@ -498,7 +525,7 @@ diyThemeChecker() {
     if [ "$cmd_counter" -le 2 ]; then
       # rename "$omModGenCmds/${c}_$sprite_group" "$omModGenCmds/_$sprite_group"
       # else
-      rename "$omModGenCmds/_$sprite_group" "$omModGenCmds/${c}_$sprite_group"
+      rename "$omModGenCmds/_${sprite_group}" "$omModGenCmds/${c}_${sprite_group}"
     fi
   done
 
@@ -512,4 +539,24 @@ diyThemeRemover() {
 
   [ -d "$diyThemePath" ] && find "$diyThemePath" -type f -not -name 'assets_here' -print0 -exec rm {} \;
 
+}
+
+audioRandomizerHome() {
+  if [ "$1" = "off" ]; then
+    remove "$om_audiorandomizer"
+    switchOff "$enableAudioSetting"
+  else
+    touch "$om_audiorandomizer"
+    switchOn "$enableAudioSetting"
+  fi
+}
+
+audioRandomizerAll() {
+  if [ "$1" = "off" ]; then
+    remove "$om_advmusichack"
+    switchOff "$enableAdvancedMusicHack"
+  else
+    touch "$om_advmusichack"
+    switchOn "$enableAdvancedMusicHack"
+  fi
 }

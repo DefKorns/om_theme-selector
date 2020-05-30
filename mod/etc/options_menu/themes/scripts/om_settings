@@ -18,34 +18,5 @@
 source $mountpoint/etc/options_menu/themes/scripts/om_vars
 script_init
 
-if [ -f "$b_file" ]; then
-  if [ ! -f "$om_themerandomizer" ]; then
-    switchOff "$enableThemeSetting"
-  else
-    if [ -f "$om_themerandomizer" ]; then
-      if grep -q "[X]" "$enableThemeSetting"; then
-        switchOff "$enableThemeSetting"
-      else
-        switchOn "$enableThemeSetting"
-      fi
-    else
-      switchOff "$enableThemeSetting"
-    fi
-  fi
-
-  if [ ! -f "$om_audiorandomizer" ]; then
-    switchOff "$enableAudioSetting"
-  else
-    if [ -f "$om_audiorandomizer" ]; then
-      if grep -q "[X]" "$enableAudioSetting"; then
-        switchOff "$enableAudioSetting"
-      else
-        switchOn "$enableAudioSetting"
-      fi
-    else
-      switchOff "$enableAudioSetting"
-    fi
-  fi
-fi
 
 $optionsMenu/options --commandPath $omModSettingsCmds/ --scriptPath $omModSettingsScripts --title "$omTitle" &

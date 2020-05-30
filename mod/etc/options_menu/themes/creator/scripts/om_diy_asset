@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 #  Copyright (c) 2020 DefKorns (https://defkorns.github.io/LICENSE)
 #
@@ -15,26 +15,36 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
-# shellcheck disable=SC2154,SC1090,SC2039,SC2086
 source $mountpoint/etc/options_menu/themes/scripts/om_vars
 script_init
 
-if [ "$1" = "-amh" ]; then
-  if [ ! -f "$om_advmusichack" ]; then
-    audioRandomizerAll "on"
-    [ ! -f "$om_audiorandomizer" ] && audioRandomizerHome "on"
-  else
-    audioRandomizerHome "off"
-      remove "$om_advmusichack"
-    switchOff "$enableAdvancedMusicHack"
-  fi
-else
-  if [ ! -f "$om_audiorandomizer" ]; then
-    audioRandomizerHome "on"
-  else
-    audioRandomizerHome "off"
-    audioRandomizerAll "off"
-  fi
-fi
+case "$1" in
+luigi)
+  diy_om_sprite_path="$omModLuigi"
+  ;;
+pole)
+  diy_om_sprite_path="$omModPole"
+  ;;
+wall)
+  diy_om_sprite_path="$omModWall"
+  ;;
+wall_near)
+  diy_om_sprite_path="$omModWallN"
+  ;;
+wall_far)
+  diy_om_sprite_path="$omModWallF"
+  ;;
+packed)
+  diy_om_sprite_path="$omModPacked"
+  ;;
+mario)
+  diy_om_sprite_path="$omModMario"
+  ;;
+colors)
+  diy_om_sprite_path="$omModColors"
+  ;;
+esac
 
-$optionsMenu/options --commandPath $omModSettingsCmds/ --scriptPath $omModSettingsScripts --title "$omTitle" &
+find_diy_asset "$1"
+
+$optionsMenu/options --commandPath $diy_om_sprite_path/commands/ --scriptPath $diy_om_sprite_path/scripts --title "$omTitle" &
