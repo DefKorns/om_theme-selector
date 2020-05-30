@@ -1,9 +1,9 @@
 COMMAND_NAME=Demo: Character #1 - Luigi
 COMMAND_TYPE=EXTERNAL
 RESTART_UI=FALSE
-COMMAND_STR=usleep 50000 && sh %script_dir%/om_luigi &
+COMMAND_STR=usleep 50000 && sh %script_dir%/om_diy_asset luigi &
 PREVIEW_IMAGE=/etc/options_menu/images/luigi.png
-PREVIEW_IMAGE_X=920
+PREVIEW_IMAGE_X=900
 PREVIEW_IMAGE_Y=275
-PREVIEW_IMAGE_WIDTH=250
+PREVIEW_IMAGE_WIDTH=0
 PREVIEW_IMAGE_HEIGHT=250

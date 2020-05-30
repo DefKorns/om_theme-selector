@@ -3,5 +3,5 @@ COMMAND_TYPE=EXTERNAL
 RESTART_UI=FALSE
 COMMAND_STR=sh /etc/options_menu/scripts/om_themeselector reload
 PREVIEW_IMAGE=/etc/options_menu/images/update.png
-PREVIEW_IMAGE_X=810
+PREVIEW_IMAGE_X=920
 PREVIEW_IMAGE_Y=262
