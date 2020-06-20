@@ -1,59 +1,23 @@
-#!/bin/bash
+#!/bin/sh
 #
 #  Copyright (c) 2020 DefKorns (https://defkorns.github.io/LICENSE)
-#
+#  
 #  This program is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation, either version 3 of the License, or
 #  (at your option) any later version.
-#
+#  
 #  This program is distributed in the hope that it will be useful,
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU General Public License for more details.
-#
+#  
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 source $mountpoint/etc/options_menu/themes/scripts/om_vars
 script_init
 
-case "$1" in
-luigi)
-  diy_om_sprite_path="$omModLuigi"
-  ;;
-pole)
-  diy_om_sprite_path="$omModPole"
-  ;;
-wall)
-  diy_om_sprite_path="$omModWall"
-  ;;
-wall_near)
-  diy_om_sprite_path="$omModWallN"
-  ;;
-wall_far)
-  diy_om_sprite_path="$omModWallF"
-  ;;
-packed)
-  diy_om_sprite_path="$omModPacked"
-  ;;
-mario)
-  diy_om_sprite_path="$omModMario"
-  ;;
-colors)
-  diy_om_sprite_path="$omModColors"
-  ;;
-colors_nes)
-  diy_om_sprite_path="$omModColorsNes"
-  ;;
-packed_nes)
-  diy_om_sprite_path="$omModPackedNes"
-  ;;
-sbm)
-  diy_om_sprite_path="$omModSbm"
-  ;;
-esac
+diyThemeChecker
 
-find_diy_asset "$1"
-
-$optionsMenu/options --commandPath $diy_om_sprite_path/commands/ --scriptPath $diy_om_sprite_path/scripts --title "$omTitle" &
+usleep 50000 && $optionsMenu/options --commandPath $omModGenCmds/ --scriptPath $omModGenScripts/ --title "$omTitle" &

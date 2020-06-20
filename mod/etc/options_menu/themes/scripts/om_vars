@@ -47,7 +47,10 @@ omModWallN="$omModSprites/wall_near"
 omModWallF="$omModSprites/wall_far"
 omModPacked="$omModSprites/packed"
 omModColors="$omModSprites/colors"
+omModColorsNes="$omModSprites/colors_nes"
 omModPole="$omModSprites/pole"
+omModPackedNes="$omModSprites/packed_nes"
+omModSbm="$omModSprites/sbm"
 omModSettings="$omMod/settings"
 omModSettingsCmds="$omModSettings/commands"
 omModSettingsScripts="$omModSettings/scripts"
@@ -92,12 +95,36 @@ enableDelDiY="$omModGenCmds/c0000_remove"
 disableDelDiY="$omModGenCmds/_remove"
 enablePreview="$omModGenCmds/c0000_preview"
 disablePreview="$omModGenCmds/_preview"
+enablePole="$omModGenCmds/c0006_pole"
+disablePole="$omModGenCmds/_pole"
+enableColor="$omModGenCmds/c0006_colors"
+disableColor="$omModGenCmds/_colors"
+enableMario="$omModGenCmds/c0002_mario"
+disableMario="$omModGenCmds/_mario"
+enableLuigi="$omModGenCmds/c0003_luigi"
+disableLuigi="$omModGenCmds/_luigi"
+enableSmb="$omModGenCmds/c0002_sbm"
+disableSmb="$omModGenCmds/_sbm"
+enablePackedNes="$omModGenCmds/c0001_packed_nes"
+disablePackedNes="$omModGenCmds/_packed_nes"
+enableColorsNes="$omModGenCmds/c0006_colors_nes"
+disableColorsNes="$omModGenCmds/_colors_nes"
+enablePacked="$omModGenCmds/c0001_packed"
+disablePacked="$omModGenCmds/_packed"
+enableWall="$omModGenCmds/c0001_wall"
+disableWall="$omModGenCmds/_wall"
+enableWallFar="$omModGenCmds/c0005_wall_far"
+disableWallFar="$omModGenCmds/_wall_far"
+enableWallNear="$omModGenCmds/c0004_wall_near"
+disableWallNear="$omModGenCmds/_wall_near"
+
 #### ARRAYS
 diy_asset_array="diy_packed diy_wall diy_wall_far diy_wall_near diy_mario diy_luigi diy_colors diy_pole" # verify
-asset_arr="$omModPole/assets $omModMario/assets $omModLuigi/assets $omModWall/assets $omModWallN/assets $omModWallF/assets $omModPacked/assets $omModColors/assets"
+asset_arr="$omModPole/assets $omModMario/assets $omModLuigi/assets $omModWall/assets $omModWallN/assets $omModWallF/assets $omModPacked/assets $omModColors/assets $omModPackedNes/assets $omModSbm/assets"
 scripts_arr="$omModPole/scripts $omModMario/scripts $omModLuigi/scripts $omModWall/scripts $omModWallN/scripts $omModWallF/scripts $omModPacked/scripts $omModColors/scripts"
-cmds_arr="$omModPole/commands $omModMario/commands $omModLuigi/commands $omModWall/commands $omModWallN/commands $omModWallF/commands $omModPacked/commands $omModColors/commands"
-del_arr="$asset_arr $scripts_arr $cmds_arr"
+nes_cmds_arr="$omModPackedNes/commands $omModColorsNes/commands $omModSbm/commands"
+cmds_arr="$omModPole/commands $omModMario/commands $omModLuigi/commands $omModWall/commands $omModWallN/commands $omModWallF/commands $omModPacked/commands $omModColors/commands $nes_cmds_arr"
+del_arr="$asset_arr $scripts_arr $cmds_arr $nes_cmds_arr"
 
 # SHARED
 thm_chk="$mountpoint$profilepath/$modname/activeTheme"
@@ -151,9 +178,24 @@ enableMenuOptions() {
   done <"$thmOverlay"
 
   if [ "$sftype" = "nes" ]; then
-    disable_cmds "ThemeGenerator"
+    disable_cmds "Pole Mario Luigi Wall WallNear WallFar Color Packed"
+    enable_cmds "ColorsNes PackedNes Smb"
+
+    if [ "$sftype" = "nes" ]; then
+      src="hvc"
+      dest="nes"
+      if [ "$sfregion" = "jpn" ]; then
+        src="nes"
+        dest="hvc"
+      fi
+
+      for subdir in "${omModPackedNes}/assets"/*; do
+        rename "${subdir}/${src}.png" "${subdir}/${dest}.png"
+      done
+    fi
   else
-    enable_cmds "ThemeGenerator"
+    enable_cmds "Pole Mario Luigi Wall WallNear WallFar Color Packed ThemeGenerator"
+    disable_cmds "ColorsNes PackedNes Smb"
   fi
 }
 
@@ -199,7 +241,6 @@ themeLoader() {
       for ext in "png" "json"; do
         rename "${sprite_path}/${src}.${ext}" "${sprite_path}/${dest}.${ext}"
       done
-
       rename "${script_path}/colors_${src}.lua" "${script_path}/colors_${dest}.lua"
     fi
 
@@ -321,7 +362,6 @@ loadThemeList() {
 }
 # verify themeGenerator function
 
-
 themeGenerator() {
   echo "Packaging: DefKorns"
   echo "Category: User Interface Mod "
@@ -367,6 +407,8 @@ find_diy_asset() {
   asset_path="layout/asset/sprite/wallpaper"
   asset="$diy_file"
   chars="0"
+  colors="0"
+  json=""
   preview_w="250"
   preview_h="250"
 
@@ -375,23 +417,41 @@ find_diy_asset() {
     diy_file="${1}_run01.png"
     asset_path="layout/asset/sprite/${1}"
     asset="*.*"
-    json=""
+    chars="1"
+    preview_w="0"
+    ;;
+  sbm)
+    diy_file="characters_sbm.png"
+    asset_path="sprites"
+    asset="*.*"
     chars="1"
     preview_w="0"
     ;;
   packed)
     asset_path="sprites"
     ;;
+  packed_nes)
+    diy_file="${sftype}.png"
+    [ "$sfregion" = "jpn" ] && diy_file="hvc.png"
+    asset_path="sprites"
+    asset="$diy_file"
+    ;;
   colors)
     asset_path="scripts/env"
     diy_file="$1_$sfregion.lua"
     asset="$diy_file"
-    json=""
+    colors="1"
+    ;;
+  colors_nes)
+    asset_path="scripts"
+    diy_file="${1}.lua"
+    [ "$sfregion" = "jpn" ] && diy_file="colors_hvc.lua"
+    asset="$diy_file"
+    colors="1"
     ;;
   pole)
     diy_file="${1}01.png"
     asset="*.*"
-    json=""
     chars="1"
     preview_w="0"
     ;;
@@ -427,18 +487,22 @@ find_diy_asset() {
           fi
 
           preview_image="$full_asset_path/$diy_file"
-          echo "preview_image: $preview_image"
-          echo "diy_file: $diy_file"
-          temp_preview="$omModSprites/$1/assets/$1_$asset_name.png"
+          if [ "$colors" = "1" ]; then
+            preview_image="$full_asset_path/$1_$sfregion"
+          fi
 
+          temp_preview="$omModSprites/$1/assets/$1_$asset_name.png"
           [ "$chars" = "1" ] && temp_preview="$preview_image"
 
           if [ -n "$json" ] && [ ! -f "$temp_preview" ]; then
             decodepng "$omModSprites/loading.png" >/dev/fb0
-            sed -r "s/changeme/${1}_${asset_name}/g;" "$om_default_json" >"$json"
-            pngpack-upx u "$json" "$preview_image" "$omModSprites/$1/assets/"
+            # echo "im in ${1}_${asset_name}"
+            if [ "$colors" = "0" ]; then
+              sed -r "s/changeme/${1}_${asset_name}/g;" "$om_default_json" >"$json"
+              pngpack-upx u "$json" "$preview_image" "$omModSprites/$1/assets/"
+              remove "$json"
+            fi
             preview_image="$temp_preview"
-            remove "$json"
             usleep 1000
           fi
 
@@ -465,6 +529,7 @@ diySpriteSelector() {
   diySelectedAsset="$1"
   diyLayout="$diyResources/$2"
   diyAsset="$diyLayout"
+
   [ ! -d "$diyAsset" ] && mkdir -p "$diyAsset"
   find "$diySelectedAsset" -name "$3" -exec cp {} "$diyLayout" \;
   if [ ! -f "$b_file" ]; then
@@ -497,42 +562,11 @@ diyThemeChecker() {
   else
     disable_cmds "DiY" "DelDiY" "Preview"
   fi
-
-  for cm in $cmds_arr; do
-    cmd_counter=$(ls -1 "$cm" | wc -l)
-    sprite_group="$(basename "$(dirname "$cm")")"
-
-    case "$sprite_group" in
-    pole | colors)
-      c="c0006"
-      ;;
-    mario)
-      c="c0002"
-      ;;
-    luigi)
-      c="c0003"
-      ;;
-    wall_far)
-      c="c0005"
-      ;;
-    wall_near)
-      c="c0004"
-      ;;
-    packed | wall)
-      c="c0001"
-      ;;
-    esac
-    if [ "$cmd_counter" -le 2 ]; then
-      # rename "$omModGenCmds/${c}_$sprite_group" "$omModGenCmds/_$sprite_group"
-      # else
-      rename "$omModGenCmds/_${sprite_group}" "$omModGenCmds/${c}_${sprite_group}"
-    fi
-  done
-
 }
 
 diyThemeRemover() {
   disable_cmds "DiY" "DelDiY" "Preview"
+
   for item in $del_arr; do
     find "$item" -type f -not -name 'c999[0-9]_*' -not -name 'om_*' -maxdepth 1 -print0 -exec rm {} \;
   done

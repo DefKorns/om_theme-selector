@@ -1,7 +1,7 @@
-COMMAND_NAME=Colors
+COMMAND_NAME=Background Color
 COMMAND_TYPE=EXTERNAL
 RESTART_UI=FALSE
-COMMAND_STR=usleep 50000 && sh %script_dir%/om_diy_asset colors &
+COMMAND_STR=usleep 50000 && sh %script_dir%/om_diy_asset colors_nes &
 PREVIEW_IMAGE=/etc/options_menu/images/colors_nes.png
 PREVIEW_IMAGE_X=762
 PREVIEW_IMAGE_Y=276
