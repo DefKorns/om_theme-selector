@@ -22,9 +22,12 @@ move() {
 del() {
 	[ -f "$1" ] && rm -rf "$1"
 }
+# shellcheck disable=SC2154
 om_themes="$rootfs/etc/options_menu/themes/scripts"
-usr_share="$rootfs/usr/share"
+usr="$rootfs/usr"
+usr_share="$usr/share"
 pre_initd="$rootfs/etc/preinit.d"
+# shellcheck disable=SC2154
 hmod_dir="$mountpoint/var/lib/hakchi/hmod"
 
 mkdir -p "$usr_share/music_menu"
@@ -51,6 +54,7 @@ transfer_default
 copy "$om_themes/om_fontfix" "$pre_initd/b8025_fontfix"
 copy "$om_themes/om_chmenu" "$rootfs/bin/chmenu"
 chmod +x "$rootfs/bin/chmenu"
-
+chmod +x "$usr/bin/pngpack-upx"
+# shellcheck disable=SC2034
 cfg_OM_ThemeSelector_enabled='y'
 return 1
