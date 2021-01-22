@@ -1,8 +1,0 @@
-COMMAND_NAME=Ghost House
-COMMAND_TYPE=INTERNAL
-COMMAND_STR=sh /etc/options_menu/themes/creator/sprites/packed/scripts/ghost.sh
-PREVIEW_IMAGE=/etc/options_menu/themes/creator/sprites/packed/packed_ghost.png
-PREVIEW_IMAGE_X=920
-PREVIEW_IMAGE_Y=275
-PREVIEW_IMAGE_WIDTH=250
-PREVIEW_IMAGE_HEIGHT=250

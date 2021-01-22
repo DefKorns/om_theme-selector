@@ -1,8 +1,0 @@
-COMMAND_NAME=80s Neon
-COMMAND_TYPE=INTERNAL
-COMMAND_STR=sh /etc/options_menu/themes/creator/sprites/packed/scripts/80s_neon.sh
-PREVIEW_IMAGE=/etc/options_menu/themes/creator/sprites/packed/packed_80s_neon.png
-PREVIEW_IMAGE_X=920
-PREVIEW_IMAGE_Y=275
-PREVIEW_IMAGE_WIDTH=250
-PREVIEW_IMAGE_HEIGHT=250

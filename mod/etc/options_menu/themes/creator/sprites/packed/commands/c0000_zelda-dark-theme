@@ -1,8 +1,0 @@
-COMMAND_NAME=Zelda Dark Theme
-COMMAND_TYPE=INTERNAL
-COMMAND_STR=sh /etc/options_menu/themes/creator/sprites/packed/scripts/zelda-dark-theme.sh
-PREVIEW_IMAGE=/etc/options_menu/themes/creator/sprites/packed/packed_zelda-dark-theme.png
-PREVIEW_IMAGE_X=920
-PREVIEW_IMAGE_Y=275
-PREVIEW_IMAGE_WIDTH=250
-PREVIEW_IMAGE_HEIGHT=250
