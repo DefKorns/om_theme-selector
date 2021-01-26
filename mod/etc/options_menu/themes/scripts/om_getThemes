@@ -18,7 +18,6 @@
 source $mountpoint/etc/options_menu/themes/scripts/om_vars
 script_init
 
-if [ ! -f "$subDummy" ]; then
-downloader
-fi
+[ ! -f "$subDummy" ] && downloader
+
 $optionsMenu/options --commandPath $omModSubCmds/ --scriptPath $omModSubScripts --title "$omTitle" &

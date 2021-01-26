@@ -18,7 +18,6 @@
 source $mountpoint/etc/options_menu/themes/scripts/om_vars
 script_init
 
-# [ -d "$diyThemePath" ] && find "$diyThemePath" -type f -not -name 'assets_here' -print0 -exec rm {} \;
 diyThemeChecker
 
 $optionsMenu/options --commandPath $omModGenCmds/ --scriptPath $omModGenScripts --title "$omTitle" &
