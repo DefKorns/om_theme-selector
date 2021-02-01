@@ -1,5 +1,5 @@
 #!/bin/bash
-#
+# shellcheck disable=SC2154,SC2038,SC2143
 #  Copyright (c) 2020 DefKorns (https://defkorns.github.io/LICENSE)
 #
 #  This program is free software: you can redistribute it and/or modify
@@ -15,24 +15,20 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
-# shellcheck disable=SC2154
-statePath="$mountpoint$profilepath/$modname"
-om_themerandomizer="$statePath/om_themerandomizer"
-om_audiorandomizer="$statePath/om_audiorandomizer"
-om_advmusichack="$statePath/om_advmusichack"
-# shellcheck disable=SC2154
-silentWav="$rootfs/usr/share/themes/bgm_boot.wav"
-musicPath="$mountpoint/media/$modname/music_menu"
-[ ! -d "$musicPath" ] && musicPath="$rootfs/usr/share/music_menu"
-wavFile="$(find "$musicPath" -maxdepth 1 -type f -name "*.[Ww][Aa][Vv]" -exec basename {} \; | sed "s|^\./||" | shuf | head -n1)"
-bgmHome="$musicPath/$wavFile"
+
+STATE_PATH="$mountpoint$profilepath/$modname"
+SILENT_WAV="$rootfs/usr/share/themes/bgm_boot.wav"
+MUSIC_PATH="$mountpoint/media/$modname/music_menu"
+[ ! -d "$MUSIC_PATH" ] && MUSIC_PATH="$rootfs/usr/share/music_menu"
+WAV_FILE="$(find "$MUSIC_PATH" -maxdepth 1 -type f -name "*.[Ww][Aa][Vv]" -exec basename {} \; | sed "s|^\./||" | shuf | head -n1)"
+BGM_HOME="$MUSIC_PATH/$WAV_FILE"
 
 music_hack_bind() {
   # ([ -f "$1" ] && [ -f "$2" ] && [ -f "$3/bgm_boot.wav" ] && [ -f "$3/bgm_home.wav" ]) || return 1
   { [ -f "$1" ] && [ -f "$2" ] && [ -f "$3/bgm_boot.wav" ] && [ -f "$3/bgm_home.wav" ]; } || return 1
-  # shellcheck disable=SC2154
+
   if [ "$sftype" = "nes" ]; then
-    [ -f "$silentWav" ] && mount_bind "$silentWav" "$3/bgm_boot.wav" || return 1
+    [ -f "$SILENT_WAV" ] && mount_bind "$SILENT_WAV" "$3/bgm_boot.wav" || return 1
   else
     [ -f "$1" ] && mount_bind "$1" "$3/bgm_boot.wav" || return 1
   fi
@@ -42,99 +38,148 @@ music_hack_bind() {
 }
 
 themeSelector() {
-  local cloverTheme="$mountpoint/usr/share/ui/$sftype-$sfregion"
-  local sysType="$sftype"
+  local FOLDER_ID
+  local GAME_STORAGE
+  local GET_THEME_NAME
+  local IS_CHILD
+  local PARENT_ID
+  local PARENT_THEME_TITLE
+  local PREVIOUS_THEME
+  local THEME_MATCH
+  local UI0="ui/$sftype-$sfregion"
+  local UI1=""
+  local SYSTEM_TYPE="$sftype"
 
   case "$sftype" in
   hvcj)
-    cloverTheme="$mountpoint/usr/share/ui/hvc"
-    sysType="shonen"
+    UI0="ui/hvc"
+    SYSTEM_TYPE="shonen"
     ;;
   nes)
-    cloverTheme="$mountpoint/usr/share/clover-ui"
-    [ "$sfregion" = "jpn" ] && sysType="hvc"
+    UI0="clover-ui"
+    UI1="nes/"
+    if [ "$sfregion" = "jpn" ]; then
+      UI0="clover-ui"
+      UI1="hvc"
+      SYSTEM_TYPE="$UI1"
+    fi
     ;;
   snes)
-    [ "$sfregion" = "jpn" ] && cloverTheme="$mountpoint/usr/share/ui/shvc"
+    [ "$sfregion" = "jpn" ] && UI0="ui/shvc"
     ;;
   esac
 
-  local cloverAudio="$cloverTheme/resources/sounds/hvc"
-  local themePath="$mountpoint/media/$modname/themes/$sysType"
-  [ ! -d "$themePath" ] && themePath="$rootfs/usr/share/themes/$sysType"
- 	local folderId="$(cat "$statePath/menu")"
-	local activeFolder="CLV-S-00$folderId"
-  local last_theme="$statePath/lastTheme"
-  local selected_theme="$statePath/activeTheme"
-  [ -f "$last_theme" ] && local prevTheme=$(cat "$last_theme")
-  local gStorage="$(findGameStorage)"
-	local theme="CHANGEME"
-  local diyTheme="$mountpoint/tmp/diy_theme"
-  local fullPath="$themePath/$theme"
+  local ORIGINAL_THEME="$mountpoint/usr/share/$UI0"
+  local ORIGINAL_THEME_AUDIO="$ORIGINAL_THEME/resources/sounds/hvc"
+  local THEMES_PATH="$mountpoint/media/$modname/themes/$SYSTEM_TYPE"
+  [ ! -d "$THEMES_PATH" ] && THEMES_PATH="$rootfs/usr/share/themes/$SYSTEM_TYPE"
+  FOLDER_ID="$(cat "$STATE_PATH/menu")"
+  local ACTIVE_FOLDER="CLV-S-00${FOLDER_ID}"
+  local LAST_THEME="$STATE_PATH/lastTheme"
+  local ACTIVE_THEME="$STATE_PATH/activeTheme"
+  [ -f "$LAST_THEME" ] && PREVIOUS_THEME=$(cat "$LAST_THEME")
 
-  find "$gStorage" -maxdepth 3 -type f -name "$activeFolder.desktop" | sort -u | while IFS= read -r desktopFile; do
-    cd "$gStorage" || exit
-    for i in $(find . -type d -name "$activeFolder" | sed "s|^\./||"); do
+  local SELECTED_THEME="CHANGEME"
+  local DIY_THEME="$mountpoint/tmp/diy_theme"
+  local FULL_THEME_PATH="$THEMES_PATH/$SELECTED_THEME"
+  local FONT_PATH="$mountpoint/media/$modname/fonts"
+  [ ! -d "$FONT_PATH" ] && FONT_PATH="$rootfs/usr/share/fonts"
+  local TITLE_FONT="$FONT_PATH/title.fnt"
+  local TITLE_FONT_BACKUP="${TITLE_FONT}.backup"
+
+  GAME_STORAGE="$(findGameStorage)"
+
+  find "$GAME_STORAGE" -maxdepth 3 -type f -name "$ACTIVE_FOLDER.desktop" | sort -u | while IFS= read -r CONFIG_FILE; do
+    cd "$GAME_STORAGE" || exit
+    for i in $(find . -type d -name "$ACTIVE_FOLDER" | sed "s|^\./||"); do
+
       if [ "$(grep -L -e "Name=Back" -e "Name=Home" "$i/$(basename "$i").desktop")" ]; then
-        local pID="$(dirname "$i")"
-        local parentID="CLV-S-00$pID"
+        PARENT_ID="$(dirname "$i")"
+        local FULL_PARENT_ID="CLV-S-00${PARENT_ID}"
         break
       fi
     done
-    find "." -maxdepth 3 -type f -name "$parentID.desktop" -exec grep -L -e "Name=Back" -e "Name=Home" {} \; >tmp
+    find "." -maxdepth 3 -type f -name "$FULL_PARENT_ID.desktop" -exec grep -L -e "Name=Back" -e "Name=Home" {} \; >tmp
     while IFS= read -r w; do
-      local parentName="$(grep -F 'Name=' "$w" | sed -r 's/Name=//g;s/ /_/g' | awk '{print tolower($0)}')"
+      PARENT_THEME_TITLE="$(grep -F 'Name=' "$w" | sed -r 's/Name=//g;s/ /_/g' | awk '{print tolower($0)}')"
     done <tmp
     [ -f tmp ] && rm tmp
+    # shellcheck disable=SC2038
+    IS_CHILD="$(find "$THEMES_PATH" -maxdepth 1 -type d | xargs -n 1 basename | grep -w "$PARENT_THEME_TITLE")"
+    GET_THEME_NAME="$(grep -F 'Name=' "$CONFIG_FILE" | sed -r '/[Bb]ack/d;s/Name=//g;s/ /_/g' | awk '{print tolower($0)}')"
 
-    local hasParent="$(find "$themePath" -maxdepth 1 -type d | xargs -n 1 basename | grep -w "$parentName")"
-    local getName="$(grep -F 'Name=' "$desktopFile" | sed -r '/[Bb]ack/d;s/Name=//g;s/ /_/g' | awk '{print tolower($0)}')"
-    local themeMatch="$(find "$themePath" -maxdepth 1 -type d | xargs -n 1 basename | grep -w "$getName")"
+    THEME_MATCH="$(find "$THEMES_PATH" -maxdepth 1 -type d | xargs -n 1 basename | grep -w "$GET_THEME_NAME")"
 
-    [ "$folderId" == "000" ] && [ -d "$themePath/default" ] && theme="default"
-    [ -n "$themeMatch" ] && theme="$getName"
-    [ -n "$hasParent" ] && theme="$parentName"
+    [ "$FOLDER_ID" == "000" ] && [ -d "$THEMES_PATH/default" ] && SELECTED_THEME="default"
+    if [ -f "$STATE_PATH/om_themeperfolder" ]; then
+      [ -n "$THEME_MATCH" ] && SELECTED_THEME="$GET_THEME_NAME"
+      [ -n "$IS_CHILD" ] && SELECTED_THEME="$PARENT_THEME_TITLE"
+    fi
 
-    if [ -f "$om_themerandomizer" ]; then
-      theme="$prevTheme"
+    if [ -f "$STATE_PATH/om_themerandomizer" ]; then
+      SELECTED_THEME="$PREVIOUS_THEME"
       local n="0"
-      while [ "$theme" == "$prevTheme" ] && [ "$n" -lt 3 ]; do
+      while [ "$SELECTED_THEME" == "$PREVIOUS_THEME" ] && [ "$n" -lt 3 ]; do
         n=$((n + 1))
-        theme="$(find "$themePath" -maxdepth 1 -type d | shuf | head -n1 | xargs -n 1 basename)"
+        SELECTED_THEME="$(find "$THEMES_PATH" -maxdepth 1 -type d | shuf | head -n1 | xargs -n 1 basename)"
       done
+      [ -f "$FONT_PATH/copyright.fnt" ] && rm "$FONT_PATH/copyright.fnt"
+      [ -f "$FONT_PATH/s.fnt" ] && rm "$FONT_PATH/s.fnt"
+      [ -f "$FONT_PATH/m.fnt" ] && rm "$FONT_PATH/m.fnt"
+      [ -f "$FONT_PATH/l.fnt" ] && rm "$FONT_PATH/l.fnt"
+
     fi
 
-    fullPath="$themePath/$theme"
+    FULL_THEME_PATH="$THEMES_PATH/$SELECTED_THEME"
 
-    if find "$diyTheme" -type f | read -r; then
-      fullPath="$diyTheme"
+    if find "$DIY_THEME" -type f | read -r; then
+      FULL_THEME_PATH="$DIY_THEME"
     fi
 
-    echo "$theme" >"$last_theme"
-    echo "$fullPath" >"$selected_theme"
-    if [ -f "$om_audiorandomizer" ] && [ -n "$(ls -A "$musicPath")" ]; then
-      if [ "$folderId" = "000" ]; then
-        music_hack_bind "$bgmHome" "$bgmHome" "$cloverAudio"
+    if [ "$SELECTED_THEME" != "$PREVIOUS_THEME" ] || [ ! -f "$LAST_THEME" ] || [ ! -f "$ACTIVE_THEME" ]; then
+      echo "$SELECTED_THEME" >"$LAST_THEME"
+      echo "$FULL_THEME_PATH" >"$ACTIVE_THEME"
+    fi
+
+    if [ -f "$STATE_PATH/om_audiorandomizer" ] && [ -n "$(ls -A "$MUSIC_PATH")" ]; then
+      if [ "$FOLDER_ID" = "000" ]; then
+        music_hack_bind "$BGM_HOME" "$BGM_HOME" "$ORIGINAL_THEME_AUDIO"
       else
-        if [ -f "$om_advmusichack" ]; then
-          if [ -z "$(find "$fullPath" -type f -name "*.wav")" ]; then
-            music_hack_bind "$bgmHome" "$bgmHome" "$cloverAudio"
-          fi
+        if [ -f "$STATE_PATH/om_advmusichack" ]; then
+          [ -z "$(find "$FULL_THEME_PATH" -type f -name "*.wav")" ] && music_hack_bind "$BGM_HOME" "$BGM_HOME" "$ORIGINAL_THEME_AUDIO"
         else
-          umount "$cloverAudio/bgm_boot.wav" "$cloverAudio/bgm_home.wav"
-          cd "$themePath/$prevTheme" && find ./* -type f -name "*.wav" | cut -c3- | while IFS= read -r audio; do
-            umount "$cloverTheme/$audio"
+          umount "$ORIGINAL_THEME_AUDIO/bgm_boot.wav" "$ORIGINAL_THEME_AUDIO/bgm_home.wav"
+          cd "$THEMES_PATH/$PREVIOUS_THEME" && find ./* -type f -name "*.wav" | cut -c3- | while IFS= read -r AUDIO_FILE; do
+            umount "$ORIGINAL_THEME/$AUDIO_FILE"
           done
         fi
       fi
     fi
 
-    cd "$themePath/$prevTheme" && find ./* -type f ! -name "*.wav" ! -path "./xtras/*" ! -path "./fonts/*" | cut -c3- | while IFS= read -r uFile; do
-      umount "$cloverTheme/$uFile"
+    local TITLE_THEME_FONT="$FULL_THEME_PATH/fonts/title.fnt"
+
+    if [ -d "$FULL_THEME_PATH/fonts" ]; then
+      if [ "$(cksum "$TITLE_FONT" | awk '{ print $1; }')" != "$(cksum "$TITLE_THEME_FONT" | awk '{ print $1; }')" ]; then
+        for FONT in title copyright s m l; do
+          [ ! -f "$TITLE_FONT_BACKUP" ] && mv "${FONT_PATH}/${FONT}.fnt" "${FONT_PATH}/${FONT}.fnt.backup"
+          cp "$FULL_THEME_PATH/fonts/${FONT}.fnt" "${FONT_PATH}/${FONT}.fnt"
+        done
+      fi
+    else
+      [ -f "$TITLE_FONT_BACKUP" ] && mv "$TITLE_FONT_BACKUP" "$TITLE_FONT"
+      for FONT in s m l small medium large; do
+        umount "${ORIGINAL_THEME}/resources/fonts/${UI1}/${FONT}.fnt"
+        rm "${FONT_PATH}/${FONT}.fnt"
+      done
+    fi
+
+    # may have issue here, due to audio files not being unmounted
+    cd "$THEMES_PATH/$PREVIOUS_THEME" && find ./* -type f ! -name "*.wav" ! -path "./xtras/*" ! -path "./fonts/*" | cut -c3- | while IFS= read -r UMOUNT_FILE; do
+      umount "$ORIGINAL_THEME/$UMOUNT_FILE"
     done
 
-    cd "$fullPath" && find . -type f ! -path "./xtras/*" ! -path "./fonts/*" | while IFS= read -r tfile; do
-      mount_bind "$fullPath/$tfile" "$cloverTheme/$tfile"
+    cd "$FULL_THEME_PATH" && find . -type f ! -path "./xtras/*" ! -path "./fonts/*" | while IFS= read -r THEME_FILE; do
+      mount_bind "$FULL_THEME_PATH/$THEME_FILE" "$ORIGINAL_THEME/$THEME_FILE"
     done
 
     cd - >/dev/ || exit
