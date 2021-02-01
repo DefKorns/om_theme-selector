@@ -18,7 +18,7 @@
 source $mountpoint/etc/options_menu/themes/scripts/om_vars
 script_init
 
-decodepng "$omImages/themepreview.png" >/dev/fb0
+decodepng "$omLoaders/themepreview.png" >/dev/fb0
 if [ ! -f "$b_file" ]; then
 	sed '1,2d' $omThemeScript >"$b_file"
 	echo "themeSelector" >"$p_file"

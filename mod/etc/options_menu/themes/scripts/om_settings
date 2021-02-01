@@ -18,5 +18,16 @@
 source $mountpoint/etc/options_menu/themes/scripts/om_vars
 script_init
 
+if [ -f "$om_themeperfolder" ]; then
+  if ! grep -q "[X]" "$enableThemePerFolder"; then
+    switchOn "$enableThemePerFolder"
+  fi
+fi
+
+if [ -f "$om_themerandomizer" ]; then
+  if ! grep -q "[X]" "$enableThemeSetting"; then
+    switchOn "$enableThemeSetting"
+  fi
+fi
 
 $optionsMenu/options --commandPath $omModSettingsCmds/ --scriptPath $omModSettingsScripts --title "$omTitle" &

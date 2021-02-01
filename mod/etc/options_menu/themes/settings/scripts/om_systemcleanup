@@ -18,29 +18,11 @@
 # shellcheck disable=SC2154,SC1090,SC2039,SC2086
 source $mountpoint/etc/options_menu/themes/scripts/om_vars
 script_init
-decodepng "$loaders/loading.png" >/dev/fb0
-imagePath="$optionsMenu/images"
-themePath="$usb_path/$modtitle"
-[ ! -d "$themePath" ] && themePath="$nand_path/$modtitle"
 
-snes_del_arr="$omModPole $omModMario $omModLuigi $omModWall $omModWallN $omModWallF $omModPacked $omModColors $disableColor $disablePole $disableMario $disableLuigi $disablePacked $disableWall $disableWallFar $disableWallNear $imagePath/mario.png $imagePath/luigi.png $imagePath/packed.png $imagePath/pole.png $imagePath/wall*.png"
+decodepng "$omLoaders/loading.png" >/dev/fb0
 
-case "$sftype" in
-hvcj)
-remove "${themePath}/nes" "${themePath}/snes" "$disableSmb" "$disablePackedNes" "$disableColorsNes" "$omModPackedNes" "$omModSbm" "$omModColorsNes"
-  ;;
-nes) 
-rmdir "$themePath/shonen" "$themePath/snes"
-  for item in $snes_del_arr; do
-    remove $item
-    rmdir $item
-  done
+modCleanUp
 
-  ;;
-snes)
-remove "${themePath}/nes" "${themePath}/shonen" "$disableSmb" "$disablePackedNes" "$disableColorsNes" "$omModPackedNes" "$omModSbm" "$omModColorsNes" "$imagePath/packed_nes.png" "$imagePath/smb.png"
-  ;;
-esac
 usleep 1000
 
  $optionsMenu/options --commandPath $omModSettingsCmds/ --scriptPath $omModSettingsScripts --title "$omTitle" &
