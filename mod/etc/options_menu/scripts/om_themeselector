@@ -18,7 +18,8 @@
 source $mountpoint/etc/options_menu/themes/scripts/om_vars
 script_init
 
-injectFile "chmenu" "fontfix"
+# injectFile "chmenu" "fontfix"
+injectFile "chmenu"
 hasThemesToInstall
 enableMenuOptions
 remove "$omDummy"
