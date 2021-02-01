@@ -19,7 +19,7 @@ source $mountpoint/etc/options_menu/themes/scripts/om_vars
 script_init
 
 diyThemeRemover
-diyThemeChecker
+diyThemeChecker "loader"
 touch "$omModGenSpacer"
 
 usleep 50000 && $optionsMenu/options --commandPath $omModGenCmds/ --scriptPath $omModGenScripts --title "$omTitle" &
