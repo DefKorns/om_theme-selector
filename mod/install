@@ -1,34 +1,36 @@
 #!/bin/sh
 #
 #  Copyright (c) 2020 DefKorns (https://defkorns.github.io/LICENSE)
-#  
+#
 #  This program is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation, either version 3 of the License, or
 #  (at your option) any later version.
-#  
+#
 #  This program is distributed in the hope that it will be useful,
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU General Public License for more details.
-#  
+#
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 move() {
-	[ -f "$1" ] && mv "$1" "$2"
+  [ -f "$1" ] && mv "$1" "$2"
 }
 
 del() {
-	[ -f "$1" ] && rm -rf "$1"
+  [ -f "$1" ] && rm -rf "$1"
 }
 # shellcheck disable=SC2154
-om_themes="$rootfs/etc/options_menu/themes/scripts"
+om_themes_scripts="$rootfs/etc/options_menu/themes/scripts"
 usr="$rootfs/usr"
 usr_share="$usr/share"
 pre_initd="$rootfs/etc/preinit.d"
 # shellcheck disable=SC2154
 hmod_dir="$mountpoint/var/lib/hakchi/hmod"
+b_file="$pre_initd/b8024_themeselector"
+p_file="$pre_initd/p8024_themeselector"
 
 mkdir -p "$usr_share/music_menu"
 move "$usr_share/menu_music"/* "$usr_share/music_menu"
@@ -51,10 +53,14 @@ find "$hmod_dir" -type f -name "*advanced_music_hack" -print0 -exec rm -f {} \;
 unset cfg_theme_randomizR_enabled
 
 transfer_default
-copy "$om_themes/om_fontfix" "$pre_initd/b8025_fontfix"
-copy "$om_themes/om_chmenu" "$rootfs/bin/chmenu"
+copy "$om_themes_scripts/om_fontfix" "$pre_initd/b8025_fontfix"
+copy "$om_themes_scripts/om_chmenu" "$rootfs/bin/chmenu"
 chmod +x "$rootfs/bin/chmenu"
 chmod +x "$usr/bin/pngpack-upx"
+
+sed '1,2d' "$om_themes_scripts/om_themescript" >"$b_file"
+[ ! -f "$p_file" ] && echo themeSelector >"$p_file"
+
 # shellcheck disable=SC2034
 cfg_OM_ThemeSelector_enabled='y'
 return 1
