@@ -28,11 +28,13 @@ GIT_COMMIT := $(shell echo "`git rev-parse --short HEAD``git diff-index --quiet 
 GIT_DIRTY      = $(shell git diff --shortstat 2> /dev/null | tail -n1 )
 RSYNC = $(shell rsync -a mod/etc/options_menu/ temp/ --links --delete)
 MOD_FILENAME   = $(shell basename `pwd`)
-DEV_DIR=~/Documents/gitlab/$(MOD_FILENAME)
-ifneq (,$(wildcard $(DEV_DIR)/.*))
-else
-	DEV_DIR=~/Documents/_projects/hmods/$(MOD_FILENAME)
-endif
+DEV_DIR=/d/om_theme-selectorv2
+# DEV_DIR=~/Documents/gitlab/$(MOD_FILENAME)
+# ifneq (,$(wildcard $(DEV_DIR)/.*))
+# else
+# 	DEV_DIR=~/Documents/_projects/hmods/$(MOD_FILENAME)
+# endif
+
 
 OUT=$(DEV_DIR)/out
 
@@ -41,7 +43,7 @@ deploy: customlang localization patches upload
 
 hmod: clean
 	mkdir -p out/ temp/
-	rsync -a mod/ temp/ --links --delete
+	rsync -a --exclude-from=exclude-file.txt mod/ temp/ --links --delete
 
 	printf "%s\n" \
 	"---" \
