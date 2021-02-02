@@ -104,10 +104,9 @@ for FONT in s m l small medium large; do
   rm "${FONT_PATH}/${FONT}.fnt"
 done
 
-echo "COMMAND_NAME=Exit \
-COMMAND_TYPE=EXTERNAL \
-RESTART_UI=TRUE \
-COMMAND_STR=echo \"Closing Options Menu\"
-" >"$rootfs/etc/options_menu/commands/c9999_Exit"
+echo "COMMAND_NAME=Exit
+COMMAND_TYPE=EXTERNAL
+RESTART_UI=TRUE
+COMMAND_STR=echo \"Closing Options Menu\"" >"$rootfs/etc/options_menu/commands/c9999_Exit"
 
 unset cfg_OM_ThemeSelector_enabled
