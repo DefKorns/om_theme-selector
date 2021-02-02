@@ -115,7 +115,6 @@ themeSelector() {
       [ -n "$IS_CHILD" ] && SELECTED_THEME="$PARENT_THEME_TITLE"
     else
       if [ -f "$STATE_PATH/om_themerandomizer" ]; then
-
         SELECTED_THEME="$PREVIOUS_THEME"
         local n="0"
         while [ "$SELECTED_THEME" == "$PREVIOUS_THEME" ] && [ "$n" -lt 3 ]; do
