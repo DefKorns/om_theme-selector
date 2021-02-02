@@ -109,27 +109,26 @@ themeSelector() {
     GET_THEME_NAME="$(grep -F 'Name=' "$CONFIG_FILE" | sed -r '/[Bb]ack/d;s/Name=//g;s/ /_/g' | awk '{print tolower($0)}')"
 
     THEME_MATCH="$(find "$THEMES_PATH" -maxdepth 1 -type d | xargs -n 1 basename | grep -w "$GET_THEME_NAME")"
-
     [ "$FOLDER_ID" == "000" ] && [ -d "$THEMES_PATH/default" ] && SELECTED_THEME="default"
     if [ -f "$STATE_PATH/om_themeperfolder" ]; then
       [ -n "$THEME_MATCH" ] && SELECTED_THEME="$GET_THEME_NAME"
       [ -n "$IS_CHILD" ] && SELECTED_THEME="$PARENT_THEME_TITLE"
+    else
+      if [ -f "$STATE_PATH/om_themerandomizer" ]; then
+
+        SELECTED_THEME="$PREVIOUS_THEME"
+        local n="0"
+        while [ "$SELECTED_THEME" == "$PREVIOUS_THEME" ] && [ "$n" -lt 3 ]; do
+          n=$((n + 1))
+          SELECTED_THEME="$(find "$THEMES_PATH" -maxdepth 1 -type d | shuf | head -n1 | xargs -n 1 basename)"
+        done
+        [ -f "$FONT_PATH/copyright.fnt" ] && rm "$FONT_PATH/copyright.fnt"
+        [ -f "$FONT_PATH/s.fnt" ] && rm "$FONT_PATH/s.fnt"
+        [ -f "$FONT_PATH/m.fnt" ] && rm "$FONT_PATH/m.fnt"
+        [ -f "$FONT_PATH/l.fnt" ] && rm "$FONT_PATH/l.fnt"
+
+      fi
     fi
-
-    if [ -f "$STATE_PATH/om_themerandomizer" ]; then
-      SELECTED_THEME="$PREVIOUS_THEME"
-      local n="0"
-      while [ "$SELECTED_THEME" == "$PREVIOUS_THEME" ] && [ "$n" -lt 3 ]; do
-        n=$((n + 1))
-        SELECTED_THEME="$(find "$THEMES_PATH" -maxdepth 1 -type d | shuf | head -n1 | xargs -n 1 basename)"
-      done
-      [ -f "$FONT_PATH/copyright.fnt" ] && rm "$FONT_PATH/copyright.fnt"
-      [ -f "$FONT_PATH/s.fnt" ] && rm "$FONT_PATH/s.fnt"
-      [ -f "$FONT_PATH/m.fnt" ] && rm "$FONT_PATH/m.fnt"
-      [ -f "$FONT_PATH/l.fnt" ] && rm "$FONT_PATH/l.fnt"
-
-    fi
-
     FULL_THEME_PATH="$THEMES_PATH/$SELECTED_THEME"
 
     if find "$DIY_THEME" -type f | read -r; then
