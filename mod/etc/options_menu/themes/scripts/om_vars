@@ -41,6 +41,7 @@ omModGen="$omMod/creator"
 omModGenCmds="$omModGen/commands"
 omModGenScripts="$omModGen/scripts"
 omModSprites="$omModGen/sprites"
+omModSpritesAssets="$omModSprites/assets"
 omModMario="$omModSprites/mario"
 omModLuigi="$omModSprites/luigi"
 omModWall="$omModSprites/wall"
@@ -52,6 +53,17 @@ omModColorsNes="$omModSprites/colors_nes"
 omModPole="$omModSprites/pole"
 omModPackedNes="$omModSprites/packed_nes"
 omModSbm="$omModSprites/sbm"
+omModMarioAssets="$omModSpritesAssets/mario"
+omModLuigiAssets="$omModSpritesAssets/luigi"
+omModWallAssets="$omModSpritesAssets/wall"
+omModWallNAssets="$omModSpritesAssets/wall_near"
+omModWallFAssets="$omModSpritesAssets/wall_far"
+omModPackedAssets="$omModSpritesAssets/packed"
+omModColorsAssets="$omModSpritesAssets/colors"
+omModColorsNesAssets="$omModSpritesAssets/colors_nes"
+omModPoleAssets="$omModSpritesAssets/pole"
+omModPackedNesAssets="$omModSpritesAssets/packed_nes"
+omModSbmAssets="$omModSpritesAssets/sbm"
 omModSettings="$omMod/settings"
 omModSettingsCmds="$omModSettings/commands"
 omModSettingsScripts="$omModSettings/scripts"
@@ -59,7 +71,7 @@ omModLicense="$omModScripts/om_license"
 diyThemePath="$mountpoint/tmp/diy_theme"
 diyResources="$diyThemePath/resources"
 diyLayout="$diyResources/layout/asset/sprite"
-f
+omModLicense="$omModScripts/om_license"
 thmPreview="$omModSub/images"
 omThemeScript="$omModScripts/om_themescript"
 omOverlayThemeScript="$omModScripts/om_overlaythmcript"
@@ -135,8 +147,11 @@ shonen_theme_path="${om_mod_path}/shonen"
 
 #### ARRAYS
 diy_asset_array="diy_packed diy_wall diy_wall_far diy_wall_near diy_mario diy_luigi diy_colors diy_pole" # verify
-asset_nes_arr="$omModColors/assets $omModPackedNes/assets $omModSbm/assets"
-asset_snes_arr="$omModPole/assets $omModMario/assets $omModLuigi/assets $omModWall/assets $omModWallN/assets $omModWallF/assets $omModPacked/assets"
+#asset_nes_arr="$omModColors/assets $omModPackedNes/assets $omModSbm/assets"
+#asset_snes_arr="$omModPole/assets $omModMario/assets $omModLuigi/assets $omModWall/assets $omModWallN/assets $omModWallF/assets $omModPacked/assets"
+
+asset_nes_arr="$omModPackedNesAssets $omModSbmAssets"
+asset_snes_arr="$omModPoleAssets $omModMarioAssets $omModLuigiAssets $omModWallAssets $omModWallNAssets $omModWallFAssets $omModPackedAssets omModColorsAssets"
 asset_arr="$asset_snes_arr $asset_nes_arr"
 scripts_arr="$omModPole/scripts $omModMario/scripts $omModLuigi/scripts $omModWall/scripts $omModWallN/scripts $omModWallF/scripts $omModPacked/scripts $omModColors/scripts"
 nes_cmds_arr="$omModPackedNes/commands $omModColorsNes/commands $omModSbm/commands"
@@ -428,6 +443,7 @@ find_diy_asset() {
   preview_w="250"
   preview_h="250"
 
+
   case "$1" in
   luigi | mario)
     diy_file="${1}_run01.png"
@@ -474,7 +490,7 @@ find_diy_asset() {
   esac
 
   om_default_json="$omModScripts/om_${1}.json"
-  paths_to_search="$diy_sprite/assets $theme_path"
+  paths_to_search="$omModSprites/assets/$1 $theme_path"
 
   find "$diy_sprite/commands" "$diy_sprite/scripts" -type f \
     -not -name 'om_*' -not -name 'c999[0-9]_*' \
@@ -486,7 +502,7 @@ find_diy_asset() {
 
         has_sprite="0"
         full_asset_path="$p/$asset_name"
-        json="$omModSprites/$1_$asset_name.json"
+        json="${omModSprites}/${1}_${asset_name}.json"
         resource_path="$full_asset_path/resources"
 
         [ -f "$full_asset_path/$diy_file" ] && has_sprite="1"
@@ -503,18 +519,50 @@ find_diy_asset() {
           fi
 
           preview_image="$full_asset_path/$diy_file"
-          temp_preview="$omModSprites/$1/assets/$asset_name.png"
+          temp_preview="${omModSprites}/assets/${1}/${1}_${asset_name}.png"
 
           if [ "$colors" = "1" ]; then
             preview_image="$temp_preview"
           fi
           [ "$chars" = "1" ] && temp_preview="$preview_image"
 
+
+
+
+#                 echo "diy_file: $diy_file" >"$rootfs/preview.log"
+#           echo "diy_sprite: $diy_sprite" >>"$rootfs/preview.log"
+#           echo "asset_path: $asset_path" >>"$rootfs/preview.log"
+#           echo "asset: $asset" >>"$rootfs/preview.log"
+#           echo "chars: $chars" >>"$rootfs/preview.log"
+#           echo "colors: $colors" >>"$rootfs/preview.log"
+#           echo "json: $json" >>"$rootfs/preview.log"
+#           echo "om_default_json: $om_default_json" >>"$rootfs/preview.log"
+#           echo "paths_to_search: $paths_to_search" >>"$rootfs/preview.log"
+#           echo "p: $p" >>"$rootfs/preview.log"
+#           echo "has_sprite: $has_sprite" >>"$rootfs/preview.log"
+#           echo "full_asset_path: $full_asset_path" >>"$rootfs/preview.log"
+#           echo "resource_path: $resource_path" >>"$rootfs/preview.log"
+#           echo "cmd_name: $cmd_name" >>"$rootfs/preview.log"
+#           echo "preview_image: $preview_image" >>"$rootfs/preview.log"
+#           echo "temp_preview: $temp_preview" >>"$rootfs/preview.log"
+
+# if [ -n "$json" ]; then
+# echo "=========== should enter =========" >> "$rootfs/preview.log"
+# else
+# echo "=========== NOT IN =========" >> "$rootfs/preview.log"
+# fi
+
+# if [ ! -f "$temp_preview" ]; then
+# echo "=========== NO FILE =========" >> "$rootfs/preview.log"
+# else
+# echo "=========== HAS FILE =========" >> "$rootfs/preview.log"
+# fi
           if [ -n "$json" ] && [ ! -f "$temp_preview" ]; then
             decodepng "$omLoaders/loading.png" >/dev/fb0
+            echo "=========================================" >>"$rootfs/preview.log"
             if [ "$colors" = "0" ]; then
               sed -r "s/changeme/${1}_${asset_name}/g;" "$om_default_json" >"$json"
-              pngpack-upx u "$json" "$preview_image" "$omModSprites/$1/assets/"
+              pngpack-upx u "$json" "$preview_image" "$omModSprites/assets/$1"
               remove "$json"
             fi
             preview_image="$temp_preview"
