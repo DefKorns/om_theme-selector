@@ -24,8 +24,9 @@ hasThemesToInstall
 enableMenuOptions
 remove "$omDummy"
 
-if [ "$1" = "reload" ]; then
+if [ "$1" = "reload" ] || [ ! -f "$om_firstrun" ] ; then
   loadThemeList -r
+  [ ! -f "$om_firstrun" ] && touch "$om_firstrun"
 else
   loadThemeList
 fi
