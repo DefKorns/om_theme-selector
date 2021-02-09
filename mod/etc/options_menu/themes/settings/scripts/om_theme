@@ -19,22 +19,6 @@
 source $mountpoint/etc/options_menu/themes/scripts/om_vars
 script_init
 
-if [ "$1" == "tpf" ]; then
-  if [ ! -f "$om_themeperfolder" ]; then
-    touch "$om_themeperfolder"
-    switchOn "$enableThemePerFolder"
-  else
-    remove "$om_themeperfolder"
-    switchOff "$enableThemePerFolder"
-  fi
-else
-  if [ ! -f "$om_themerandomizer" ]; then
-    touch "$om_themerandomizer"
-    switchOn "$enableThemeSetting"
-  else
-    remove "$om_themerandomizer"
-    switchOff "$enableThemeSetting"
-  fi
-fi
+themeSettings "$1"
 
 $optionsMenu/options --commandPath $omModSettingsCmds/ --scriptPath $omModSettingsScripts --title "$omTitle" &
