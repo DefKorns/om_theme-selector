@@ -1,8 +1,0 @@
-COMMAND_NAME=Super Mario Bros. 3
-COMMAND_TYPE=INTERNAL
-COMMAND_STR=sh /etc/options_menu/themes/creator/sprites/mario/scripts/smb3.sh
-PREVIEW_IMAGE=/media/hakchi/themes/snes/smb3/resources/layout/asset/sprite/mario/mario_run01.png
-PREVIEW_IMAGE_X=920
-PREVIEW_IMAGE_Y=275
-PREVIEW_IMAGE_WIDTH=0
-PREVIEW_IMAGE_HEIGHT=250
