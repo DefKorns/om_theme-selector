@@ -77,4 +77,4 @@ etc/options_menu/b8025_fontfix
 etc/options_menu/p8025_fontfix
 etc/preinit.d/p8024_themeselector
 etc/preinit.d/b8024_themeselector
-
+etc/options_menu/commands/c9999_Exit
