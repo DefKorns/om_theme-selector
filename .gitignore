@@ -519,3 +519,6 @@ mod/etc/options_menu/b8025_fontfix
 mod/etc/options_menu/p8025_fontfix
 old.themescript.sh
 out---backup/
+BACKUP.gpg
+out---/
+
