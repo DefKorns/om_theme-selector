@@ -6,12 +6,13 @@
 This [Options Menu](https://github.com/CompCom/OptionsMenu/releases/latest) module gives you the possibility to choose your favorite theme and apply it on your NESCE or SNESCE.<br/>
 It includes all the features of it's predecessor and much more
 
-[![Theme Selector](https://i.imgur.com/WXN7Nwl.png)](https://i.imgur.com/qyTv9Fs.png)
+`Click the image below to view it on YouTube.`
+[![Theme Selector - Demo](https://i.imgur.com/Ixi8LYu.png)](https://youtu.be/yRUbGssu8ko "Theme Selector - Demo")
 ### Features
 *  Graphical interface to allow you to select themes
-*  Download themes directy from the internet (Wi-Fi mod required)
-*  Theme randomizer (Off by default)
-*  Audio randomizer on home folder (Off by default)
+*  Download themes directy from the internet (**Wi-Fi mod required**)
+*  Theme randomizer (**Off by default**)
+*  Audio randomizer on home folder (**Off by default**)
 *  Set theme per folder (keeping the same the per sub-folder)
 *  Create a theme based your existent theme resources
 *  Custom fonts per theme
@@ -20,7 +21,7 @@ It includes all the features of it's predecessor and much more
 *  Custom icons for Option Menu
 
 ### Can i use it with NAND
-Well, yes. But this mod was designed for USB-HOST, as the themes may include audio files and they may get over 10mb.
+Well, yes. But this mod was designed for USB-HOST, as the themes may include audio files and they may get over 10Mb.
 
 ### Set theme per folder, what is that?
 If you are like me and have tons of games organized with tons of system folders... Wouldn't be nice if you could have a theme associated with each system? Now you can, just create your own theme and add it to the HMOD or directly to your USB/SD theme folder.
@@ -72,3 +73,4 @@ Enjoy it as much as i did making it.
 - [ModMyClassic](https://modmyclassic.com/)
 - NESminiling0618
 - [Swingflip](https://github.com/swingflip)
+
