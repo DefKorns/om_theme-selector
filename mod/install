@@ -1,5 +1,5 @@
 #!/bin/sh
-#
+# shellcheck disable=SC2154
 #  Copyright (c) 2021 DefKorns (https://defkorns.github.io/LICENSE)
 #
 #  This program is free software: you can redistribute it and/or modify
@@ -22,12 +22,12 @@ move() {
 del() {
   [ -f "$1" ] && rm -rf "$1"
 }
-# shellcheck disable=SC2154
+
 om_themes_scripts="$rootfs/etc/options_menu/themes/scripts"
 usr="$rootfs/usr"
 usr_share="$usr/share"
 pre_initd="$rootfs/etc/preinit.d"
-# shellcheck disable=SC2154
+
 hmod_dir="$mountpoint/var/lib/hakchi/hmod"
 b_file="$pre_initd/b8024_themeselector"
 p_file="$pre_initd/p8024_themeselector"
@@ -53,6 +53,9 @@ find "$hmod_dir" -type f -name "*advanced_music_hack" -print0 -exec rm -f {} \;
 unset cfg_theme_randomizR_enabled
 
 transfer_default
+
+om_firstrun="$mountpoint/$profilepath/$modname/om_firstrun"
+[ ! -f "$om_firstrun" ] && touch "$om_firstrun"
 copy "$om_themes_scripts/om_fontfix" "$pre_initd/b8025_fontfix"
 copy "$om_themes_scripts/om_chmenu" "$rootfs/bin/chmenu"
 chmod +x "$rootfs/bin/chmenu"

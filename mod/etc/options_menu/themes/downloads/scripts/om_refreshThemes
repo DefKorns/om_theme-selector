@@ -18,6 +18,6 @@
 source $mountpoint/etc/options_menu/themes/scripts/om_vars
 script_init
 
-downloader
+get_theme_list
 
 $optionsMenu/options --commandPath $omModSubCmds/ --scriptPath $omModSubScripts --title "$omTitle" &

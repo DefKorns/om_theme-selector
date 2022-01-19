@@ -18,16 +18,17 @@
 source $mountpoint/etc/options_menu/themes/scripts/om_vars
 script_init
 
-if [ -f "$om_themeperfolder" ]; then
-  if ! grep -q "[X]" "$enableThemePerFolder"; then
-    switchOn "$enableThemePerFolder"
-  fi
-fi
+hasSelectedOptions "$om_themeperfolder" "$enableThemePerFolder"
+hasSelectedOptions "$om_themerandomizer" "$enableThemeSetting"
 
-if [ -f "$om_themerandomizer" ]; then
-  if ! grep -q "[X]" "$enableThemeSetting"; then
-    switchOn "$enableThemeSetting"
-  fi
+hasItemsToCleanUp "SystemCleanUp"
+
+if [ -f "$b_file" ] && [ -f "$p_file" ]; then
+  enable_cmds "Uninstaller"
+  [ ! -f "$omModSettingsSpacer" ] && touch "$omModSettingsSpacer"
+else
+  disable_cmds "Uninstaller"
+  [ ! -f "$enableSystemCleanUp" ] && remove "$omModSettingsSpacer"
 fi
 
 $optionsMenu/options --commandPath $omModSettingsCmds/ --scriptPath $omModSettingsScripts --title "$omTitle" &
