@@ -1,5 +1,5 @@
 #!/bin/sh
-#
+# shellcheck disable=SC1090,SC2039,SC2086,SC2154
 #  Copyright (c) 2021 DefKorns (https://defkorns.github.io/LICENSE)
 #
 #  This program is free software: you can redistribute it and/or modify
@@ -18,17 +18,20 @@
 source $mountpoint/etc/options_menu/themes/scripts/om_vars
 script_init
 
+decodepng "$omLoaders/saving.png" >/dev/fb0
+
 name="diy_theme"
-if [ -d "$name" ]; then
-  i=0
-  while [ -d "$name-$i" ]; do
-    i=$((i+1))
+i=1
+
+if [ -d "${theme_path}/${name}" ]; then
+  while [ -d "${theme_path}/${name}-${i}" ]; do
+    i=$((i + 1))
   done
-  name="$name-$i"
+  name="${name}-${i}"
 fi
 
-cp -R "$diyThemePath" "$theme_path/$name"
-remove "$diyThemePath"
+cp -R "${diyThemePath}" "${theme_path}/${name}"
+remove "${diyThemePath}"
 
 clearList
 disable_cmds "Clear" "Preview" "DiY"

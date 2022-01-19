@@ -15,35 +15,82 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
+font_bind_fix() {
+  [ "$1" == "backup" ] && FONT_TYPE="title s m l small medium large"
+  [ "$1" == "restore" ] && FONT_TYPE="s m l small medium large"
+  [ "$1" == "restore" ] && [ -f "$TITLE_FONT_BACKUP" ] && mv "$TITLE_FONT_BACKUP" "$TITLE_FONT"
+  for FONT in $FONT_TYPE; do
+    [ "$1" == "backup" ] && [ ! -f "$TITLE_FONT_BACKUP" ] && mv "${FONT_PATH}/${FONT}.fnt" "${FONT_PATH}/${FONT}.fnt.backup"
+    [ "$1" == "backup" ] && cp "$FULL_THEME_PATH/fonts/${FONT}.fnt" "${FONT_PATH}/${FONT}.fnt"
+    [ "$1" == "restore" ] && umount "${ORIGINAL_THEME}/resources/fonts/${UI1}/${FONT}.fnt"
+    [ "$1" == "restore" ] && rm "${FONT_PATH}/${FONT}.fnt"
+  done
+}
+
 themeSelector() {
-  local USR_SHARE="$mountpoint/usr/share"
-	local ORIGINAL_THEME="$USR_SHARE/ui/$sftype-$sfregion"
-	local SYSTEM_TYPE="$sftype"
-	
-	case "$sftype" in
-	hvcj)
-		ORIGINAL_THEME="$USR_SHARE/ui/hvc"
-		SYSTEM_TYPE="shonen"
-		;;
-	nes)
-		ORIGINAL_THEME="$USR_SHARE/clover-ui"
-		[ "$sfregion" = "jpn" ] && SYSTEM_TYPE="hvc"
-		;;
-	snes)
-		[ "$sfregion" = "jpn" ] && ORIGINAL_THEME="$USR_SHARE/ui/shvc"
-		;;
-	esac
+  local UI0="ui/$sftype-$sfregion"
+  local UI1=""
+  local SYSTEM_TYPE="$sftype"
 
-	local THEMES_PATH="$mountpoint/media/$modname/themes/$SYSTEM_TYPE"
-	[ ! -d "$THEMES_PATH" ] && THEMES_PATH="$rootfs/usr/share/themes/$SYSTEM_TYPE"
-	local STATE_PATH="$mountpoint$profilepath/$modname"
-	local LAST_THEME="$STATE_PATH/lastTheme"
-	local ACTIVE_THEME="$STATE_PATH/activeTheme"
-	local SELECTED_THEME="CHANGEME"
-	local FULL_THEME_PATH="$THEMES_PATH/$SELECTED_THEME"
+  case "$sftype" in
+  hvcj)
+    UI0="ui/hvc"
+    SYSTEM_TYPE="shonen"
+    ;;
+  nes)
+    UI0="clover-ui"
+    UI1="nes/"
+    if [ "$sfregion" = "jpn" ]; then
+      UI0="clover-ui"
+      UI1="hvc"
+      SYSTEM_TYPE="$UI1"
+    fi
+    ;;
+  snes)
+    [ "$sfregion" = "jpn" ] && UI0="ui/shvc"
+    ;;
+  esac
+  local ORIGINAL_THEME="$mountpoint/usr/share/$UI0"
 
-		echo "$SELECTED_THEME" >"$LAST_THEME"
-		echo "$FULL_THEME_PATH" >"$ACTIVE_THEME"
-		mountpoint -q "$ORIGINAL_THEME" && umount "$ORIGINAL_THEME"
-		[ -d "$FULL_THEME_PATH" ] && mount -t overlayfs -o lowerdir="$ORIGINAL_THEME",upperdir="$FULL_THEME_PATH" overlayfs "$ORIGINAL_THEME"
+  local THEMES_PATH="$mountpoint/media/$modname/themes/$SYSTEM_TYPE"
+  [ ! -d "$THEMES_PATH" ] && THEMES_PATH="$rootfs/usr/share/themes/$SYSTEM_TYPE"
+
+  local STATE_PATH="$mountpoint$profilepath/$modname"
+  local LAST_THEME="$STATE_PATH/lastTheme"
+  local ACTIVE_THEME="$STATE_PATH/activeTheme"
+  local SELECTED_THEME="CHANGEME"
+
+  if [ -f "$STATE_PATH/om_themerandomizer" ]; then
+    SELECTED_THEME="$PREVIOUS_THEME"
+    local n="0"
+    while [ "$SELECTED_THEME" == "$PREVIOUS_THEME" ] && [ "$n" -lt 3 ]; do
+      n=$((n + 1))
+      SELECTED_THEME="$(find "$THEMES_PATH" -maxdepth 1 -type d | shuf | head -n1 | xargs -n 1 basename)"
+    done
+  fi
+
+  local FULL_THEME_PATH="$THEMES_PATH/$SELECTED_THEME"
+
+  local FONT_PATH="$mountpoint/media/$modname/fonts"
+  [ ! -d "$FONT_PATH" ] && FONT_PATH="$rootfs/usr/share/fonts"
+  local TITLE_FONT="$FONT_PATH/title.fnt"
+  local TITLE_FONT_BACKUP="${TITLE_FONT}.backup"
+  local TITLE_THEME_FONT="$FULL_THEME_PATH/fonts/title.fnt"
+
+  if [ "$SELECTED_THEME" != "$PREVIOUS_THEME" ] || [ ! -f "$LAST_THEME" ] || [ ! -f "$ACTIVE_THEME" ]; then
+    echo "$SELECTED_THEME" >"$LAST_THEME"
+    echo "$FULL_THEME_PATH" >"$ACTIVE_THEME"
+  fi
+
+  if [ -d "$FULL_THEME_PATH/fonts" ]; then
+    if [ "$(cksum "$TITLE_FONT" | awk '{ print $1; }')" != "$(cksum "$TITLE_THEME_FONT" | awk '{ print $1; }')" ]; then
+      font_bind_fix "backup"
+    fi
+  else
+    font_bind_fix "restore"
+  fi
+
+  mountpoint -q "$ORIGINAL_THEME" && umount "$ORIGINAL_THEME"
+  [ -d "$FULL_THEME_PATH" ] && mount -t overlayfs -o lowerdir="$ORIGINAL_THEME",upperdir="$FULL_THEME_PATH" overlayfs "$ORIGINAL_THEME"
+
 }
