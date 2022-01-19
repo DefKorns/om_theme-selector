@@ -52,10 +52,11 @@ Simply select from the listed previews and create your own DIY theme.
 - Install Hmod
 - Download the themes and enjoy
 
-on NAND themes will be on `/var/lib/hakchi/usr/share/themes/consoletype`
-on USB/SD themes will be on `/media/hakchi/themes/consoletype`
+on NAND themes will be on `/var/lib/hakchi/usr/share/themes/your-system`
 
-*consoletype is just `nes`, `snes`  or `shonen`*
+on USB/SD themes will be on `/media/hakchi/themes/your-system`
+
+> **Note:** Where `your-system` changes depending on own mini `nes`, `snes`  or `shonen`
 
 ### Notes
 Enjoy it as much as i did making it.
