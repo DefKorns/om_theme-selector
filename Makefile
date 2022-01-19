@@ -101,19 +101,5 @@ info:
 clean:
 	rm -rf out/ temp/
 
-up:
-	$(if $(GIT_DIRTY), $(error "Unable to pull subtree(s): Dirty Git repository"))
-	@for elem in $(GIT_SUBTREE_REPOS); do \
-		url=`echo $$elem | cut -d '|' -f 1`; \
-		repo=`basename $$url .git`; \
-		path=`echo $$repo | tr '-' '/'`; \
-		br=`echo $$elem | cut -d '|' -f 2`;  \
-		[ "$$br" == "$$url" ] && br='master'; \
-		echo -e "\n===> pulling changes into subtree '$$path' using remote '$$repo/$$br'"; \
-		echo -e "     \__ fetching remote '$$repo'"; \
-		git fetch $$repo; \
-		echo -e "     \__ pulling changes"; \
-		git subtree pull --prefix $$path --squash $${repo} $${br}; \
-	done
 
 .PHONY: clean
