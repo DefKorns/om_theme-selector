@@ -1,0 +1,44 @@
+{
+	"folders": [
+        {
+            "name": "om_theme-selectorv2",
+            "path": "."
+        },
+        {
+            "name": "out",
+            "path": "out"
+        }
+    ],
+    "settings": {
+        "files.autoSave": "off",
+        // "terminal.integrated.shell.windows": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+    "terminal.integrated.shell.windows": "C:\\Program Files\\Git\\bin\\bash.exe",
+
+        "shellformat.path": "C:\\bin\\shfmt_v3.2.4_windows_amd64.exe",
+        "window.zoomLevel": 0,
+        "files.associations": {
+            "b[0-9]*": "shellscript",
+            "p[0-9]*": "shellscript",
+            "om_*": "shellscript",
+            "install": "shellscript",
+            "uninstall": "shellscript",
+            "chmenu": "shellscript",
+            "fontfix": "shellscript",
+            "c[0-9]*": "properties"
+        },
+        "explorer.confirmDragAndDrop": false,
+        "prettier.disableLanguages": [
+            "html"
+        ],
+        "git.confirmSync": false,
+        "vsicons.projectDetection.autoReload": true,
+        "vsicons.dontShowNewVersionMessage": true,
+        "explorer.confirmDelete": false,
+        "terminal.integrated.rendererType": "dom",
+        "workbench.iconTheme": "vscode-icons",
+        "beautify.config": "",
+        "http.proxyAuthorization": null,
+        "workbench.colorTheme": "Flatland Monokai",
+
+    }
+}
