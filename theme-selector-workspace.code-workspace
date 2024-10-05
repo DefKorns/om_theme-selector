@@ -1,7 +1,7 @@
 {
 	"folders": [
         {
-            "name": "om_theme-selectorv2",
+            "name": "om_theme-selector",
             "path": "."
         },
         {
@@ -27,9 +27,6 @@
             "c[0-9]*": "properties"
         },
         "explorer.confirmDragAndDrop": false,
-        "prettier.disableLanguages": [
-            "html"
-        ],
         "git.confirmSync": false,
         "vsicons.projectDetection.autoReload": true,
         "vsicons.dontShowNewVersionMessage": true,
@@ -38,7 +35,6 @@
         "workbench.iconTheme": "vscode-icons",
         "beautify.config": "",
         "http.proxyAuthorization": null,
-        "workbench.colorTheme": "Flatland Monokai",
 
     }
 }
