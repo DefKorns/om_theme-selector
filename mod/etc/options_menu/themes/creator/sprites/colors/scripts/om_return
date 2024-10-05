@@ -1,5 +1,5 @@
 #!/bin/sh
-# shellcheck disable=SC2086,SC2119,SC2154
+# shellcheck disable=SC2086,SC2154,SC3046,SC3051
 #
 #  Copyright (c) 2024 DefKorns (https://defkorns.github.io/LICENSE)
 #  
