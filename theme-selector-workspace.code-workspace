@@ -53,7 +53,7 @@
         "shellcheck.customArgs": [
             "-x"
         ],
-         "shellcheck.exclude": ["3046", "3014", "3051"],
+         "shellcheck.exclude": ["3046", "3014","3046", "3051"],
         "shellformat.flag": "-i 2 -ci -sr -bn",
     }
 }

@@ -1,4 +1,5 @@
 #!/bin/sh
+# shellcheck disable=SC2034,SC3046,SC3051
 # # shellcheck disable=SC2039
 #  Copyright (c) 2024 DefKorns (https://defkorns.github.io/LICENSE)
 #
@@ -218,7 +219,6 @@ enableMenuOptions() {
 
   toggleDownloads
 
-  # shellcheck disable=SC2039
   [[ -n $(ls -A "$theme_path") ]] && disable_cmds "ThemeGenerator"
 
   if [ -f "$b_file" ] || [ -f "$p_file" ]; then
@@ -239,7 +239,7 @@ enableMenuOptions() {
     if [ "$sftype" = "nes" ]; then
       src="hvc"
       dest="nes"
-      # shellcheck disable=SC2154
+
       if [ "$sfregion" = "jpn" ]; then
         src="nes"
         dest="hvc"
@@ -303,7 +303,6 @@ themeLoader() {
 
     copy "$omModLicense" "$thm_script.sh"
     if [ -f "$xtras/thumb.png" ]; then
-      # shellcheck disable=SC2154
       echo "find \"$gStorage\" -path \"*_small.png*\" | while read -r file; do
 copier \"\$file\" \"\$file\"_backup 
 copier \"$xtras/thumb.png\" \"\$file\"
