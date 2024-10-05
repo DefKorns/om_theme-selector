@@ -522,3 +522,6 @@ out---backup/
 BACKUP.gpg
 out---/
 
+preinit
+b0010_functions
+b0050_boot
