@@ -85,6 +85,7 @@ thmOverlay="$omModScripts/om_overlay"
 
 om_themerandomizer="$state_path/om_themerandomizer"
 om_themeperfolder="$state_path/om_themeperfolder"
+om_themeperfolderchild="$state_path/om_themeperfolderchild"
 om_audiorandomizer="$state_path/om_audiorandomizer"
 om_advmusichack="$state_path/om_advmusichack"
 om_firstrun="$state_path/om_firstrun"
@@ -111,6 +112,8 @@ enableThemeSetting="$omModSettingsCmds/c0000_themerandomizer"
 disableThemeSetting="$omModSettingsCmds/_themerandomizer"
 enableThemePerFolder="$omModSettingsCmds/c0000_themeperfolder"
 disableThemePerFolder="$omModSettingsCmds/_themeperfolder"
+enableThemePerFolderChild="$omModSettingsCmds/c0000_themeperfolder_child"
+disableThemePerFolderChild="$omModSettingsCmds/_themeperfolder_child"
 enableSystemCleanUp="$omModSettingsCmds/c0001_systemcleanup"
 disableSystemCleanUp="$omModSettingsCmds/_systemcleanup"
 enableThemeGenerator="$omModCommands/c0000_generatetheme"
@@ -631,7 +634,7 @@ diyThemeChecker() {
   else
     disable_cmds "DiY" "DelDiY" "Preview"
   fi
-  
+
   [ "$1" = "loader" ] && usleep 1000
 }
 
@@ -654,43 +657,47 @@ modCleanUp() {
 }
 
 themeSettings() {
-  if [ "$1" = "tpf" ]; then
-    themeSettingsChecker "$om_themeperfolder" "$enableThemePerFolder"
+  if [ "$1" = "child" ]; then
+    toggleOptions "$om_themeperfolderchild" "$enableThemePerFolderChild" "$om_themeperfolder" "$enableThemePerFolder"
+  elif [ "$1" = "tpf" ]; then
+   toggleOptions "$om_themeperfolder" "$enableThemePerFolder" "$om_themeperfolderchild" "$enableThemePerFolderChild" "switchOn"
   else
-    themeSettingsChecker "$om_themerandomizer" "$enableThemeSetting"
+    if [ ! -f "$om_themerandomizer" ]; then
+      settingsOptionChecker "on" "$om_themerandomizer" "$enableThemeSetting"
+    else
+      settingsOptionChecker "off" "$om_themerandomizer" "$enableThemeSetting"
+    fi
   fi
 }
 
 audioSettings() {
   if [ "$1" = "-amh" ]; then
-    if [ ! -f "$om_advmusichack" ]; then
-      audioSettingsChecker "on" "$om_advmusichack" "$enableAdvancedMusicHack"
-      [ ! -f "$om_audiorandomizer" ] && audioSettingsChecker "on" "$om_audiorandomizer" "$enableAudioSetting"
-    else
-      remove "$om_advmusichack"
-      switchOff "$enableAdvancedMusicHack"
-    fi
+      toggleOptions "$om_advmusichack" "$enableAdvancedMusicHack" "$om_audiorandomizer" "$enableAudioSetting"
   else
     if [ ! -f "$om_audiorandomizer" ]; then
-      audioSettingsChecker "on" "$om_audiorandomizer" "$enableAudioSetting"
+      settingsOptionChecker "on" "$om_audiorandomizer" "$enableAudioSetting"
     else
-      audioSettingsChecker "off" "$om_audiorandomizer" "$enableAudioSetting"
-      audioSettingsChecker "off" "$om_advmusichack" "$enableAdvancedMusicHack"
+      settingsOptionChecker "off" "$om_audiorandomizer" "$enableAudioSetting"
+      settingsOptionChecker "off" "$om_advmusichack" "$enableAdvancedMusicHack"
     fi
   fi
 }
 
-themeSettingsChecker() {
+toggleOptions() {
   if [ ! -f "$1" ]; then
-    touch "$1"
-    switchOn "$2"
+    settingsOptionChecker "on" "$1" "$2"
+    if [ -n "$5" ]; then
+      [ -f "$3" ] && switchOn "$4"
+    else
+      [ ! -f "$3" ] && settingsOptionChecker "on" "$3" "$4"
+    fi
   else
     remove "$1"
     switchOff "$2"
   fi
 }
 
-audioSettingsChecker() {
+settingsOptionChecker() {
   if [ "$1" = "off" ]; then
     remove "$2"
     switchOff "$3"

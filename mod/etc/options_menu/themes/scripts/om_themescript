@@ -98,6 +98,7 @@ themeSelector() {
   [ ! -d "$FONT_PATH" ] && FONT_PATH="$rootfs/usr/share/fonts"
   local TITLE_FONT="$FONT_PATH/title.fnt"
   local TITLE_FONT_BACKUP="${TITLE_FONT}.backup"
+  local THEME_FONT_PATH="$FULL_THEME_PATH/fonts"
 
   SILENT_WAV="$rootfs/usr/share/themes/bgm_boot.wav"
   MUSIC_PATH="$mountpoint/media/$modname/music_menu"
@@ -138,7 +139,9 @@ themeSelector() {
     [ "$FOLDER_ID" == "000" ] && [ -d "$THEMES_PATH/default" ] && SELECTED_THEME="default"
     if [ -f "$STATE_PATH/om_themeperfolder" ]; then
       [ -n "$THEME_MATCH" ] && SELECTED_THEME="$GET_THEME_NAME"
-      [ -n "$IS_CHILD" ] && SELECTED_THEME="$PARENT_THEME_TITLE"
+      if [ ! -f "$STATE_PATH/om_themeperfolderchild" ]; then
+        [ -n "$IS_CHILD" ] && SELECTED_THEME="$PARENT_THEME_TITLE"
+      fi
     fi
 
     FULL_THEME_PATH="$THEMES_PATH/$SELECTED_THEME"
@@ -152,10 +155,8 @@ themeSelector() {
       echo "$FULL_THEME_PATH" >"$ACTIVE_THEME"
     fi
 
-    local TITLE_THEME_FONT="$FULL_THEME_PATH/fonts/title.fnt"
-
-    if [ -d "$FULL_THEME_PATH/fonts" ]; then
-      if [ "$(cksum "$TITLE_FONT" | awk '{ print $1; }')" != "$(cksum "$TITLE_THEME_FONT" | awk '{ print $1; }')" ]; then
+    if [ -d "$THEME_FONT_PATH" ]; then
+      if [ "$(cksum "$TITLE_FONT" | awk '{ print $1; }')" != "$(cksum "$THEME_FONT_PATH/title.fnt" | awk '{ print $1; }')" ]; then
         font_bind_fix "backup"
       fi
     else
