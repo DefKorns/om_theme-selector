@@ -1,5 +1,5 @@
 #!/bin/sh
-# shellcheck disable=SC2034,SC3046,SC3051
+# shellcheck disable=SC2034,SC2086,SC2154,SC3010,SC3046,SC3051
 # # shellcheck disable=SC2039
 #  Copyright (c) 2025 DefKorns (https://defkorns.github.io/LICENSE)
 #
@@ -660,7 +660,7 @@ themeSettings() {
   if [ "$1" = "child" ]; then
     toggleOptions "$om_themeperfolderchild" "$enableThemePerFolderChild" "$om_themeperfolder" "$enableThemePerFolder"
   elif [ "$1" = "tpf" ]; then
-   toggleOptions "$om_themeperfolder" "$enableThemePerFolder" "$om_themeperfolderchild" "$enableThemePerFolderChild" "switchOn"
+    toggleOptions "$om_themeperfolder" "$enableThemePerFolder" "$om_themeperfolderchild" "$enableThemePerFolderChild" "switchOn"
   else
     if [ ! -f "$om_themerandomizer" ]; then
       settingsOptionChecker "on" "$om_themerandomizer" "$enableThemeSetting"
@@ -672,7 +672,7 @@ themeSettings() {
 
 audioSettings() {
   if [ "$1" = "-amh" ]; then
-      toggleOptions "$om_advmusichack" "$enableAdvancedMusicHack" "$om_audiorandomizer" "$enableAudioSetting"
+    toggleOptions "$om_advmusichack" "$enableAdvancedMusicHack" "$om_audiorandomizer" "$enableAudioSetting"
   else
     if [ ! -f "$om_audiorandomizer" ]; then
       settingsOptionChecker "on" "$om_audiorandomizer" "$enableAudioSetting"
