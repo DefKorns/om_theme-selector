@@ -1,6 +1,6 @@
 #!/bin/sh
-# shellcheck disable=SC2154,SC1091,SC2034,SC2068,SC2039
-#  Copyright (c) 2024 DefKorns (https://defkorns.github.io/LICENSE)
+# shellcheck disable=SC2154,SC1091,SC2034,SC2068,SC2039,SC3051,SC3046
+#  Copyright (c) 2025 DefKorns (https://defkorns.github.io/LICENSE)
 #
 #  This program is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -15,7 +15,7 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
-# shellcheck source=preinit
+# shellcheck source=/dev/null
 source /etc/preinit
 script_init
 
