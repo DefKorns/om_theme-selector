@@ -22,11 +22,11 @@ script_init
 remove "$omDummy"
 
 if [ -n "$(ls -A $theme_path)" ]; then
-	touch "$omDummy"
-	themeLoader
+  touch "$omDummy"
+  themeLoader
 else
-	remove "$omModSpacer"
-	clearList
+  remove "$omModSpacer"
+  clearList
 fi
 
 usleep 50000 && $optionsMenu/options --commandPath $omModCommands/ --scriptPath $omModScripts/ --title "$omTitle" &
