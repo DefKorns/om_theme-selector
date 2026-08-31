@@ -37,23 +37,26 @@
         "workbench.iconTheme": "vscode-icons",
         // "beautify.config": "",
         // "http.proxyAuthorization": null,
-
         //
-        "editor.tabSize": 4,
+        "editor.tabSize": 2,
         // "editor.wordWrap": "wordWrapColumn",
         // "editor.wordWrapColumn": 80,
         // "editor.fontSize": 16,
         "editor.insertSpaces": true,
         "editor.detectIndentation": false,
         "editor.renderWhitespace": "all",
-
         "shellcheck.enable": true,
         "shellcheck.useWorkspaceRootAsCwd": true,
         "shellcheck.run": "onSave",
         "shellcheck.customArgs": [
             "-x"
         ],
-         "shellcheck.exclude": ["3046", "3014","3046", "3051"],
+        "shellcheck.exclude": [
+            "3046",
+            "3014",
+            "3046",
+            "3051"
+        ],
         "shellformat.flag": "-i 2 -ci -sr -bn",
     }
 }
