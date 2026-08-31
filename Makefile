@@ -98,8 +98,11 @@ info:
 	@echo "next minor version: $(NEXT_MINOR_VERSION)"
 	@echo "next patch version: $(NEXT_PATCH_VERSION)"
 
+update-headers:
+	sh tools/update-license-headers.sh $(YEAR)
+
 clean:
 	rm -rf out/ temp/
 
 
-.PHONY: clean
+.PHONY: clean update-headers
