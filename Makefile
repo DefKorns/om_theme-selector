@@ -16,7 +16,7 @@ MOD_VER    = $(shell [ -f VERSION ] && head VERSION || echo $(GET_VER))
 MAJOR      = $(shell echo $(MOD_VER) | sed "s/^\([0-9]*\).*/\1/")
 MINOR      = $(shell echo $(MOD_VER) | sed "s/[0-9]*\.\([0-9]*\).*/\1/")
 PATCH      = $(shell echo $(MOD_VER) | sed "s/[0-9]*\.[0-9]*\.\([0-9]*\).*/\1/")
-RC		   = $(shell echo $(MOD_VER) | grep -oP '(?<=rc)[0-9]+')
+RC		   = $(shell echo $(MOD_VER) | grep -oP '(?<=rc)[0-9]+' || echo 0)
 
 # total number of commits
 BUILD      = $(shell git log --oneline | wc -l | sed -e "s/[ \t]*//g")
@@ -26,8 +26,7 @@ NEXT_PATCH_VERSION = $(MAJOR).$(MINOR).$(shell expr $(PATCH) + 1)-b$(BUILD)
 NEXT_RC_VERSION = $(MAJOR).$(MINOR).$(PATCH)-rc$(shell expr $(RC) + 1)
 
 MOD_URL=`git config --get remote.origin.url`
-GIT_COMMIT := $(shell echo "`git rev-parse --short HEAD``git diff-index --quiet HEAD --`")
-GIT_DIRTY      = $(shell git diff --shortstat 2> /dev/null | tail -n1 )
+GIT_COMMIT := $(shell git rev-parse --short HEAD)$(shell git diff-index --quiet HEAD -- || echo -dirty)
 RSYNC = $(shell rsync -a --exclude-from=exclude-file.txt mod/etc/options_menu/ temp/ --links --delete)
 MOD_FILENAME   = $(shell basename `pwd`)
 DEV_DIR = $(shell realpath .)
@@ -73,16 +72,32 @@ zip:
 	cd temp/; zip -r $(OUT)/$(MOD_FILENAME)-$(MOD_VER).zip *
 
 fix: hmod
-	@echo $(NEXT_PATCH_VERSION) > VERSION
+	@ver="$(NEXT_PATCH_VERSION)" && \
+	git tag "v$(MOD_VER)" && \
+	echo "$$ver" > VERSION && \
+	git add VERSION && \
+	git commit -m "Bump version to v$$ver"
 
 rc: hmod
-	@echo $(NEXT_RC_VERSION) > VERSION
+	@ver="$(NEXT_RC_VERSION)" && \
+	git tag "v$(MOD_VER)" && \
+	echo "$$ver" > VERSION && \
+	git add VERSION && \
+	git commit -m "Bump version to v$$ver"
 
 update: all
-	@echo $(NEXT_MINOR_VERSION) > VERSION
+	@ver="$(NEXT_MINOR_VERSION)" && \
+	git tag "v$(MOD_VER)" && \
+	echo "$$ver" > VERSION && \
+	git add VERSION && \
+	git commit -m "Bump version to v$$ver"
 
 upgrade: all
-	@echo $(NEXT_MAJOR_VERSION) > VERSION
+	@ver="$(NEXT_MAJOR_VERSION)" && \
+	git tag "v$(MOD_VER)" && \
+	echo "$$ver" > VERSION && \
+	git add VERSION && \
+	git commit -m "Bump version to v$$ver"
 
 upload:
 	rm -f $(OUT)/$(MOD_FILENAME).*
