@@ -178,7 +178,7 @@ del_on_shonen="$snes_theme_path $del_shared"
 items_to_delete="$del_on_snes"
 
 # shellcheck disable=SC2012
-has_theme="$(ls -1 "$theme_path/$system".*.tar.gz 2> /dev/null | wc -l)"
+has_theme="$(ls -1 "$theme_path/$system".*.tar.gz 2>/dev/null | wc -l)"
 
 ################
 # shellcheck disable=SC2154
@@ -233,7 +233,7 @@ enableMenuOptions() {
     if grep -q "$advThm" "$thm_chk"; then
       disable_cmds "AudioSetting" "ThemeSetting" "AdvancedMusicHack"
     fi
-  done < "$thmOverlay"
+  done <"$thmOverlay"
 
   if [ "$sftype" = "nes" ]; then
     disable_cmds "Pole" "Mario" "Luigi" "Wall" "WallNear" "WallFar" "Color" "Packed"
@@ -273,7 +273,7 @@ themeLoader() {
     tmp_thm_script="$omThemeScript"
 
     if [ ! -f "$full_path/info" ]; then
-      echo "NAME=$thm_title [${size}b]" > "$full_path/info"
+      echo "NAME=$thm_title [${size}b]" >"$full_path/info"
     fi
 
     if [ ! -f "$full_path.png" ]; then
@@ -310,12 +310,12 @@ themeLoader() {
 copier \"\$file\" \"\$file\"_backup 
 copier \"$xtras/thumb.png\" \"\$file\"
 touch \"$hadThumb\"
-done" >> "$thm_script.sh"
+done" >>"$thm_script.sh"
     else
       echo "if [ -f \"$hadThumb\" ]; then
   sh $omModScripts/om_restorethumb
   rm \"$hadThumb\" 
-fi" >> "$thm_script.sh"
+fi" >>"$thm_script.sh"
     fi
 
     if grep -q -w "$thm" "$thmOverlay" || [ ! -d "$has_folders" ]; then
@@ -328,17 +328,17 @@ sed -i \"s/SELECTED_THEME=\\\"CHANGEME\\\"/SELECTED_THEME=\\\"${thm}\\\"/g;\" \"
 # if [ \"$tmp_thm_script\" = \"$omOverlayThemeScript\"] && [ ! -d \"${gStorage}/001\" ];then
 # sed -i \"s/HAS_FOLDERS=\\\"true\\\"/HAS_FOLDERS=\\\"false\\\"/g;\" \"$b_file\"
 # fi
-" >> "$thm_script.sh"
+|" >>"$thm_script.sh"
 
     echo "sleep 1
-    hakchi reboot" >> "$thm_script.sh"
+    hakchi reboot" >>"$thm_script.sh"
 
     preview_image="$thmPreview/$thm.png"
     [ ! -f "$preview_image" ] && preview_image="$theme_path/$thm.png"
     [ ! -f "$preview_image" ] && [ -z "${thm##diy_theme*}" ] && preview_image="$optionsMenu/images/diy_preview.png"
     [ ! -f "$preview_image" ] && preview_image="$optionsMenu/images/default_preview.png"
 
-    cmdName="$(sed -r 's/NAME=//g' < "$full_path/info")"
+    cmdName="$(sed -r 's/NAME=//g' <"$full_path/info")"
     echo "COMMAND_NAME=$cmdName
 COMMAND_TYPE=INTERNAL
 COMMAND_STR=sh $thm_script.sh
@@ -346,7 +346,7 @@ PREVIEW_IMAGE=$preview_image
 PREVIEW_IMAGE_X=762
 PREVIEW_IMAGE_Y=276
 PREVIEW_IMAGE_WIDTH=0
-PREVIEW_IMAGE_HEIGHT=272" > "$cmd_list"
+PREVIEW_IMAGE_HEIGHT=272" >"$cmd_list"
   done
 }
 
@@ -359,12 +359,12 @@ remove_regional_theme() {
 }
 
 get_theme_list() {
-  decodepng "$omLoaders/downloadthemelist.png" > /dev/fb0
+  decodepng "$omLoaders/downloadthemelist.png" >/dev/fb0
   cd "$omModSub" || exit
 
   if [ ! -e "${s_type}${listName}" ]; then
     clearDownloads
-    if wget -q --spider "$downloadURL/${s_type}${listName}" > /dev/null 2>&1; then
+    if wget -q --spider "$downloadURL/${s_type}${listName}" >/dev/null 2>&1; then
       wget "$downloadURL/${s_type}${listName}"
     else
       netChecker
@@ -438,7 +438,7 @@ themeGenerator() {
   theme_pkg="${themeURL}/${system}.${theme_name}.tar.gz"
   [ "${theme_name}" = "all" ] && theme_pkg="${downloadURL}/${sftype}-all"
 
-  if wget -q --spider "${theme_pkg}" > /dev/null 2>&1; then
+  if wget -q --spider "${theme_pkg}" >/dev/null 2>&1; then
     echo "Downloading..."
     wget "${theme_pkg}"
     if [ "${theme_name}" = "all" ]; then
@@ -448,14 +448,14 @@ themeGenerator() {
         theme_pkg="${themeURL}/${system}.${t}.tar.gz"
         wget "${theme_pkg}"
         tar -xzvf "${system}.${t}.tar.gz" && remove "${system}.${t}.tar.gz"
-      done < "${sftype}-all"
+      done <"${sftype}-all"
     fi
     [ -f "${system}.${theme_name}.tar.gz" ] && tar -xzvf "${system}.${theme_name}.tar.gz" && rm -f ./*.tar.gz
     remove "${sftype}-all"
     remove_regional_theme
     echo ""
     size="$(du -sh "${full_path}" | cut -f1)"
-    echo "NAME=${full_title}[${size}b]" > "${full_path}/info"
+    echo "NAME=${full_title}[${size}b]" >"${full_path}/info"
     echo "Installation complete."
   else
     netChecker
@@ -553,7 +553,7 @@ find_diy_asset() {
           cmd_name="$(echo "$asset_name" | sed -e 's/_/ /g' | awk '{for(i=1;i<=NF;i++){$i=toupper(substr($i,1,1))substr($i,2)}}1')"
 
           if [ "$p" = "$theme_path" ]; then
-            cmd_name="$(sed -r 's/NAME=//g' < "$full_asset_path/info" | awk '{$NF="";sub(/[ \t]+$/,"")}1')"
+            cmd_name="$(sed -r 's/NAME=//g' <"$full_asset_path/info" | awk '{$NF="";sub(/[ \t]+$/,"")}1')"
             full_asset_path="$resource_path/$asset_path"
           fi
 
@@ -565,9 +565,9 @@ find_diy_asset() {
           fi
           [ "$chars" = "1" ] && temp_preview="$preview_image"
           if [ -n "$json" ] && [ ! -f "$temp_preview" ]; then
-            decodepng "$omLoaders/loading.png" > /dev/fb0
+            decodepng "$omLoaders/loading.png" >/dev/fb0
             if [ "$colors" = "0" ]; then
-              sed -r "s/changeme/${1}_${asset_name}/g;" "$om_default_json" > "$json"
+              sed -r "s/changeme/${1}_${asset_name}/g;" "$om_default_json" >"$json"
               pngpack-upx u "$json" "$preview_image" "$omModSprites/assets/$1"
               remove "$json"
             fi
@@ -584,10 +584,10 @@ PREVIEW_IMAGE=$preview_image
 PREVIEW_IMAGE_X=$preview_x
 PREVIEW_IMAGE_Y=$preview_y
 PREVIEW_IMAGE_WIDTH=$preview_w
-PREVIEW_IMAGE_HEIGHT=$preview_h" > "$cmd_file"
+PREVIEW_IMAGE_HEIGHT=$preview_h" >"$cmd_file"
           fi
           copy "$omModLicense" "$sprite_script.sh"
-          echo "diySpriteSelector \"$full_asset_path\" \"$asset_path\" \"$asset\"" >> "$sprite_script.sh"
+          echo "diySpriteSelector \"$full_asset_path\" \"$asset_path\" \"$asset\"" >>"$sprite_script.sh"
         fi
       done
     fi
@@ -602,8 +602,8 @@ diySpriteSelector() {
   [ ! -d "$diyAsset" ] && mkdir -p "$diyAsset"
   find "$diySelectedAsset" -name "$3" -exec cp {} "$diyLayout" \;
   if [ ! -f "$b_file" ]; then
-    sed '1,2d' "$omThemeScript" > "$b_file"
-    echo themeSelector > "$p_file"
+    sed '1,2d' "$omThemeScript" >"$b_file"
+    echo themeSelector >"$p_file"
   fi
   echo ""
   echo "  ____ _____   __  _____ _   _ _____ __  __ _____    ____ ____  _____    _  _____ ___  ____  "
@@ -626,7 +626,7 @@ diySpriteSelector() {
 }
 
 diyThemeChecker() {
-  [ "$1" = "loader" ] && decodepng "$omLoaders/loadingassets.png" > /dev/fb0
+  [ "$1" = "loader" ] && decodepng "$omLoaders/loadingassets.png" >/dev/fb0
 
   [ ! -d "$diyThemePath" ] && mkdir -p "$diyThemePath"
   create "$omModGenSpacer"
