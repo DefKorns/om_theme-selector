@@ -20,6 +20,7 @@
 source $mountpoint/etc/options_menu/themes/scripts/om_vars
 script_init
 
+# shellcheck disable=SC2119 # deliberately called with no args here
 diyThemeChecker
 
 usleep 50000 && $optionsMenu/options --commandPath $omModGenCmds/ --scriptPath $omModGenScripts/ --title "$omTitle" &
