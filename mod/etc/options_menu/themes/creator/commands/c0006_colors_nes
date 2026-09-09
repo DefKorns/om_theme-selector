@@ -1,4 +1,4 @@
-COMMAND_NAME=Background Color
+COMMAND_NAME=BACKGROUND_COLOR
 COMMAND_TYPE=EXTERNAL
 RESTART_UI=FALSE
 COMMAND_STR=usleep 50000 && sh %script_dir%/om_diy_asset colors_nes &

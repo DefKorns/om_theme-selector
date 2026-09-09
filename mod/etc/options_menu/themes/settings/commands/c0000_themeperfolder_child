@@ -1,6 +1,7 @@
-COMMAND_NAME=   Allow Different Theme to SubFolder
+COMMAND_NAME=ALLOW_DIFFERENT_THEME_SUBFOLDER
 COMMAND_TYPE=EXTERNAL
 RESTART_UI=FALSE
+CHILD=TRUE
 COMMAND_STR=sh %script_dir%/om_theme child
 PREVIEW_IMAGE=/etc/options_menu/images/randtheme.png
 PREVIEW_IMAGE_X=920

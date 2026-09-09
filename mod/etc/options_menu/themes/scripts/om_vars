@@ -21,7 +21,7 @@ source $mountpoint/etc/options_menu/scripts/om_functions
 script_init
 
 modtitle="themes"
-omTitle="Theme Selector"
+omTitle="THEME_SELECTOR"
 b_file="$mountpoint/etc/preinit.d/b8024_themeselector"
 p_file="$mountpoint/etc/preinit.d/p8024_themeselector"
 fontfix_file="$mountpoint/etc/preinit.d/b8025_fontfix"
@@ -418,9 +418,9 @@ loadThemeList() {
 # verify themeGenerator function
 themeGenerator() {
   echo "Packaging: DefKorns"
-  echo "Category: User Interface Mod "
+  translate CATEGORY_UI_MOD
   echo ""
-  echo "Checking selected theme files."
+  translate CHECKING_THEME_FILES
   echo ""
   theme_name="${1}"
   full_title="$(grep -F 'NAME=' "${omModSubCmds}/c0010_${theme_name}" | sed -e 's/.*=\(.*\)\[.*/\1/')"
@@ -431,7 +431,7 @@ themeGenerator() {
   [ "${theme_name}" = "all" ] && theme_pkg="${downloadURL}/${sftype}-all"
 
   if wget -q --spider "${theme_pkg}" > /dev/null 2>&1; then
-    echo "Downloading..."
+    translate DOWNLOADING
     wget "${theme_pkg}"
     if [ "${theme_name}" = "all" ]; then
       while IFS= read -r t; do
@@ -448,7 +448,7 @@ themeGenerator() {
     echo ""
     size="$(du -sh "${full_path}" | cut -f1)"
     echo "NAME=${full_title}[${size}b]" > "${full_path}/info"
-    echo "Installation complete."
+    translate INSTALLATION_COMPLETE
   else
     netChecker
   fi
@@ -608,11 +608,11 @@ diySpriteSelector() {
   echo ""
   echo ""
   echo ""
-  echo "Asset applied successfully! "
+  translate ASSET_APPLIED_SUCCESS
   echo ""
   echo ""
-  echo "Don't forget to select 'Save custom theme' when you finish selecting your assets, or simply select"
-  echo "'Preview custom theme', to have a preview before saving your theme."
+  translate SAVE_PREVIEW_HINT_LINE1
+  translate SAVE_PREVIEW_HINT_LINE2
   echo ""
   echo ""
 }

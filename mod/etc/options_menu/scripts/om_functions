@@ -63,15 +63,27 @@ optionsMenu="$mountpoint/etc/options_menu"
 omCommands="$optionsMenu/commands"
 omScripts="$optionsMenu/scripts"
 omImages="$optionsMenu/images"
-# MESSAGES
-noNetErr="echo Error while connecting to server, please check your internet connection and try again. "
-noPkgErr="echo The package you resquested isn't available at the moment, please try again later."
 
 # FUNCTIONS
 gStorage="$(findGameStorage)"
 
 rename() {
   [ -f "$1" ] && mv "$1" "$2"
+}
+
+translate() {
+  key="$1"
+  langCode="en-US"
+  [ -f "$optionsMenu/language.cfg" ] && langCode="$(cat "$optionsMenu/language.cfg")"
+  [ -z "$langCode" ] && langCode="en-US"
+
+  value=""
+  for langDir in "$optionsMenu/lang" "$optionsMenu"/*/lang; do
+    [ -z "$value" ] && [ -f "$langDir/$langCode.lang" ] && value="$(grep "^${key}=" "$langDir/$langCode.lang" 2>/dev/null | tail -1 | cut -d= -f2-)"
+    [ -z "$value" ] && [ -f "$langDir/en-US.lang" ] && value="$(grep "^${key}=" "$langDir/en-US.lang" 2>/dev/null | tail -1 | cut -d= -f2-)"
+  done
+  [ -z "$value" ] && value="$key"
+  echo "$value"
 }
 
 remove() {
@@ -112,9 +124,9 @@ disable_cmds() {
 
 netChecker() {
   if ! nc -z 8.8.8.8 53 >/dev/null 2>&1; then
-    $noPkgErr
+    translate NO_PKG_ERR
   else
-    $noNetErr
+    translate NO_NET_ERR
   fi
 }
 

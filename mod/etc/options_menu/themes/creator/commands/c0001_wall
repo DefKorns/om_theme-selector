@@ -1,4 +1,4 @@
-COMMAND_NAME=Background
+COMMAND_NAME=BACKGROUND
 COMMAND_TYPE=EXTERNAL
 RESTART_UI=FALSE
 COMMAND_STR=usleep 50000 && sh %script_dir%/om_diy_asset wall &

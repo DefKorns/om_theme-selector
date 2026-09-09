@@ -1,4 +1,4 @@
-COMMAND_NAME=Refresh
+COMMAND_NAME=REFRESH
 COMMAND_TYPE=EXTERNAL
 RESTART_UI=FALSE
 COMMAND_STR=sh /etc/options_menu/scripts/om_themeselector reload
