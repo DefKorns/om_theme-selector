@@ -15,7 +15,7 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
-font_bind_fix() {
+fontBindFix() {
   [ "$1" == "backup" ] && FONT_TYPE="title s m l small medium large"
   [ "$1" == "restore" ] && FONT_TYPE="s m l small medium large"
   [ "$1" == "restore" ] && [ -f "$TITLE_FONT_BACKUP" ] && mv "$TITLE_FONT_BACKUP" "$TITLE_FONT"
@@ -57,7 +57,7 @@ themeSelector() {
 
   local STATE_PATH="$mountpoint$profilepath/$modname"
   local LAST_THEME="$STATE_PATH/lastTheme"
-  local ACTIVE_THEME="$STATE_PATH/activeTheme"
+  local ACTIVE_THEME="$STATE_PATH/active_theme"
   local SELECTED_THEME="CHANGEME"
 
   if [ -f "$STATE_PATH/om_themerandomizer" ]; then
@@ -84,10 +84,10 @@ themeSelector() {
 
   if [ -d "$FULL_THEME_PATH/fonts" ]; then
     if [ "$(cksum "$TITLE_FONT" | awk '{ print $1; }')" != "$(cksum "$TITLE_THEME_FONT" | awk '{ print $1; }')" ]; then
-      font_bind_fix "backup"
+      fontBindFix "backup"
     fi
   else
-    font_bind_fix "restore"
+    fontBindFix "restore"
   fi
 
   mountpoint -q "$ORIGINAL_THEME" && umount "$ORIGINAL_THEME"

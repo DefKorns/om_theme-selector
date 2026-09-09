@@ -12,11 +12,14 @@
     "settings": {
         "files.autoSave": "off",
         "[bash]": {
-            "editor.formatOnSave": true
+            "editor.formatOnSave": true,
+            "editor.tabSize": 2,
+            "editor.insertSpaces": true,
+            "editor.detectIndentation": false
         },
         // "terminal.integrated.shell.windows": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
         // "terminal.integrated.shell.windows": "C:\\Program Files\\Git\\bin\\bash.exe",
-        "shellformat.path": "C:\\bin\\shfmt_v3.2.4_windows_amd64.exe",
+        "shellformat.path": "C:\\bin\\shfmt_v3.12.0_windows_amd64.exe",
         "window.zoomLevel": 0,
         "files.associations": {
             "b[0-9]*": "shellscript",
@@ -48,6 +51,7 @@
         "shellcheck.enable": true,
         "shellcheck.useWorkspaceRootAsCwd": true,
         "shellcheck.run": "onSave",
+        "shellcheck.enableQuickFix": true,
         "shellcheck.customArgs": [
             "-x"
         ],
@@ -57,6 +61,11 @@
             "3046",
             "3051"
         ],
-        "shellformat.flag": "-i 2 -ci -sr -bn",
+        // "shellformat.flag": "-i 2 -ci -sr -bn",
+        "shfmtIde.flag": "-p -bn -ci -i=2 -ln=posix/sh",
+        "shfmt.executableArgs": [
+            "-i=2",
+            "-ci"
+        ]
     }
 }

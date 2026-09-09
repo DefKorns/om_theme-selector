@@ -56,6 +56,6 @@ sbm)
   ;;
 esac
 
-find_diy_asset "$1"
+findDiyAsset "$1"
 
 $optionsMenu/options --commandPath $diy_om_sprite_path/commands/ --scriptPath $diy_om_sprite_path/scripts --title "$omTitle" &
