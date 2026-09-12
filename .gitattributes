@@ -1,0 +1,5 @@
+# Force LF regardless of platform checkout settings (core.autocrlf, etc.) -
+# GitHub Actions workflow YAML and shell here don't want a stray \r.
+* text=auto eol=lf
+
+*.ttf binary
