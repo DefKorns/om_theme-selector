@@ -20,6 +20,9 @@
 source $mountpoint/etc/options_menu/scripts/om_functions
 script_init
 
+# shellcheck source=mod/etc/options_menu/themes/scripts/om_theme_functions
+source $mountpoint/etc/options_menu/themes/scripts/om_theme_functions
+
 modtitle="themes"
 omTitle="THEME_SELECTOR"
 b_file="$mountpoint/etc/preinit.d/b8024_themeselector"

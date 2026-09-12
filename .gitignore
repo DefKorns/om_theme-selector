@@ -500,6 +500,7 @@ default/
 temp/
 mod/etc/options_menu/themes/scripts/b8024_themeselector
 mod-/
+mod-backup/
 out--/
 mod/etc/options_menu/themes-old/
 modules/
