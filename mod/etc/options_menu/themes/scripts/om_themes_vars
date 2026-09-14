@@ -21,14 +21,19 @@ source $mountpoint/etc/options_menu/scripts/om_functions
 script_init
 
 modtitle="themes"
+omTitle="THEME_SELECTOR"
+b_file="$mountpoint/etc/preinit.d/b8024_themeselector"
+p_file="$mountpoint/etc/preinit.d/p8024_themeselector"
+fontfix_file="$mountpoint/etc/preinit.d/b8025_fontfix"
+chmenu_file="$root_bin/chmenu"
+has_folders="${gStorage}/001"
+
 
 theme_path="$usb_path/$modtitle/$s_type"
 [ ! -d "$theme_path" ] && theme_path="$nand_path/$modtitle/$s_type"
 system="$(echo "$s_type" | awk '{print toupper($0)}')"
 has_theme="$(ls -1 "$theme_path/$system".*.tar.gz 2> /dev/null | wc -l)"
 
-chmenu_file="$root_bin/chmenu"
-fontfix_file="$mountpoint/etc/preinit.d/b8025_fontfix"
 
 # extracts any theme archives already sitting in $theme_path (e.g. copied
 # there over USB), instead of the old version's "*.tar.gz in whatever the
@@ -68,4 +73,3 @@ fontFix' "$injected_file"
     fi
   done
 }
-
