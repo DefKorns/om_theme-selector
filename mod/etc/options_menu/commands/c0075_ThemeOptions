@@ -1,7 +1,5 @@
 COMMAND_NAME=THEME_OPTIONS
 COMMAND_TYPE=EXTERNAL
 RESTART_UI=FALSE
-COMMAND_STR=sh %script_dir%/om_themeselector
-PREVIEW_IMAGE=/etc/options_menu/images/themes.png
-PREVIEW_IMAGE_X=900
-PREVIEW_IMAGE_Y=262
+COMMAND_STR=sh %script_dir%/om_theme_selector
+PREVIEW_IMAGE=/etc/options_menu/images/preview_theme_options.png

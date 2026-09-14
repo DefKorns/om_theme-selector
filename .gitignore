@@ -526,3 +526,4 @@ out---/
 preinit
 b0010_functions
 b0050_boot
+tools/gen_theme_options_preview.py

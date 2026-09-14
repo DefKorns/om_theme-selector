@@ -1,5 +1,5 @@
 #!/bin/sh
-# shellcheck disable=SC2086,SC2154,SC3051
+# shellcheck disable=SC2086,SC2154,SC3046,SC3051
 # # shellcheck disable=SC2034,SC2086,SC2154,SC3010,SC3046,SC3051
 #  Copyright (c) 2026 DefKorns (https://defkorns.github.io/LICENSE)
 #
@@ -20,4 +20,52 @@
 source $mountpoint/etc/options_menu/scripts/om_functions
 script_init
 
+modtitle="themes"
+
+theme_path="$usb_path/$modtitle/$s_type"
+[ ! -d "$theme_path" ] && theme_path="$nand_path/$modtitle/$s_type"
+system="$(echo "$s_type" | awk '{print toupper($0)}')"
+has_theme="$(ls -1 "$theme_path/$system".*.tar.gz 2> /dev/null | wc -l)"
+
+chmenu_file="$root_bin/chmenu"
+fontfix_file="$mountpoint/etc/preinit.d/b8025_fontfix"
+
+# extracts any theme archives already sitting in $theme_path (e.g. copied
+# there over USB), instead of the old version's "*.tar.gz in whatever the
+# CWD happens to be" - which didn't match what $has_theme itself checked
+hasThemesToInstall() {
+  [ "$has_theme" = 0 ] && return
+  for f in "$theme_path/$system".*.tar.gz; do
+    [ -f "$f" ] || continue
+    tar -xzvf "$f" -C "$theme_path" && rm -f "$f"
+  done
+}
+
+# patches chmenu/fontfix (via $injected_file, not a hardcoded path - so the
+# grep guard and the sed always target the same file even if $rootfs
+# resolves differently) to call into the theme selector's own hooks
+injectFile() {
+  for scrpt in "$@"; do
+    case "$scrpt" in
+      chmenu) injected_file="$chmenu_file" ;;
+      fontfix) injected_file="$fontfix_file" ;;
+    esac
+
+    grep -q "# themeselector" "$injected_file" && continue
+
+    if [ "$scrpt" = "chmenu" ]; then
+      # shellcheck disable=SC1004
+      sed -i '/^overmount_games.*/a  # themeselector fix \
+themeSelector \
+fontFix' "$injected_file"
+    elif [ "$scrpt" = "fontfix" ]; then
+      # shellcheck disable=SC1004,SC2016
+      sed -i '/^fontFix_getPath().*/a  # themeselector \
+  if [ -f "$mountpoint$profilepath/$modname/active_theme" ]; then \
+    active_theme=$(cat "$mountpoint$profilepath/$modname/active_theme") \
+    fontFix_getPath0 "$active_theme/fonts/$1" && return 0 \
+  fi' "$injected_file"
+    fi
+  done
+}
 
