@@ -502,6 +502,31 @@ mod/etc/options_menu/themes/scripts/b8024_themeselector
 mod-/
 mod-backup/
 out--/
+
+# excluded from every build (exclude-file.txt) - kept on disk for local
+# testing, never tracked
+mod/etc/options_menu/themes/creator/sprites/assets/luigi/Fire_Bros/
+mod/etc/options_menu/themes/creator/sprites/assets/luigi/Frogman/
+mod/etc/options_menu/themes/creator/sprites/assets/luigi/Hammer_Bro/
+mod/etc/options_menu/themes/creator/sprites/assets/luigi/Little_Bro/
+mod/etc/options_menu/themes/creator/sprites/assets/luigi/Racoon_tail/
+mod/etc/options_menu/themes/creator/sprites/assets/luigi/Super_Bro/
+mod/etc/options_menu/themes/creator/sprites/assets/luigi/Tanooki/
+mod/etc/options_menu/themes/creator/sprites/assets/mario/Fire_Bros/
+mod/etc/options_menu/themes/creator/sprites/assets/mario/Frogman/
+mod/etc/options_menu/themes/creator/sprites/assets/mario/Hammer_Bro/
+mod/etc/options_menu/themes/creator/sprites/assets/mario/Little_Bro/
+mod/etc/options_menu/themes/creator/sprites/assets/mario/Racoon_tail/
+mod/etc/options_menu/themes/creator/sprites/assets/mario/Super_Bro/
+mod/etc/options_menu/themes/creator/sprites/assets/mario/Tanooki/
+mod/etc/options_menu/themes/creator/sprites/assets/wall/Fire_Bros/
+mod/etc/options_menu/themes/creator/sprites/assets/wall/Frogman/
+mod/etc/options_menu/themes/creator/sprites/assets/wall/Hammer_Bro/
+mod/etc/options_menu/themes/creator/sprites/assets/wall/Little_Bro/
+mod/etc/options_menu/themes/creator/sprites/assets/wall/Racoon_tail/
+mod/etc/options_menu/themes/creator/sprites/assets/wall/Super_Bro/
+mod/etc/options_menu/themes/creator/sprites/assets/wall/Tanooki/
+mod/etc/options_menu/themes/creator/sprites/assets/packed_nes/*.png
 mod/etc/options_menu/themes-old/
 modules/
 mod/etc/options_menu/themes/scripts/scripts/*
@@ -527,3 +552,4 @@ preinit
 b0010_functions
 b0050_boot
 tools/gen_theme_options_preview.py
+_console_originals/
