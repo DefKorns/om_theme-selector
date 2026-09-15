@@ -350,7 +350,7 @@ removeRegionalTheme() {
 }
 
 getThemeList() {
-  "$omScripts/gen_splash" /tmp/om_splash.png THEME_LIST_DOWNLOADING && decodepng /tmp/om_splash.png > /dev/fb0
+  "$omScripts/gen_splash" /tmp/om_splash.png THEME_LIST_DOWNLOADING_LINE1 THEME_LIST_DOWNLOADING_LINE2 && decodepng /tmp/om_splash.png > /dev/fb0
   cd "$omModSub" || exit
 
   if [ ! -e "${s_type}${listName}" ]; then
