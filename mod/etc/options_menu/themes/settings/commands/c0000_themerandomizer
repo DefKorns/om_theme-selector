@@ -2,6 +2,4 @@ COMMAND_NAME=THEME_RANDOMIZER
 COMMAND_TYPE=EXTERNAL
 RESTART_UI=FALSE
 COMMAND_STR=usleep 50000 && sh %script_dir%/om_theme &
-PREVIEW_IMAGE=/etc/options_menu/images/randtheme.png
-PREVIEW_IMAGE_X=920
-PREVIEW_IMAGE_Y=262
+PREVIEW_IMAGE=/etc/options_menu/images/preview_theme_randomizer.png

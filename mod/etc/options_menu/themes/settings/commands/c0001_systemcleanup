@@ -2,6 +2,4 @@ COMMAND_NAME=CLEAN_UP
 COMMAND_TYPE=EXTERNAL
 RESTART_UI=FALSE
 COMMAND_STR=sh %script_dir%/om_systemcleanup &
-PREVIEW_IMAGE=/etc/options_menu/images/uninstall.png
-PREVIEW_IMAGE_X=920
-PREVIEW_IMAGE_Y=262
+PREVIEW_IMAGE=/etc/options_menu/images/preview_clean_up.png
