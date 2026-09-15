@@ -20,7 +20,7 @@
 source $mountpoint/etc/options_menu/themes/scripts/om_vars
 script_init
 
-decodepng "$omLoaders/themepreview.png" >/dev/fb0
+"$omScripts/gen_splash" /tmp/om_splash.png THEME_PREVIEW_LOADING && decodepng /tmp/om_splash.png >/dev/fb0
 if [ ! -f "$b_file" ]; then
   sed '1,2d' $omThemeScript >"$b_file"
   echo "themeSelector" >"$p_file"

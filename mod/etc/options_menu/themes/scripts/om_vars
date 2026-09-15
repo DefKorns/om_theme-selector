@@ -36,7 +36,6 @@ themeURL="http://hakchicloud.com/Hakchi_Themes/themes"
 # Options Menu
 omMod="$optionsMenu/$modtitle"
 omModImgs="$optionsMenu/images"
-omLoaders="$omModImgs/loading/"
 omModCommands="$omMod/commands"
 omModScripts="$omMod/scripts"
 omModFnts="$omMod/fonts" # verify
@@ -351,7 +350,7 @@ removeRegionalTheme() {
 }
 
 getThemeList() {
-  decodepng "$omLoaders/downloadthemelist.png" > /dev/fb0
+  "$omScripts/gen_splash" /tmp/om_splash.png THEME_LIST_DOWNLOADING && decodepng /tmp/om_splash.png > /dev/fb0
   cd "$omModSub" || exit
 
   if [ ! -e "${s_type}${listName}" ]; then
@@ -557,7 +556,7 @@ findDiyAsset() {
           fi
           [ "$chars" = "1" ] && temp_preview="$preview_image"
           if [ -n "$json" ] && [ ! -f "$temp_preview" ]; then
-            decodepng "$omLoaders/loading.png" > /dev/fb0
+            "$omScripts/gen_splash" /tmp/om_splash.png THEME_LOADING && decodepng /tmp/om_splash.png > /dev/fb0
             if [ "$colors" = "0" ]; then
               sed -r "s/changeme/${1}_${asset_name}/g;" "$om_default_json" > "$json"
               pngpack-upx u "$json" "$preview_image" "$omModSprites/assets/$1"
@@ -618,7 +617,7 @@ diySpriteSelector() {
 }
 
 diyThemeChecker() {
-  [ "$1" = "loader" ] && decodepng "$omLoaders/loadingassets.png" > /dev/fb0
+  [ "$1" = "loader" ] && { "$omScripts/gen_splash" /tmp/om_splash.png THEME_LOADING_ASSETS && decodepng /tmp/om_splash.png > /dev/fb0; }
 
   [ ! -d "$diyThemePath" ] && mkdir -p "$diyThemePath"
   create "$omModGenSpacer"
