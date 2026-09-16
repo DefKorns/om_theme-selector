@@ -489,6 +489,7 @@ findDiyAsset() {
   asset="$diy_file"
   chars="0"
   colors="0"
+  preview_square="0"
   json=""
   preview_x="920"
   preview_y="275"
@@ -502,6 +503,10 @@ findDiyAsset() {
       asset="*.*"
       chars="1"
       preview_w="0"
+      preview_square="1"
+      ;;
+    wall | wall_near | wall_far)
+      preview_square="1"
       ;;
     sbm)
       diy_file="characters_sbm.png"
@@ -515,6 +520,7 @@ findDiyAsset() {
       preview_x="780"
       preview_w="0"
       preview_h="200"
+      preview_square="1"
       ;;
     packed_nes)
       diy_file="${sftype}.png"
@@ -523,6 +529,7 @@ findDiyAsset() {
       asset="$diy_file"
       preview_x="780"
       preview_w="0"
+      preview_square="1"
       preview_h="200"
       ;;
     colors)
@@ -543,6 +550,7 @@ findDiyAsset() {
       asset="*.*"
       chars="1"
       preview_w="0"
+      preview_square="1"
       ;;
   esac
 
@@ -564,7 +572,7 @@ findDiyAsset() {
 
   find "$diy_sprite/commands" "$diy_sprite/scripts" -type f \
     -not -name 'om_*' -not -name 'c999[0-9]_*' \
-    -not -name 'c0000_*' -not -name '_*' -exec rm {} +
+    -not -name 'c0001_*' -not -name '_*' -exec rm {} +
 
   diy_crop_batch=0
   for p in $paths_to_search; do
@@ -588,14 +596,11 @@ findDiyAsset() {
         [ -f "$resource_path/$asset_path/$diy_file" ] && has_sprite="1"
 
         if [ $has_sprite = "1" ] && [ "$asset_name" = "${asset_name#diy_theme}" ]; then
-          cmd_file="$diy_sprite/commands/c0000_$asset_name"
+          cmd_file="$diy_sprite/commands/c0001_$asset_name"
           sprite_script="$diy_sprite/scripts/$asset_name"
-          cmd_name="$(echo "$asset_name" | sed -e 's/_/ /g' | awk '{for(i=1;i<=NF;i++){$i=toupper(substr($i,1,1))substr($i,2)}}1')"
+          info_path="$full_asset_path" # theme root, before the next line repoints full_asset_path
 
-          if [ "$p" = "$theme_path" ]; then
-            cmd_name="$(sed -r 's/NAME=//g' < "$full_asset_path/info" | awk '{$NF="";sub(/[ \t]+$/,"")}1')"
-            full_asset_path="$resource_path/$asset_path"
-          fi
+          [ "$p" = "$theme_path" ] && full_asset_path="$resource_path/$asset_path"
 
           preview_image="$full_asset_path/$diy_file"
           temp_preview="${omModSprites}/assets/${1}/${1}_${asset_name}.png"
@@ -604,29 +609,32 @@ findDiyAsset() {
             preview_image="$temp_preview"
           fi
           [ "$chars" = "1" ] && temp_preview="$preview_image"
-          if [ -n "$json" ] && [ ! -f "$temp_preview" ]; then
-            if [ "$colors" = "0" ] && [ -n "$diy_crop_x" ]; then
-              # backgrounded and batched (4 at a time, matching this console's
-              # core count) - a bare sequential loop over every installed
-              # theme was the whole reason this screen took so long to open
+          if [ "$colors" = "0" ] && [ "$chars" != "1" ] && [ -n "$diy_crop_x" ]; then
+            if [ ! -f "$temp_preview" ]; then
+              # backgrounded, batched 4 at a time (this console's core count)
               sprite_crop "$preview_image" "$diy_crop_x" "$diy_crop_y" "$diy_crop_w" "$diy_crop_h" "$temp_preview" &
               diy_crop_batch=$((diy_crop_batch + 1))
               if [ "$diy_crop_batch" -ge 4 ]; then
                 wait
                 diy_crop_batch=0
               fi
+              usleep 1000
             fi
-            preview_image="$temp_preview"
-            usleep 1000
+            preview_image="$temp_preview" # cropped copy, queued above or already cached
           fi
 
           if [ ! -f "$cmd_file" ]; then
             touch "$cmd_file"
-            # chars=1 previews are tiny sprites (e.g. mario_run01.png) blown
-            # up a lot - nearest-neighbor keeps them crisp instead of blurry
+            cmd_name="$(echo "$asset_name" | sed -e 's/_/ /g' | awk '{for(i=1;i<=NF;i++){$i=toupper(substr($i,1,1))substr($i,2)}}1')"
+            [ "$p" = "$theme_path" ] && cmd_name="$(sed -r 's/NAME=//g' < "$info_path/info" | awk '{$NF="";sub(/[ \t]+$/,"")}1')"
+
+            # chars=1: tiny sprites blown up a lot, nearest keeps them crisp
             preview_nearest=""
             [ "$chars" = "1" ] && preview_nearest="
 PREVIEW_NEAREST=TRUE"
+            preview_square_str=""
+            [ "$preview_square" = "1" ] && preview_square_str="
+PREVIEW_SQUARE=TRUE"
             echo "COMMAND_NAME=$cmd_name
 COMMAND_TYPE=INTERNAL
 COMMAND_STR=sh $sprite_script.sh
@@ -634,10 +642,11 @@ PREVIEW_IMAGE=$preview_image
 PREVIEW_IMAGE_X=$preview_x
 PREVIEW_IMAGE_Y=$preview_y
 PREVIEW_IMAGE_WIDTH=$preview_w
-PREVIEW_IMAGE_HEIGHT=$preview_h${preview_nearest}" > "$cmd_file"
+PREVIEW_IMAGE_HEIGHT=$preview_h${preview_nearest}${preview_square_str}" > "$cmd_file"
+
+            copy "$omModLicense" "$sprite_script.sh"
+            echo "diySpriteSelector \"$full_asset_path\" \"$asset_path\" \"$asset\"" >> "$sprite_script.sh"
           fi
-          copy "$omModLicense" "$sprite_script.sh"
-          echo "diySpriteSelector \"$full_asset_path\" \"$asset_path\" \"$asset\"" >> "$sprite_script.sh"
         fi
       done < /tmp/diy_asset_list
       remove /tmp/diy_asset_list

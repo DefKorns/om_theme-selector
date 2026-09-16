@@ -23,39 +23,50 @@ script_init
 case "$1" in
 luigi)
   diy_om_sprite_path="$omModLuigi"
+  diy_title="DEMO_CHARACTER_2_LUIGI"
   ;;
 pole)
   diy_om_sprite_path="$omModPole"
+  diy_title="DEMO_POLE"
   ;;
 wall)
   diy_om_sprite_path="$omModWall"
+  diy_title="BACKGROUND"
   ;;
 wall_near)
   diy_om_sprite_path="$omModWallN"
+  diy_title="DEMO_BACKGROUND_NEAR"
   ;;
 wall_far)
   diy_om_sprite_path="$omModWallF"
+  diy_title="DEMO_BACKGROUND_FAR"
   ;;
 packed)
   diy_om_sprite_path="$omModPacked"
+  diy_title="BASE_UI"
   ;;
 mario)
   diy_om_sprite_path="$omModMario"
+  diy_title="DEMO_CHARACTER_1_MARIO"
   ;;
 colors)
   diy_om_sprite_path="$omModColors"
+  diy_title="COLORS"
   ;;
 colors_nes)
   diy_om_sprite_path="$omModColorsNes"
+  diy_title="BACKGROUND_COLOR"
   ;;
 packed_nes)
   diy_om_sprite_path="$omModPackedNes"
+  diy_title="BASE_UI"
   ;;
 sbm)
   diy_om_sprite_path="$omModSbm"
+  diy_title="DEMO_CHARACTERS"
   ;;
 esac
 
 findDiyAsset "$1"
 
-$optionsMenu/themes/theme_manager --commandPath $diy_om_sprite_path/commands/ --scriptPath $diy_om_sprite_path/scripts --title "$omTitle" &
+$optionsMenu/themes/theme_manager --commandPath $diy_om_sprite_path/commands/ --scriptPath $diy_om_sprite_path/scripts --title $diy_title --layout grid &
