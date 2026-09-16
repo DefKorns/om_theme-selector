@@ -7,14 +7,15 @@
   * (at your option) any later version.
   */
 
-// Standalone theme manager - a dedicated Modern-UI screen for om_theme-selector,
-// reusing OptionsMenu's engine (framework/ + command.cpp + localization.cpp,
-// vendored as a submodule) instead of the generic `options` binary. Every
-// om_theme-selector screen (root, downloads, DIY creator at every depth,
-// settings) is just this same binary relaunched with a different
-// --commandPath, exactly like `options` itself - the shell side already
-// generates real command files per screen (om_vars' themeLoader/getThemeList/
-// diyThemeChecker etc.), this only needs to read and render them.
+// Standalone theme manager for om_theme-selector, reusing OptionsMenu's
+// engine (framework/ + command.cpp + localization.cpp, vendored submodule)
+// instead of the generic `options` binary. Every screen is this same binary
+// relaunched with a different --commandPath, reading command files the
+// shell side already generates.
+//
+// --layout list (default): single-column option picker.
+// --layout grid: fixed actions as a chip strip, everything else (themes,
+// DIY assets) as a scrollable tile grid.
 
 #include "framework/sdl_helper.h"
 #include "framework/controller.h"
@@ -43,6 +44,42 @@ static void sReplace(std::string & command, std::string oldString, std::string n
         command.replace(pos, oldString.size(), newString);
 }
 
+// scale-to-fit-centered
+static void FitCentered(Texture & tex, int boxX, int boxY, int boxW, int boxH, int padding)
+{
+    const int maxW = boxW - 2*padding;
+    const int maxH = boxH - 2*padding;
+    if(tex.rect.w <= 0 || tex.rect.h <= 0)
+        return;
+    double scale = std::min((double)maxW / tex.rect.w, (double)maxH / tex.rect.h);
+    tex.rect.w = static_cast<int>(tex.rect.w * scale);
+    tex.rect.h = static_cast<int>(tex.rect.h * scale);
+    tex.rect.x = boxX + (boxW - tex.rect.w) / 2;
+    tex.rect.y = boxY + (boxH - tex.rect.h) / 2;
+}
+
+static std::string TruncateToWidth(const std::string & text, int glyphSize, int available)
+{
+    std::string label = text;
+    if(CanRenderWithTTF(label, glyphSize))
+    {
+        if(MeasureTTFWidth(label, glyphSize) > available)
+        {
+            int n = Utf8Length(label);
+            while(n > 0 && MeasureTTFWidth(TruncateUtf8(label, n) + "...", glyphSize) > available)
+                --n;
+            label = TruncateUtf8(label, n) + "...";
+        }
+    }
+    else
+    {
+        int maxChars = available / glyphSize;
+        if(TruncateUtf8(label, maxChars).size() != label.size())
+            label = TruncateUtf8(label, std::max(0, maxChars - 3)) + "...";
+    }
+    return label;
+}
+
 int main(int argc, char * argv[])
 {
     const std::string optionsLocation = "/etc/options_menu/";
@@ -50,6 +87,7 @@ int main(int argc, char * argv[])
     std::string scriptLocation = optionsLocation + "themes/scripts/";
     std::string titleKey = "THEME_SELECTOR";
     bool isRootScreen = true; // no --commandPath override - this is the top of the theme-selector's own tree
+    bool gridLayout = false;
 
     for(int i = 1; i < argc; ++i)
     {
@@ -62,24 +100,26 @@ int main(int argc, char * argv[])
             scriptLocation = argv[++i];
         else if(strcmp(argv[i], "--title") == 0 && i+1 < argc)
             titleKey = argv[++i];
+        else if(strcmp(argv[i], "--layout") == 0 && i+1 < argc)
+            gridLayout = (std::string(argv[++i]) == "grid");
     }
     if(!commandLocation.empty() && commandLocation.back() != '/')
         commandLocation += '/';
     if(!scriptLocation.empty() && scriptLocation.back() != '/')
         scriptLocation += '/';
 
-    // set only by OptionsMenu itself (main.cpp), right before running the "Theme
-    // Options" row - a leftover pointer to OptionsMenu's own screen, so the root
-    // of the theme selector can offer a real way back to it (see the synthesized
-    // BACK row below, after commands load)
+    // set by OptionsMenu before launching the "Theme Options" row - lets the
+    // root screen offer a real way back to it
     const char * backStackEnv = getenv("OM_BACK_STACK");
     std::string backStack = (isRootScreen && backStackEnv) ? backStackEnv : "";
 
     LoadLanguageFromConfig(optionsLocation);
     SetTTFFontPath(optionsLocation);
 
-    // Read commands from the real, shell-generated command folder for this screen
+    // isThemeItem: false for a "c0000_*" fixed action, true for a theme/asset
+    // row - only used by grid layout, to split strip vs. tile
     std::vector<Command> commands;
+    std::vector<bool> isThemeItem;
     std::ifstream in;
     if(auto dir = opendir(commandLocation.c_str()))
     {
@@ -111,6 +151,7 @@ int main(int argc, char * argv[])
                         c.UpdateState();
                     }
                     commands.push_back(c);
+                    isThemeItem.push_back(file.compare(0, 6, "c0000_") != 0);
                 }
             }
         }
@@ -121,10 +162,6 @@ int main(int argc, char * argv[])
         exit(1);
     }
 
-    // real way back to OptionsMenu's own screen, only offered on the theme
-    // selector's own root (sub-screens already have their own static Back row
-    // pointing back to this root) - mirrors OptionsMenu main.cpp's own BACK
-    // synthesis so returning there lands on the exact screen we came from
     if(!backStack.empty())
     {
         std::vector<std::string> entries;
@@ -158,17 +195,12 @@ int main(int argc, char * argv[])
             + (backScriptPath.empty() ? "" : " --scriptPath " + backScriptPath)
             + " --title \"" + backTitleKey + "\" &";
         commands.push_back(back);
+        isThemeItem.push_back(false);
     }
     else if(!isRootScreen)
     {
-        // every sub-screen used to need its own static c9999_Back file just
-        // to relaunch theme_manager - synthesized here instead. Screens with
-        // real cleanup to do first (e.g. the DIY sprite pickers re-enabling
-        // "Preview"/"DiY" rows, or Downloads refreshing the theme list) keep
-        // that as an om_return script in their own scriptLocation; this only
-        // needs to know whether one exists, not what it does. Screens with
-        // nothing to clean up (Settings, the DIY category list) just relaunch
-        // straight back to the theme selector's own root.
+        // use the screen's own om_return for cleanup if it has one, else
+        // just relaunch straight back to root
         Command back;
         back.name = "BACK";
         back.runInternal = false;
@@ -178,8 +210,9 @@ int main(int argc, char * argv[])
         if(returnScript.good())
             back.command = "sh " + scriptLocation + "om_return &";
         else
-            back.command = "usleep 50000 && " + optionsLocation + "themes/theme_manager &";
+            back.command = "usleep 50000 && " + optionsLocation + "themes/theme_manager --title INSTALLED_THEMES --layout grid &";
         commands.push_back(back);
+        isThemeItem.push_back(false);
     }
 
     if(commands.empty())
@@ -188,12 +221,16 @@ int main(int argc, char * argv[])
         exit(1);
     }
 
-    // BACK/EXIT rows (the synthesized one above, or a static c9999_Back file -
-    // both sort last) are pinned near the footer instead of scrolling with
-    // the rest of the list, matching OptionsMenu's own main.cpp
+    // BACK/EXIT sort last - pin them near the footer instead of scrolling
     int pinnedStartIndex = static_cast<int>(commands.size());
     while(pinnedStartIndex > 0 && (commands[pinnedStartIndex-1].name == "BACK" || commands[pinnedStartIndex-1].name == "EXIT"))
         --pinnedStartIndex;
+
+    // grid layout only: first non-fixed-action row (themeStart==pinnedStartIndex
+    // for an empty list - still renders as grid, just with an empty grid area)
+    int themeStart = 0;
+    while(themeStart < pinnedStartIndex && !isThemeItem[themeStart])
+        ++themeStart;
 
     int currentCommandId = 0;
 
@@ -215,12 +252,7 @@ int main(int argc, char * argv[])
     Texture appVersionText(MOD_VERSION, UiTheme::VersionFontSize, renderer, appTitleText.rect.x + appTitleText.rect.w + UiTheme::VersionGap, UiTheme::TitleY, false, 0xFFFFFFFF, true);
     appVersionText.rect.y -= appVersionText.rect.h / 2;
     Texture titleText(Translate(titleKey), UiTheme::SectionTitleFontSize, renderer, UiTheme::SectionTitleX, UiTheme::SectionTitleY, false, 0xFFFFFFFF, true);
-    SDL_Rect selectedRowRect{ UiTheme::ListX, UiTheme::RowFirstY - 2, UiTheme::ListContentRightX - UiTheme::ListX, 0 };
     Texture creditText("Theme Manager - by DefKorns", 16, renderer, UiTheme::CreditX, UiTheme::CreditY, false, 0xFFFFFFFF, true);
-    Texture scrollUp("^", 16, renderer, UiTheme::ScrollX, UiTheme::ScrollUpY, false, 0xFFFFFFFF, true);
-    scrollUp.rect.x -= scrollUp.rect.w / 2;
-    Texture scrollDown = scrollUp;
-    scrollDown.rect.y = UiTheme::ScrollDownY;
 
     struct Badge { Texture letter; Texture label; UiTheme::BadgeColor rim; UiTheme::BadgeColor fill; };
     Badge badgeA{ Texture("A", 16, renderer, 0, 0, false, UiTheme::BadgeLetterColor, true), Texture(Translate("HINT_SELECT"), 16, renderer, 0, 0, false, 0xFFFFFFFF, true), UiTheme::BadgeADark, UiTheme::BadgeA };
@@ -247,34 +279,333 @@ int main(int argc, char * argv[])
         return x - UiTheme::BadgeGroupGap;
     };
 
+    // shared chrome; section title is separate since grid positions it lower
+    auto DrawChromeCommon = [&]()
+    {
+        DrawStrokeRect(renderer, UiTheme::OuterRect, UiTheme::BorderR, UiTheme::BorderG, UiTheme::BorderB, UiTheme::BorderWidth, UiTheme::BorderRadius);
+        gearIcon.Draw(renderer);
+        appTitleText.Draw(renderer);
+        appVersionText.Draw(renderer);
+        DrawHLine(renderer, UiTheme::HeaderDividerX, UiTheme::HeaderDividerX + UiTheme::HeaderDividerW, UiTheme::HeaderDividerY, UiTheme::BorderR, UiTheme::BorderG, UiTheme::BorderB, UiTheme::BorderWidth);
+        DrawHLine(renderer, UiTheme::OuterRect.x, UiTheme::OuterRect.x + UiTheme::OuterRect.w, UiTheme::FooterDividerY, UiTheme::BorderR, UiTheme::BorderG, UiTheme::BorderB, UiTheme::BorderWidth);
+        DrawBadge(badgeA, UiTheme::BadgeClusterRightX);
+        creditText.Draw(renderer);
+    };
+    auto DrawSectionTitle = [&]()
+    {
+        int accentBarY = titleText.rect.y + (titleText.rect.h - UiTheme::SectionAccentBarH) / 2;
+        DrawFillRect(renderer, { UiTheme::SectionTitleX - UiTheme::SectionAccentBarW - 14, accentBarY, UiTheme::SectionAccentBarW, UiTheme::SectionAccentBarH }, UiTheme::AccentR, UiTheme::AccentG, UiTheme::AccentB);
+        titleText.Draw(renderer);
+    };
+
+    if(gridLayout)
+    {
+        // ============================= GRID LAYOUT =============================
+        // squareTiles: pack more/narrower columns for square-ish previews
+        const bool squareTiles = themeStart < pinnedStartIndex && commands[themeStart].previewSquare;
+        const int GridCols = squareTiles ? 7 : 4;
+        const int GridGap = 20;
+
+        // strip = fixed actions [0,themeStart), skipping empty/separator rows.
+        // Back/Exit aren't chips here - hinted in the footer instead (badgeB)
+        std::vector<int> stripIndices;
+        for(int i = 0; i < themeStart; ++i)
+            if(!commands[i].command.empty())
+                stripIndices.push_back(i);
+        const int stripCount = static_cast<int>(stripIndices.size());
+        auto StripToCommand = [&](int pos) -> int { return stripIndices[pos]; };
+        auto CommandToStrip = [&](int idx) -> int
+        {
+            for(int p = 0; p < stripCount; ++p)
+                if(stripIndices[p] == idx)
+                    return p;
+            return 0;
+        };
+        const int chipGap = 14;
+        const int chipIconSize = 22; // small, matches the 14px label's own scale
+
+        // no strip on a pure-tile screen (e.g. a DIY category) - use the row for a 3rd grid row
+        const bool hasStrip = stripCount > 0;
+        const int StripTop = UiTheme::HeaderDividerY + 22;
+        const int StripH = hasStrip ? 58 : 0;
+        const int GridLeft = UiTheme::FrameX + 32;
+        const int GridRight = UiTheme::FrameX + UiTheme::FrameW - 32;
+        const int chipW = hasStrip ? (GridRight - GridLeft - (stripCount-1)*chipGap) / stripCount : 0;
+        titleText = Texture(Translate(titleKey), UiTheme::SectionTitleFontSize - 6, renderer, UiTheme::SectionTitleX, 0, false, 0xFFFFFFFF, true);
+        titleText.rect.y = hasStrip ? (StripTop + StripH + 22) : (UiTheme::HeaderDividerY + 22);
+        const int GridTop = titleText.rect.y + titleText.rect.h + 20;
+        const int GridBottom = UiTheme::FooterDividerY - 14;
+        const int TileW = (GridRight - GridLeft - (GridCols-1)*GridGap) / GridCols;
+        int TileH, GridRowsVisible;
+        if(hasStrip)
+        {
+            TileH = TileW * 9 / 16;
+            GridRowsVisible = std::max(1, (GridBottom - GridTop + GridGap) / (TileH + GridGap));
+        }
+        else
+        {
+            GridRowsVisible = 3;
+            TileH = (GridBottom - GridTop - (GridRowsVisible-1)*GridGap) / GridRowsVisible;
+        }
+        const int GridRowPitch = TileH + GridGap;
+
+        Texture gridScrollUp("^", 16, renderer, GridRight + 22, GridTop + 24, false, 0xFFFFFFFF, true);
+        gridScrollUp.rect.x -= gridScrollUp.rect.w / 2;
+        Texture gridScrollDown = gridScrollUp;
+        gridScrollDown.rect.y = GridBottom - 24 - gridScrollDown.rect.h;
+
+        // Back/Exit hint, footer badge next to A's - B runs it directly
+        Badge badgeB{ Texture("B", 16, renderer, 0, 0, false, UiTheme::BadgeLetterColor, true),
+                      Texture(pinnedStartIndex < (int)commands.size() ? Translate(commands[pinnedStartIndex].name) : "", 16, renderer, 0, 0, false, 0xFFFFFFFF, true),
+                      UiTheme::BadgeBDark, UiTheme::BadgeB };
+
+        std::vector<Texture> chipIcons(commands.size());
+        std::vector<Texture> chipLabels(commands.size());
+        std::vector<Texture> tileImages(commands.size());
+        std::vector<Texture> tileLabels(commands.size());
+        for(int i = 0; i < (int)commands.size(); ++i)
+        {
+            Command & c = commands[i];
+            std::string label = Translate(c.name);
+            if(i < themeStart || i >= pinnedStartIndex)
+            {
+                if(commands[i].command.empty())
+                    continue; // separator, not a chip
+                int labelAvail = chipW - chipIconSize - 24;
+                if(c.previewImage.size())
+                {
+                    SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "1"); // smooth - these are small glyphs, nearest looks jagged
+                    Texture icon(c.previewImage, renderer, 0, 0);
+                    SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "0");
+                    FitCentered(icon, 0, 0, chipIconSize, chipIconSize, 0);
+                    SDL_SetTextureColorMod(icon.texture.get(), UiTheme::AccentR, UiTheme::AccentG, UiTheme::AccentB);
+                    chipIcons[i] = icon;
+                    labelAvail = chipW - chipIconSize - 32;
+                }
+                label = TruncateToWidth(label, 14, labelAvail);
+                chipLabels[i] = Texture(label, 14, renderer, 0, 0, false, 0xFFFFFFFF, true);
+            }
+            else
+            {
+                // tile image loaded lazily, see EnsureTileImage below
+                label = TruncateToWidth(label, 15, TileW - 12);
+                tileLabels[i] = Texture(label, 15, renderer, 0, 0, false, 0xFFFFFFFF, true);
+            }
+        }
+        std::vector<bool> tileImageLoaded(commands.size(), false);
+        auto EnsureTileImage = [&](int idx)
+        {
+            if(tileImageLoaded[idx])
+                return;
+            tileImageLoaded[idx] = true;
+            const Command & c = commands[idx];
+            if(c.previewImage.empty())
+                return;
+            SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, c.previewNearest ? "0" : "1");
+            Texture art(c.previewImage, renderer, 0, 0);
+            SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "0");
+            FitCentered(art, 0, 0, TileW - 16, TileH - 30, 0);
+            tileImages[idx] = art;
+        };
+
+        int gridTopRow = 0;
+        auto SetCurrentCommand = [&](int newId)
+        {
+            currentCommandId = newId;
+            if(newId >= themeStart && newId < pinnedStartIndex)
+            {
+                int row = (newId - themeStart) / GridCols;
+                if(row < gridTopRow) gridTopRow = row;
+                else if(row >= gridTopRow + GridRowsVisible) gridTopRow = row - GridRowsVisible + 1;
+            }
+        };
+        SetCurrentCommand(themeStart < pinnedStartIndex ? themeStart : (stripCount > 0 ? StripToCommand(0) : 0));
+
+        for(;;)
+        {
+            sdl_context.StartFrame();
+            controller.Update();
+
+            SDL_Event e;
+            while(SDL_PollEvent(&e))
+                if(e.type == SDL_QUIT)
+                    return 0;
+
+            if(sdl_context.powerwatch->buttonPress())
+                break;
+
+            bool inGrid = currentCommandId >= themeStart && currentCommandId < pinnedStartIndex;
+
+            if(controller.GetButtonStatus(A) || controller.GetButtonStatus(START))
+            {
+                if(commands[currentCommandId].runInternal)
+                {
+                    commands[currentCommandId].RunCommand(sdl_context, &controller, { gearIcon, appTitleText, appVersionText, creditText }, bgR, bgG, bgB);
+                    if(commands[currentCommandId].isToggle)
+                        commands[currentCommandId].UpdateState();
+                }
+                else
+                {
+                    system(commands[currentCommandId].command.c_str());
+                    break;
+                }
+            }
+            else if(controller.GetButtonStatus(LEFT))
+            {
+                if(inGrid && currentCommandId > themeStart)
+                    SetCurrentCommand(currentCommandId - 1);
+                else if(!inGrid && stripCount > 0)
+                    SetCurrentCommand(StripToCommand(std::max(0, CommandToStrip(currentCommandId) - 1)));
+            }
+            else if(controller.GetButtonStatus(RIGHT))
+            {
+                if(inGrid && currentCommandId < pinnedStartIndex - 1)
+                    SetCurrentCommand(currentCommandId + 1);
+                else if(!inGrid && stripCount > 0)
+                    SetCurrentCommand(StripToCommand(std::min(stripCount - 1, CommandToStrip(currentCommandId) + 1)));
+            }
+            else if(controller.GetButtonStatus(UP))
+            {
+                if(inGrid)
+                {
+                    int col = (currentCommandId - themeStart) % GridCols;
+                    if(currentCommandId - themeStart < GridCols) // top grid row - jump up to the strip
+                    {
+                        if(stripCount > 0)
+                            SetCurrentCommand(StripToCommand(std::min(stripCount - 1, col)));
+                    }
+                    else
+                        SetCurrentCommand(currentCommandId - GridCols);
+                }
+            }
+            else if(controller.GetButtonStatus(DOWN))
+            {
+                if(!inGrid && themeStart < pinnedStartIndex)
+                {
+                    int col = std::min(GridCols - 1, CommandToStrip(currentCommandId));
+                    SetCurrentCommand(std::min(pinnedStartIndex - 1, themeStart + col));
+                }
+                else if(inGrid && currentCommandId + GridCols < pinnedStartIndex)
+                    SetCurrentCommand(currentCommandId + GridCols);
+            }
+            else if(controller.GetButtonStatus(B) && pinnedStartIndex < (int)commands.size())
+            {
+                // Back/Exit isn't a chip - B runs it directly
+                Command & backCmd = commands[pinnedStartIndex];
+                if(backCmd.runInternal)
+                {
+                    backCmd.RunCommand(sdl_context, &controller, { gearIcon, appTitleText, appVersionText, creditText }, bgR, bgG, bgB);
+                    if(backCmd.isToggle)
+                        backCmd.UpdateState();
+                }
+                else
+                {
+                    system(backCmd.command.c_str());
+                    break;
+                }
+            }
+
+            DrawChromeCommon();
+            DrawSectionTitle();
+            if(pinnedStartIndex < (int)commands.size())
+                DrawBadge(badgeB, UiTheme::BadgeClusterRightX - UiTheme::BadgeOuterSize - UiTheme::BadgeLabelGap - badgeA.label.rect.w - UiTheme::BadgeGroupGap);
+
+            // action strip
+            {
+                int x = GridLeft;
+                for(int pos = 0; pos < stripCount; ++pos)
+                {
+                    int idx = StripToCommand(pos);
+                    bool selected = idx == currentCommandId;
+                    SDL_Rect chipRect{ x, StripTop, chipW, StripH };
+                    if(selected)
+                    {
+                        DrawRoundedFillRect(renderer, chipRect, UiTheme::SelectedRowBgR, UiTheme::SelectedRowBgG, UiTheme::SelectedRowBgB, UiTheme::BoxRadius);
+                        DrawStrokeRect(renderer, chipRect, UiTheme::AccentR, UiTheme::AccentG, UiTheme::AccentB, 2, UiTheme::BoxRadius);
+                    }
+                    else
+                        DrawStrokeRect(renderer, chipRect, UiTheme::BorderR, UiTheme::BorderG, UiTheme::BorderB, UiTheme::BorderWidth, UiTheme::BoxRadius);
+
+                    // icon+label centered as one group, not each alone
+                    Texture & icon = chipIcons[idx];
+                    Texture & label = chipLabels[idx];
+                    int iconW = icon.rect.h > 0 ? chipIconSize : 0;
+                    int groupW = iconW + (iconW > 0 ? 12 : 0) + label.rect.w;
+                    int gx = x + (chipW - groupW) / 2;
+                    if(icon.rect.h > 0)
+                    {
+                        icon.rect.x = gx + (chipIconSize - icon.rect.w) / 2;
+                        icon.rect.y = StripTop + (StripH - icon.rect.h) / 2;
+                        icon.Draw(renderer);
+                        gx += iconW + 12;
+                    }
+                    label.rect.x = gx;
+                    label.rect.y = StripTop + (StripH - label.rect.h) / 2;
+                    label.Draw(renderer);
+
+                    x += chipW + chipGap;
+                }
+            }
+
+            // theme/asset grid
+            {
+                int lastThemeIndex = pinnedStartIndex - 1;
+                for(int row = 0; row < GridRowsVisible; ++row)
+                {
+                    int rowStart = themeStart + (gridTopRow+row)*GridCols;
+                    if(rowStart > lastThemeIndex)
+                        break;
+                    int y = GridTop + row*GridRowPitch;
+                    for(int col = 0; col < GridCols; ++col)
+                    {
+                        int idx = rowStart + col;
+                        if(idx > lastThemeIndex)
+                            break;
+                        int x = GridLeft + col*(TileW+GridGap);
+                        bool selected = idx == currentCommandId;
+                        SDL_Rect tileRect{ x, y, TileW, TileH };
+                        DrawRoundedFillRect(renderer, tileRect, UiTheme::SelectedRowBgR, UiTheme::SelectedRowBgG, UiTheme::SelectedRowBgB, UiTheme::BoxRadius);
+                        EnsureTileImage(idx);
+                        if(tileImages[idx].rect.w > 0)
+                        {
+                            FitCentered(tileImages[idx], x, y+6, TileW, TileH-24, 8);
+                            tileImages[idx].Draw(renderer);
+                        }
+                        DrawStrokeRect(renderer, tileRect, selected ? UiTheme::AccentR : UiTheme::BorderR, selected ? UiTheme::AccentG : UiTheme::BorderG, selected ? UiTheme::AccentB : UiTheme::BorderB, selected ? 3 : UiTheme::BorderWidth, UiTheme::BoxRadius);
+                        tileLabels[idx].rect.x = x + (TileW - tileLabels[idx].rect.w) / 2;
+                        tileLabels[idx].rect.y = y + TileH - tileLabels[idx].rect.h - 6;
+                        tileLabels[idx].Draw(renderer);
+                    }
+                }
+
+                int totalRows = (lastThemeIndex - themeStart + GridCols) / GridCols;
+                if(gridTopRow > 0)
+                    gridScrollUp.Draw(renderer);
+                if(gridTopRow + GridRowsVisible < totalRows)
+                    gridScrollDown.Draw(renderer, SDL_FLIP_VERTICAL);
+            }
+
+            SDL_SetRenderDrawColor(renderer, bgR, bgG, bgB, 0xFF);
+            sdl_context.EndFrame();
+        }
+
+        return 0;
+    }
+
+    // ============================= LIST LAYOUT =============================
+    Texture scrollUp("^", 16, renderer, UiTheme::ScrollX, UiTheme::ScrollUpY, false, 0xFFFFFFFF, true);
+    scrollUp.rect.x -= scrollUp.rect.w / 2;
+    Texture scrollDown = scrollUp;
+    scrollDown.rect.y = UiTheme::ScrollDownY;
+    SDL_Rect selectedRowRect{ UiTheme::ListX, UiTheme::RowFirstY - 2, UiTheme::ListContentRightX - UiTheme::ListX, 0 };
+
     const int RowGlyphSize = 16;
     const int RowTextGapPx = 16;
     const int ChildIndent = 4*16;
     for(Command & c : commands)
     {
         int textX = UiTheme::RowTextX + (c.child ? ChildIndent : 0);
-        std::string label = Translate(c.name);
-
-        int maxRight = UiTheme::RowControlRightX - RowTextGapPx;
-        bool rowUsesTTF = CanRenderWithTTF(label, RowGlyphSize);
-        int available = std::max(0, maxRight - textX);
-        if(rowUsesTTF)
-        {
-            if(MeasureTTFWidth(label, RowGlyphSize) > available)
-            {
-                int n = Utf8Length(label);
-                while(n > 0 && MeasureTTFWidth(TruncateUtf8(label, n) + "...", RowGlyphSize) > available)
-                    --n;
-                label = TruncateUtf8(label, n) + "...";
-            }
-        }
-        else
-        {
-            int maxChars = available / RowGlyphSize;
-            if(TruncateUtf8(label, maxChars).size() != label.size())
-                label = TruncateUtf8(label, std::max(0, maxChars - 3)) + "...";
-        }
-
+        std::string label = TruncateToWidth(Translate(c.name), RowGlyphSize, UiTheme::RowControlRightX - RowTextGapPx - textX);
         c.texture = Texture(label, RowGlyphSize, renderer, textX, 0, false, 0xFFFFFFFF, true);
     }
 
@@ -329,19 +660,10 @@ int main(int argc, char * argv[])
 
         if(currentCommand.previewImage.size())
         {
-            // linear by default (photo-like screenshots); nearest for small
-            // pixel-art sprites blown up a lot, where linear just blurs them
             SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, currentCommand.previewNearest ? "0" : "1");
             PreviewImage = std::make_shared<Texture>(currentCommand.previewImage, renderer, 0, 0);
             SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "0");
-            if(PreviewImage->rect.w > 0 && PreviewImage->rect.h > 0)
-            {
-                const int maxW = UiTheme::DetailW - 2*UiTheme::ContentPadding;
-                const int maxH = UiTheme::PreviewBoxH - 2*UiTheme::ContentPadding;
-                double scale = std::min((double)maxW / PreviewImage->rect.w, (double)maxH / PreviewImage->rect.h);
-                PreviewImage->rect.w = static_cast<int>(PreviewImage->rect.w * scale);
-                PreviewImage->rect.h = static_cast<int>(PreviewImage->rect.h * scale);
-            }
+            FitCentered(*PreviewImage, UiTheme::DetailX, UiTheme::PreviewBoxY, UiTheme::DetailW, UiTheme::PreviewBoxH, UiTheme::ContentPadding);
         }
         else
             PreviewImage.reset();
@@ -366,14 +688,8 @@ int main(int argc, char * argv[])
 
     auto DrawChrome = [&]()
     {
-        DrawStrokeRect(renderer, UiTheme::OuterRect, UiTheme::BorderR, UiTheme::BorderG, UiTheme::BorderB, UiTheme::BorderWidth, UiTheme::BorderRadius);
-        gearIcon.Draw(renderer);
-        appTitleText.Draw(renderer);
-        appVersionText.Draw(renderer);
-        DrawHLine(renderer, UiTheme::HeaderDividerX, UiTheme::HeaderDividerX + UiTheme::HeaderDividerW, UiTheme::HeaderDividerY, UiTheme::BorderR, UiTheme::BorderG, UiTheme::BorderB, UiTheme::BorderWidth);
-        DrawHLine(renderer, UiTheme::OuterRect.x, UiTheme::OuterRect.x + UiTheme::OuterRect.w, UiTheme::FooterDividerY, UiTheme::BorderR, UiTheme::BorderG, UiTheme::BorderB, UiTheme::BorderWidth);
-        int accentBarY = titleText.rect.y + (titleText.rect.h - UiTheme::SectionAccentBarH) / 2;
-        DrawFillRect(renderer, { UiTheme::SectionTitleX - UiTheme::SectionAccentBarW - 14, accentBarY, UiTheme::SectionAccentBarW, UiTheme::SectionAccentBarH }, UiTheme::AccentR, UiTheme::AccentG, UiTheme::AccentB);
+        DrawChromeCommon();
+        DrawSectionTitle();
 
         DrawRoundedFillRect(renderer, selectedRowRect, UiTheme::SelectedRowBgR, UiTheme::SelectedRowBgG, UiTheme::SelectedRowBgB, UiTheme::BoxRadius);
         DrawStrokeRect(renderer, selectedRowRect, UiTheme::AccentR, UiTheme::AccentG, UiTheme::AccentB, 2, UiTheme::BoxRadius);
@@ -382,14 +698,8 @@ int main(int argc, char * argv[])
         {
             SDL_Rect previewBox{ UiTheme::DetailX, UiTheme::PreviewBoxY, UiTheme::DetailW, UiTheme::PreviewBoxH };
             DrawStrokeRect(renderer, previewBox, UiTheme::BorderR, UiTheme::BorderG, UiTheme::BorderB, UiTheme::BorderWidth, UiTheme::BoxRadius);
-            PreviewImage->rect.x = previewBox.x + (previewBox.w - PreviewImage->rect.w) / 2;
-            PreviewImage->rect.y = previewBox.y + (previewBox.h - PreviewImage->rect.h) / 2;
             PreviewImage->Draw(renderer);
         }
-
-        // B has nothing to do on any screen here - navigation is always via a
-        // real "Back" row in the list (like every other row), not a shortcut
-        DrawBadge(badgeA, UiTheme::BadgeClusterRightX);
     };
 
     for(;;)
@@ -442,15 +752,13 @@ int main(int argc, char * argv[])
             }
             SetCurrentCommand(newCommandId);
         }
-        // tap B = jump straight to the last row (BACK here, EXIT on the real
-        // OptionsMenu) - matches main.cpp's own B behavior
+        // B = jump straight to the last row (BACK/EXIT)
         else if(controller.GetButtonStatus(B))
         {
             SetCurrentCommand(commands.size()-1);
         }
 
         DrawChrome();
-        titleText.Draw(renderer);
 
         int lastCommandIndex = static_cast<int>(commands.size()) - 1;
         for(int i = 0, count = std::min(DisplayItemCount, pinnedStartIndex-topListItemNumber); i < count; ++i)
@@ -459,8 +767,6 @@ int main(int argc, char * argv[])
         // pinned trailing rows (Back/Exit) - always visible near the footer
         for(int i = pinnedStartIndex; i <= lastCommandIndex; ++i)
             DrawRow(commands[i], i == lastCommandIndex);
-
-        creditText.Draw(renderer);
 
         // bounded by pinnedStartIndex, not commands.size() - pinned rows need no scroll
         if(topListItemNumber != 0)
