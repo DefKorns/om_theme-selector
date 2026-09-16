@@ -1,6 +1,5 @@
 #!/bin/sh
-# shellcheck disable=SC2086,SC2154,SC3046,SC3051
-# # shellcheck disable=SC2034,SC2086,SC2154,SC3010,SC3046,SC3051
+# shellcheck disable=SC2034,SC2086,SC2154,SC3046,SC3051
 #  Copyright (c) 2026 DefKorns (https://defkorns.github.io/LICENSE)
 #
 #  This program is free software: you can redistribute it and/or modify
@@ -32,7 +31,7 @@ has_folders="${gStorage}/001"
 theme_path="$usb_path/$modtitle/$s_type"
 [ ! -d "$theme_path" ] && theme_path="$nand_path/$modtitle/$s_type"
 system="$(echo "$s_type" | awk '{print toupper($0)}')"
-has_theme="$(ls -1 "$theme_path/$system".*.tar.gz 2> /dev/null | wc -l)"
+has_theme="$(find "$theme_path" -maxdepth 1 -name "$system.*.tar.gz" 2> /dev/null | wc -l)"
 
 
 # extracts any theme archives already sitting in $theme_path (e.g. copied
