@@ -24,4 +24,4 @@ clearDownloads
 remove "$subDummy"
 remove "$omModSubSpacer"
 
-$optionsMenu/themes/theme_manager --commandPath $omModSubCmds/ --scriptPath $omModSubScripts --title "$omTitle" &
+$optionsMenu/themes/theme_manager --commandPath $omModSubCmds/ --scriptPath $omModSubScripts --title AVAILABLE_THEMES --layout grid &

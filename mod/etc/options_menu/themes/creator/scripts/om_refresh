@@ -24,4 +24,4 @@ diyThemeRemover
 diyThemeChecker "loader"
 touch "$omModGenSpacer"
 
-usleep 50000 && $optionsMenu/themes/theme_manager --commandPath $omModGenCmds/ --scriptPath $omModGenScripts --title "$omTitle" &
+usleep 50000 && $optionsMenu/themes/theme_manager --commandPath $omModGenCmds/ --scriptPath $omModGenScripts --title DIY_THEME &

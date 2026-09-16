@@ -1,5 +1,7 @@
 THEME_OPTIONS=Themes
 THEME_SELECTOR=Theme Selector
+INSTALLED_THEMES=Installed Themes
+AVAILABLE_THEMES=Available Themes
 DIY_THEME=DIY Theme
 THEME_SETTINGS=Settings
 REFRESH=Refresh

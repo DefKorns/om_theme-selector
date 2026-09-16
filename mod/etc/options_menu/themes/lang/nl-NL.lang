@@ -1,5 +1,7 @@
 THEME_OPTIONS=Thema's
 THEME_SELECTOR=Themakiezer
+INSTALLED_THEMES=Geïnstalleerde thema's
+AVAILABLE_THEMES=Beschikbare thema's
 DIY_THEME=Eigen thema
 THEME_SETTINGS=Instellingen
 REFRESH=Vernieuwen

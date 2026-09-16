@@ -21,4 +21,4 @@ script_init
 
 audioSettings "$1"
 
-$optionsMenu/themes/theme_manager --commandPath $omModSettingsCmds/ --scriptPath $omModSettingsScripts --title "$omTitle" &
+$optionsMenu/themes/theme_manager --commandPath $omModSettingsCmds/ --scriptPath $omModSettingsScripts --title THEME_SETTINGS &

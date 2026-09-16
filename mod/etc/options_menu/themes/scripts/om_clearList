@@ -24,4 +24,4 @@ clearList
 disable_cmds "Clear"
 enable_cmds "Refresh"
 
-$optionsMenu/themes/theme_manager --commandPath $omModCommands/ --scriptPath $omModScripts --title "$omTitle" &
+$optionsMenu/themes/theme_manager --title INSTALLED_THEMES --layout grid &

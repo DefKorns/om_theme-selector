@@ -1,5 +1,7 @@
 THEME_OPTIONS=Темы
 THEME_SELECTOR=Выбор тем
+INSTALLED_THEMES=Установленные темы
+AVAILABLE_THEMES=Доступные темы
 DIY_THEME=Своя тема
 THEME_SETTINGS=Настройки
 REFRESH=Обновить
