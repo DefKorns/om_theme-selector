@@ -2,4 +2,4 @@ COMMAND_NAME=UPDATE_THEME_LIST
 COMMAND_TYPE=EXTERNAL
 RESTART_UI=FALSE
 COMMAND_STR=sh %script_dir%/om_refreshThemes &
-PREVIEW_IMAGE=/etc/options_menu/images/preview_update_theme_list.png
+PREVIEW_IMAGE=/etc/options_menu/images/chip_refresh.png
