@@ -553,3 +553,5 @@ b0010_functions
 b0050_boot
 _console_originals/
 tools/*.py
+tools/MaterialSymbolsOutlined.codepoints
+tools/MaterialSymbolsOutlined.ttf
