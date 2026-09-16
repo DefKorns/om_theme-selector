@@ -58,4 +58,4 @@ esac
 
 findDiyAsset "$1"
 
-$optionsMenu/options --commandPath $diy_om_sprite_path/commands/ --scriptPath $diy_om_sprite_path/scripts --title "$omTitle" &
+$optionsMenu/themes/theme_manager --commandPath $diy_om_sprite_path/commands/ --scriptPath $diy_om_sprite_path/scripts --title "$omTitle" &

@@ -30,8 +30,9 @@ has_folders="${gStorage}/001"
 
 downloadURL="http://hakchicloud.com/Hakchi_Themes/scripts"
 themeURL="http://hakchicloud.com/Hakchi_Themes/themes"
-! wget -q --spider "$downloadURL" > /dev/null 2>&1 && downloadURL="http://classicmods.net/files/themes/themeselector-scripts/"
-! wget -q --spider "$themeURL" > /dev/null 2>&1 && themeURL="http://classicmods.net/files/themes/themeselector/"
+# resolveDownloadUrls (below) does the actual availability check - two blocking
+# wget calls (~0.9s combined) here would run on every om_vars source, i.e. on
+# every screen of the theme selector, not just the ones that download anything
 
 # Options Menu
 omMod="$optionsMenu/$modtitle"
@@ -88,6 +89,7 @@ om_themeperfolderchild="$state_path/om_themeperfolderchild"
 om_audiorandomizer="$state_path/om_audiorandomizer"
 om_advmusichack="$state_path/om_advmusichack"
 om_firstrun="$state_path/om_firstrun"
+om_theme_count="$state_path/om_theme_count"
 
 #### SEPARATORS
 omDummy="$omModCommands/c0000_0000"
@@ -109,10 +111,6 @@ enableAdvancedMusicHack="$omModSettingsCmds/c0001_audiorandomizerall"
 disableAdvancedMusicHack="$omModSettingsCmds/_audiorandomizerall"
 enableThemeSetting="$omModSettingsCmds/c0000_themerandomizer"
 disableThemeSetting="$omModSettingsCmds/_themerandomizer"
-enableThemePerFolder="$omModSettingsCmds/c0000_themeperfolder"
-disableThemePerFolder="$omModSettingsCmds/_themeperfolder"
-enableThemePerFolderChild="$omModSettingsCmds/c0000_themeperfolder_child"
-disableThemePerFolderChild="$omModSettingsCmds/_themeperfolder_child"
 enableSystemCleanUp="$omModSettingsCmds/c0001_systemcleanup"
 disableSystemCleanUp="$omModSettingsCmds/_systemcleanup"
 enableThemeGenerator="$omModCommands/c0000_generatetheme"
@@ -254,6 +252,16 @@ enableMenuOptions() {
   [ ! -d "$has_folders" ] && disable_cmds "ThemeGenerator"
 }
 
+# cheap stand-in for "did the installed theme list actually change" - avoids
+# re-running the full themeLoader scan (~1.7s with a few dozen themes) when
+# nothing was added or removed, e.g. just browsing Downloads then going Back
+themeCountChanged() {
+  new_count="$(find "$theme_path" -mindepth 1 -maxdepth 1 -type d | wc -l)"
+  old_count="$(cat "$om_theme_count" 2> /dev/null)"
+  echo "$new_count" > "$om_theme_count"
+  [ "$new_count" != "$old_count" ]
+}
+
 themeLoader() {
   removeRegionalTheme
   cd "$theme_path" && find . -mindepth 1 -maxdepth 1 -type d | sed 's#^\./##' | sort -u | while IFS= read -r thm; do
@@ -349,14 +357,28 @@ removeRegionalTheme() {
   [ -d "$theme_path/snesce-$sfregion" ] && rm -rf "$theme_path/snesce-$sfregion"
 }
 
+# picks the mirror that's actually reachable for downloadURL/themeURL - two
+# blocking wget calls, so only run this where a download is about to happen,
+# never unconditionally at om_vars source time
+resolveDownloadUrls() {
+  # -T bounds a bad/unreachable network to a few seconds instead of hanging
+  # the whole UI (theme_manager blocks on this the entire time it runs)
+  ! wget -q -T 5 --spider "$downloadURL" > /dev/null 2>&1 && downloadURL="http://classicmods.net/files/themes/themeselector-scripts/"
+  ! wget -q -T 5 --spider "$themeURL" > /dev/null 2>&1 && themeURL="http://classicmods.net/files/themes/themeselector/"
+}
+
 getThemeList() {
+  # splash first - resolveDownloadUrls can take a few seconds (bounded by its
+  # own -T 5 now, but still real) when hakchicloud.com is slow/unreachable,
+  # and that shouldn't be a blank screen before the loading indicator shows
   "$omScripts/gen_splash" /tmp/om_splash.png THEME_LIST_DOWNLOADING_LINE1 THEME_LIST_DOWNLOADING_LINE2 && decodepng /tmp/om_splash.png > /dev/fb0
+  resolveDownloadUrls
   cd "$omModSub" || exit
 
   if [ ! -e "${s_type}${listName}" ]; then
     clearDownloads
-    if wget -q --spider "$downloadURL/${s_type}${listName}" > /dev/null 2>&1; then
-      wget "$downloadURL/${s_type}${listName}"
+    if wget -q -T 5 --spider "$downloadURL/${s_type}${listName}" > /dev/null 2>&1; then
+      wget -T 10 "$downloadURL/${s_type}${listName}"
     else
       netChecker
     fi
@@ -416,6 +438,7 @@ loadThemeList() {
 
 # verify themeGenerator function
 themeGenerator() {
+  resolveDownloadUrls
   echo "Packaging: DefKorns"
   translate CATEGORY_UI_MOD
   echo ""
@@ -429,15 +452,15 @@ themeGenerator() {
   theme_pkg="${themeURL}/${system}.${theme_name}.tar.gz"
   [ "${theme_name}" = "all" ] && theme_pkg="${downloadURL}/${sftype}-all"
 
-  if wget -q --spider "${theme_pkg}" > /dev/null 2>&1; then
+  if wget -q -T 5 --spider "${theme_pkg}" > /dev/null 2>&1; then
     translate DOWNLOADING
-    wget "${theme_pkg}"
+    wget -T 10 "${theme_pkg}"
     if [ "${theme_name}" = "all" ]; then
       while IFS= read -r t; do
         echo "$t"
         echo ""
         theme_pkg="${themeURL}/${system}.${t}.tar.gz"
-        wget "${theme_pkg}"
+        wget -T 10 "${theme_pkg}"
         tar -xzvf "${system}.${t}.tar.gz" && remove "${system}.${t}.tar.gz"
       done < "${sftype}-all"
     fi
@@ -455,6 +478,11 @@ themeGenerator() {
 }
 
 findDiyAsset() {
+  # drawn once, up front - previously this was redrawn per theme inside the
+  # loop below, which (now that the crops run backgrounded/parallel instead
+  # of one at a time) no longer reliably stays on screen for the whole scan
+  "$omScripts/gen_splash" /tmp/om_splash.png THEME_LOADING && decodepng /tmp/om_splash.png > /dev/fb0
+
   diy_file="${1}.png"
   diy_sprite="$omModSprites/${1}"
   asset_path="layout/asset/sprite/wallpaper"
@@ -518,17 +546,38 @@ findDiyAsset() {
       ;;
   esac
 
-  om_default_json="$omModScripts/om_${1}.json"
+  # the crop rectangle is the same for every theme in this category (it's
+  # the same region of each theme's own packed.png/wall.png every time, only
+  # the source theme differs) - read it once here, not per theme
+  diy_crop_x=""
+  diy_sprites_json="$omModScripts/om_${1}.sprites.json"
+  if [ "$colors" = "0" ] && [ -f "$diy_sprites_json" ]; then
+    diy_frame="$(grep -o '"textureFrame":\[[0-9]*,[0-9]*,[0-9]*,[0-9]*\]' "$diy_sprites_json" | grep -o '[0-9]*,[0-9]*,[0-9]*,[0-9]*')"
+    diy_crop_x="${diy_frame%%,*}"
+    diy_rest="${diy_frame#*,}"
+    diy_crop_y="${diy_rest%%,*}"
+    diy_rest="${diy_rest#*,}"
+    diy_crop_w="${diy_rest%%,*}"
+    diy_crop_h="${diy_rest#*,}"
+  fi
   paths_to_search="$omModSprites/assets/$1 $theme_path"
 
   find "$diy_sprite/commands" "$diy_sprite/scripts" -type f \
     -not -name 'om_*' -not -name 'c999[0-9]_*' \
     -not -name 'c0000_*' -not -name '_*' -exec rm {} +
 
+  diy_crop_batch=0
   for p in $paths_to_search; do
     if [ "$(ls -A "$p")" ]; then
       # shellcheck disable=SC2038
-      cd "$p" && find . -mindepth 1 -maxdepth 1 -type d | xargs -n 1 basename | sort -u | while IFS= read -r asset_name; do
+      # listed to a temp file and read via redirection, not piped straight
+      # into the while loop - a pipe would run the loop in a subshell, and
+      # the backgrounded sprite_crop jobs below would then belong to that
+      # subshell, not this function, so the "wait" after the loop (needed to
+      # not return before the last, sub-4 batch of crops finishes) wouldn't
+      # actually catch them
+      cd "$p" && find . -mindepth 1 -maxdepth 1 -type d | xargs -n 1 basename | sort -u > /tmp/diy_asset_list
+      while IFS= read -r asset_name; do
 
         has_sprite="0"
         full_asset_path="$p/$asset_name"
@@ -556,11 +605,16 @@ findDiyAsset() {
           fi
           [ "$chars" = "1" ] && temp_preview="$preview_image"
           if [ -n "$json" ] && [ ! -f "$temp_preview" ]; then
-            "$omScripts/gen_splash" /tmp/om_splash.png THEME_LOADING && decodepng /tmp/om_splash.png > /dev/fb0
-            if [ "$colors" = "0" ]; then
-              sed -r "s/changeme/${1}_${asset_name}/g;" "$om_default_json" > "$json"
-              pngpack-upx u "$json" "$preview_image" "$omModSprites/assets/$1"
-              remove "$json"
+            if [ "$colors" = "0" ] && [ -n "$diy_crop_x" ]; then
+              # backgrounded and batched (4 at a time, matching this console's
+              # core count) - a bare sequential loop over every installed
+              # theme was the whole reason this screen took so long to open
+              sprite_crop "$preview_image" "$diy_crop_x" "$diy_crop_y" "$diy_crop_w" "$diy_crop_h" "$temp_preview" &
+              diy_crop_batch=$((diy_crop_batch + 1))
+              if [ "$diy_crop_batch" -ge 4 ]; then
+                wait
+                diy_crop_batch=0
+              fi
             fi
             preview_image="$temp_preview"
             usleep 1000
@@ -568,6 +622,11 @@ findDiyAsset() {
 
           if [ ! -f "$cmd_file" ]; then
             touch "$cmd_file"
+            # chars=1 previews are tiny sprites (e.g. mario_run01.png) blown
+            # up a lot - nearest-neighbor keeps them crisp instead of blurry
+            preview_nearest=""
+            [ "$chars" = "1" ] && preview_nearest="
+PREVIEW_NEAREST=TRUE"
             echo "COMMAND_NAME=$cmd_name
 COMMAND_TYPE=INTERNAL
 COMMAND_STR=sh $sprite_script.sh
@@ -575,14 +634,16 @@ PREVIEW_IMAGE=$preview_image
 PREVIEW_IMAGE_X=$preview_x
 PREVIEW_IMAGE_Y=$preview_y
 PREVIEW_IMAGE_WIDTH=$preview_w
-PREVIEW_IMAGE_HEIGHT=$preview_h" > "$cmd_file"
+PREVIEW_IMAGE_HEIGHT=$preview_h${preview_nearest}" > "$cmd_file"
           fi
           copy "$omModLicense" "$sprite_script.sh"
           echo "diySpriteSelector \"$full_asset_path\" \"$asset_path\" \"$asset\"" >> "$sprite_script.sh"
         fi
-      done
+      done < /tmp/diy_asset_list
+      remove /tmp/diy_asset_list
     fi
   done
+  wait # catch whatever's left of the last batch before returning
 }
 
 diySpriteSelector() {
@@ -651,52 +712,48 @@ modCleanUp() {
 
 themeSettings() {
   if [ "$1" = "child" ]; then
-    toggleOptions "$om_themeperfolderchild" "$enableThemePerFolderChild" "$om_themeperfolder" "$enableThemePerFolder"
+    toggleOptions "$om_themeperfolderchild" "$om_themeperfolder"
   elif [ "$1" = "tpf" ]; then
-    toggleOptions "$om_themeperfolder" "$enableThemePerFolder" "$om_themeperfolderchild" "$enableThemePerFolderChild" "switchOn"
+    toggleOptions "$om_themeperfolder" "$om_themeperfolderchild" "no-cascade"
   else
     if [ ! -f "$om_themerandomizer" ]; then
-      settingsOptionChecker "on" "$om_themerandomizer" "$enableThemeSetting"
+      settingsOptionChecker "on" "$om_themerandomizer"
     else
-      settingsOptionChecker "off" "$om_themerandomizer" "$enableThemeSetting"
+      settingsOptionChecker "off" "$om_themerandomizer"
     fi
   fi
 }
 
 audioSettings() {
   if [ "$1" = "-amh" ]; then
-    toggleOptions "$om_advmusichack" "$enableAdvancedMusicHack" "$om_audiorandomizer" "$enableAudioSetting"
+    toggleOptions "$om_advmusichack" "$om_audiorandomizer"
   else
     if [ ! -f "$om_audiorandomizer" ]; then
-      settingsOptionChecker "on" "$om_audiorandomizer" "$enableAudioSetting"
+      settingsOptionChecker "on" "$om_audiorandomizer"
     else
-      settingsOptionChecker "off" "$om_audiorandomizer" "$enableAudioSetting"
-      settingsOptionChecker "off" "$om_advmusichack" "$enableAdvancedMusicHack"
+      settingsOptionChecker "off" "$om_audiorandomizer"
+      settingsOptionChecker "off" "$om_advmusichack"
     fi
   fi
 }
 
 toggleOptions() {
+  # $1=this flag file, $2=paired parent/child flag file, $3=set to skip the
+  # cascade (used for a parent toggling itself back on - its own child's
+  # state stays whatever it already was)
   if [ ! -f "$1" ]; then
-    settingsOptionChecker "on" "$1" "$2"
-    if [ -n "$5" ]; then
-      [ -f "$3" ] && switchOn "$4"
-    else
-      [ ! -f "$3" ] && settingsOptionChecker "on" "$3" "$4"
-    fi
+    settingsOptionChecker "on" "$1"
+    [ -z "$3" ] && [ ! -f "$2" ] && settingsOptionChecker "on" "$2"
   else
     remove "$1"
-    switchOff "$2"
   fi
 }
 
 settingsOptionChecker() {
   if [ "$1" = "off" ]; then
     remove "$2"
-    switchOff "$3"
   else
     touch "$2"
-    switchOn "$3"
   fi
 }
 
@@ -713,15 +770,5 @@ hasItemsToCleanUp() {
   else
     disable_cmds "$1"
     [ ! -f "$enableUninstaller" ] && remove "$omModSettingsSpacer"
-  fi
-}
-
-hasSelectedOptions() {
-  if [ -f "$1" ]; then
-    if ! grep -q "\[X\]" "$2"; then
-      switchOn "$2"
-    fi
-  else
-    switchOff "$2"
   fi
 }

@@ -3,6 +3,7 @@ COMMAND_TYPE=EXTERNAL
 RESTART_UI=FALSE
 CHILD=TRUE
 COMMAND_STR=sh %script_dir%/om_theme child
+STATE_STR=sh %script_dir%/om_state theme_per_folder_child
 PREVIEW_IMAGE=/etc/options_menu/images/randtheme.png
 PREVIEW_IMAGE_X=920
 PREVIEW_IMAGE_Y=262

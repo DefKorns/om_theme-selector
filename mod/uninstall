@@ -102,6 +102,7 @@ remove "$rootfs/etc/options_menu/images/update.png"
 remove "$rootfs/etc/options_menu/images/wall.png"
 remove "$rootfs/etc/options_menu/images/wall_far.png"
 remove "$rootfs/etc/usr/bin/pngpack-upx"
+remove "$rootfs/etc/usr/bin/sprite_crop"
 
 [ -f "$TITLE_FONT_BACKUP" ] && mv "$TITLE_FONT_BACKUP" "$TITLE_FONT"
 for FONT in s m l small medium large; do

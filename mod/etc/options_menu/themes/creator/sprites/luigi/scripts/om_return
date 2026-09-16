@@ -23,4 +23,4 @@ script_init
 # shellcheck disable=SC2119 # deliberately called with no args here
 diyThemeChecker
 
-usleep 50000 && $optionsMenu/options --commandPath $omModGenCmds/ --scriptPath $omModGenScripts/ --title "$omTitle" &
+usleep 50000 && $optionsMenu/themes/theme_manager --commandPath $omModGenCmds/ --scriptPath $omModGenScripts/ --title "$omTitle" &

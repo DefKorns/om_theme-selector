@@ -41,4 +41,4 @@ remove "$omDummy"
 
 loadThemeList -r
 
-$optionsMenu/options --commandPath $omModGenCmds/ --scriptPath $omModGenScripts --title "$omTitle" &
+$optionsMenu/themes/theme_manager --commandPath $omModGenCmds/ --scriptPath $omModGenScripts --title "$omTitle" &

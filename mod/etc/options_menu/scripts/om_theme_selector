@@ -18,3 +18,5 @@
 # shellcheck source=/dev/null
 source $mountpoint/etc/options_menu/themes/scripts/om_vars
 script_init
+
+sh "$mountpoint/etc/options_menu/scripts/om_themeselector"

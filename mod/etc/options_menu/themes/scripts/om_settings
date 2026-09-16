@@ -20,8 +20,12 @@
 source $mountpoint/etc/options_menu/themes/scripts/om_vars
 script_init
 
-hasSelectedOptions "$om_themeperfolder" "$enableThemePerFolder"
-hasSelectedOptions "$om_themerandomizer" "$enableThemeSetting"
+# theme_manager's STATE_STR checks (om_state) would otherwise each re-derive
+# $state_path from scratch via om_functions/preinit - cache it once here so
+# 5 toggle rows cost one lookup instead of five. Plain /tmp, no $mountpoint:
+# this is throwaway same-boot-session IPC, not data that needs to live inside
+# a particular mounted rootfs the way e.g. diyThemePath does
+echo "$state_path" > /tmp/om_state_path
 
 hasItemsToCleanUp "SystemCleanUp"
 
@@ -33,4 +37,4 @@ else
   [ ! -f "$enableSystemCleanUp" ] && remove "$omModSettingsSpacer"
 fi
 
-$optionsMenu/options --commandPath $omModSettingsCmds/ --scriptPath $omModSettingsScripts --title "$omTitle" &
+$optionsMenu/themes/theme_manager --commandPath $omModSettingsCmds/ --scriptPath $omModSettingsScripts --title "$omTitle" &

@@ -1,0 +1,40 @@
+#!/bin/sh
+# shellcheck disable=SC2086,SC2154,SC3046,SC3051
+#
+#  Copyright (c) 2026 DefKorns (https://defkorns.github.io/LICENSE)
+#
+#  This program is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+#
+# Reports current on/off state for a Settings toggle row - read-only
+# counterpart to om_theme/om_audio, which flip the same flag files. The
+# engine calls this once per toggle row every time the Settings screen
+# loads, so it reads $state_path from the cache om_settings writes just
+# before launching theme_manager, instead of re-sourcing om_functions/
+# preinit (~0.1-0.3s) five times over for the same value.
+state_path="$(cat /tmp/om_state_path 2> /dev/null)"
+if [ -z "$state_path" ]; then
+  # shellcheck source=/dev/null
+  source $mountpoint/etc/options_menu/scripts/om_functions
+  script_init
+fi
+
+case "$1" in
+  theme_per_folder) flag="$state_path/om_themeperfolder" ;;
+  theme_per_folder_child) flag="$state_path/om_themeperfolderchild" ;;
+  theme_randomizer) flag="$state_path/om_themerandomizer" ;;
+  audio_randomizer) flag="$state_path/om_audiorandomizer" ;;
+  audio_randomizer_all) flag="$state_path/om_advmusichack" ;;
+esac
+
+[ -f "$flag" ] && echo on || echo off

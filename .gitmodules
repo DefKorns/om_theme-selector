@@ -4,3 +4,7 @@
 [submodule "pngpack"]
 	path = pngpack
 	url = https://github.com/DefKorns/pngpack.git
+[submodule "vendor/OptionsMenu"]
+	path = vendor/OptionsMenu
+	url = https://github.com/DefKorns/OptionsMenu
+	branch = modern-ui-ttf

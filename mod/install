@@ -23,18 +23,6 @@ del() {
   [ -f "$1" ] && rm -rf "$1"
 }
 
-# writes $om_themes_scripts/om_<name>.json by combining the console's own
-# "texture" block (read live from $2, never shipped by us) with our own
-# "sprites" fragment (om_<name>.sprites.json) - so the only thing this hmod
-# vendors is content it actually authored, not a copy of the console's own
-# sprite atlas metadata
-genThemeJson() {
-  [ -f "$2" ] || return
-  texture="$(grep -o '"texture":[[:space:]]*{[^}]*}' "$2")"
-  sprites="$(cat "$om_themes_scripts/om_${1}.sprites.json")"
-  echo "{${texture},\"sprites\":${sprites}}" >"$om_themes_scripts/om_${1}.json"
-}
-
 om_themes_scripts="$rootfs/etc/options_menu/themes/scripts"
 usr="$rootfs/usr"
 usr_share="$usr/share"
@@ -80,27 +68,10 @@ done
 copy "$om_themes_scripts/om_fontfix" "$pre_initd/b8025_fontfix"
 copy "$om_themes_scripts/om_chmenu" "$rootfs/bin/chmenu"
 chmod +x "$rootfs/bin/chmenu"
-chmod +x "$usr/bin/pngpack-upx"
+chmod +x "$usr/bin/sprite_crop"
 
 sed '1,2d' "$om_themes_scripts/om_themescript" >"$b_file"
 [ ! -f "$p_file" ] && echo themeSelector >"$p_file"
-
-# regenerate the DIY sprite templates against this console's own atlas data
-# (see genThemeJson above) - wall/wall_far/wall_near/packed only exist on
-# SNES's UI, packed_nes is clover-ui's (NES) own equivalent
-if [ "$sftype" = "snes" ]; then
-  ui0="ui/$sftype-$sfregion"
-  [ "$sfregion" = "jpn" ] && ui0="ui/shvc"
-  wallpaper_dir="$usr_share/$ui0/resources/layout/asset/sprite/wallpaper"
-  genThemeJson wall "$wallpaper_dir/wall.json"
-  genThemeJson wall_far "$wallpaper_dir/wall_far.json"
-  genThemeJson wall_near "$wallpaper_dir/wall_near.json"
-  genThemeJson packed "$usr_share/$ui0/resources/sprites/packed.json"
-elif [ "$sftype" = "nes" ]; then
-  packed_nes_src="$usr_share/clover-ui/resources/sprites/nes.json"
-  [ "$sfregion" = "jpn" ] && packed_nes_src="$usr_share/clover-ui/resources/sprites/hvc.json"
-  genThemeJson packed_nes "$packed_nes_src"
-fi
 
 # shellcheck disable=SC2034
 cfg_OM_ThemeSelector_enabled='y'

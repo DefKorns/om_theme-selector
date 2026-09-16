@@ -33,4 +33,4 @@ else
   loadThemeList
 fi
 
-$optionsMenu/options --commandPath $omModCommands/ --scriptPath $omModScripts --title "$omTitle" &
+$optionsMenu/themes/theme_manager &
