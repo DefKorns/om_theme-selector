@@ -1,0 +1,40 @@
+# Cross-compiles the standalone theme manager skeleton (src/main.cpp) against
+# the shared rendering framework vendored from OptionsMenu (vendor/OptionsMenu,
+# a git submodule - see that repo's src/framework/ for what's reused here).
+# This is a separate build from the existing Makefile (which only packages
+# the shell-script based hmod) - run via build.sh, mirroring OptionsMenu's
+# own Docker-toolchain setup.
+FRAMEWORK_DIR = vendor/OptionsMenu/src/framework
+CXX = g++
+STRIP = strip
+ifdef CROSS_PREFIX
+PKG_CONFIG_LIBDIR = /usr/lib/arm-linux-gnueabihf/pkgconfig
+SDL_CFLAGS = -I/usr/include/arm-linux-gnueabihf $(shell PKG_CONFIG_LIBDIR=$(PKG_CONFIG_LIBDIR) pkg-config --cflags sdl2 SDL2_ttf libpng)
+SDL_LIBS = $(shell PKG_CONFIG_LIBDIR=$(PKG_CONFIG_LIBDIR) pkg-config --libs sdl2 SDL2_ttf libpng)
+LDFLAGS = -Wl,--allow-shlib-undefined
+else
+SDL_CFLAGS = $(shell sdl2-config --cflags) $(shell pkg-config --cflags SDL2_ttf)
+SDL_LIBS = $(shell sdl2-config --libs) $(shell pkg-config --libs SDL2_ttf) -lpng
+LDFLAGS =
+endif
+CXXFLAGS = -std=c++11 -Os -Ivendor/OptionsMenu/src $(SDL_CFLAGS)
+LDLIBS = $(SDL_LIBS)
+VENDOR_SRC_DIR = vendor/OptionsMenu/src
+SOURCES = src/main.cpp $(VENDOR_SRC_DIR)/command.cpp $(VENDOR_SRC_DIR)/localization.cpp $(FRAMEWORK_DIR)/sdl_context.cpp $(FRAMEWORK_DIR)/texture.cpp $(FRAMEWORK_DIR)/controller.cpp $(FRAMEWORK_DIR)/powerwatch.cpp $(FRAMEWORK_DIR)/draw_helpers.cpp $(FRAMEWORK_DIR)/utf8.cpp $(FRAMEWORK_DIR)/font8x8_lookup.cpp
+OBJECTS = $(SOURCES:.cpp=.o)
+
+all: out/theme_manager
+
+out/theme_manager: $(OBJECTS)
+	mkdir -p out
+	$(CROSS_PREFIX)$(CXX) $(OBJECTS) $(LDLIBS) $(LDFLAGS) -Wl,-rpath,/etc/options_menu -o out/theme_manager
+	$(CROSS_PREFIX)$(STRIP) out/theme_manager
+
+%.o: %.cpp
+	$(CROSS_PREFIX)$(CXX) $(CXXFLAGS) -c $< -o $@
+
+clean:
+	find . -name "*.o" -type f -delete
+	rm -rf out/
+
+.PHONY: clean
