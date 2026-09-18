@@ -26,12 +26,14 @@
 #include "localization.h"
 
 #include <algorithm>
+#include <csignal>
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
 #include <fstream>
 #include <list>
 #include <dirent.h>
+#include <unistd.h>
 
 #ifndef MOD_VERSION
 #define MOD_VERSION "dev"
@@ -52,6 +54,46 @@ static void FitCentered(Texture & tex, int boxX, int boxY, int boxW, int boxH, i
     if(tex.rect.w <= 0 || tex.rect.h <= 0)
         return;
     double scale = std::min((double)maxW / tex.rect.w, (double)maxH / tex.rect.h);
+    tex.rect.w = static_cast<int>(tex.rect.w * scale);
+    tex.rect.h = static_cast<int>(tex.rect.h * scale);
+    tex.rect.x = boxX + (boxW - tex.rect.w) / 2;
+    tex.rect.y = boxY + (boxH - tex.rect.h) / 2;
+}
+
+// dark gradient over the tile's bottom edge, solid for the lower ~60% (where
+// the overlaid label sits) and fading to transparent above that, so the
+// label stays legible over any image - SDL has no gradient fill primitive,
+// so this is a stack of alpha-stepped bands
+static void DrawBottomScrim(SDL_Renderer * renderer, int x, int y, int w, int h)
+{
+    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+    const int bands = 24;
+    const Uint8 maxAlpha = 235;
+    const double rampFrac = 0.4; // reaches maxAlpha by 40% down the scrim, solid for the rest - the label sits in that solid tail, not the fade
+    for(int i = 0; i < bands; ++i)
+    {
+        double t = (double)i / (bands - 1); // 0 at top of scrim, 1 at bottom
+        double ramp = std::min(1.0, t / rampFrac);
+        Uint8 alpha = static_cast<Uint8>(maxAlpha * ramp);
+        SDL_Rect band{ x, y + h * i / bands, w, h / bands + 1 };
+        SDL_SetRenderDrawColor(renderer, 0, 0, 0, alpha);
+        SDL_RenderFillRect(renderer, &band);
+    }
+    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
+}
+
+// scale-to-cover-centered (crops the overflow) - pair with a clip rect at
+// (boxX+padding, boxY+padding, boxW-2*padding, boxH-2*padding) so the
+// overflow doesn't bleed past the box, and DrawRoundedCornerMask afterwards
+// to fake-round that clip rect's square corners back to match a rounded
+// container
+static void FitCover(Texture & tex, int boxX, int boxY, int boxW, int boxH, int padding)
+{
+    const int maxW = boxW - 2*padding;
+    const int maxH = boxH - 2*padding;
+    if(tex.rect.w <= 0 || tex.rect.h <= 0)
+        return;
+    double scale = std::max((double)maxW / tex.rect.w, (double)maxH / tex.rect.h);
     tex.rect.w = static_cast<int>(tex.rect.w * scale);
     tex.rect.h = static_cast<int>(tex.rect.h * scale);
     tex.rect.x = boxX + (boxW - tex.rect.w) / 2;
@@ -80,8 +122,41 @@ static std::string TruncateToWidth(const std::string & text, int glyphSize, int 
     return label;
 }
 
+// only one theme_manager should ever hold /dev/fb0 at a time - two screens
+// (e.g. a stuck/crashed instance plus a freshly-launched one) fight over it
+// and both flicker. Takes over rather than refusing to start, so a lock left
+// behind by a crash never blocks every future launch.
+static const char * LockPath = "/tmp/theme_manager.lock";
+
+static void ReleaseSingleInstanceLock()
+{
+    remove(LockPath);
+}
+
+static void AcquireSingleInstanceLock()
+{
+    std::ifstream in(LockPath);
+    pid_t oldPid = 0;
+    if(in.good())
+        in >> oldPid;
+    in.close();
+    if(oldPid > 0 && oldPid != getpid() && kill(oldPid, 0) == 0)
+    {
+        kill(oldPid, SIGTERM);
+        for(int i = 0; i < 40 && kill(oldPid, 0) == 0; ++i)
+            usleep(50000);
+        if(kill(oldPid, 0) == 0)
+            kill(oldPid, SIGKILL);
+    }
+    std::ofstream(LockPath, std::ios::trunc) << getpid();
+    atexit(ReleaseSingleInstanceLock);
+    signal(SIGTERM, [](int) { exit(0); }); // so a newer instance's takeover runs our atexit cleanup too
+}
+
 int main(int argc, char * argv[])
 {
+    AcquireSingleInstanceLock();
+
     const std::string optionsLocation = "/etc/options_menu/";
     std::string commandLocation = optionsLocation + "themes/commands/";
     std::string scriptLocation = optionsLocation + "themes/scripts/";
@@ -138,7 +213,12 @@ int main(int argc, char * argv[])
             if(in.is_open())
             {
                 Command c(in);
-                if(!(commands.size() == 0 && c.command.size() == 0))
+                // c0000_0000: leading empty sentinel, always skipped. A
+                // later empty COMMAND_STR is a reserved blank slot instead -
+                // kept and skipped by the strip/grid draw loops below
+                if(commands.empty() && c.command.empty())
+                    continue;
+                if(!c.command.empty())
                 {
                     sReplace(c.command, "%options_path%", optionsLocation);
                     sReplace(c.command, "%script_dir%", scriptLocation);
@@ -150,9 +230,9 @@ int main(int argc, char * argv[])
                         sReplace(c.stateCommand, "%script_dir%", scriptLocation);
                         c.UpdateState();
                     }
-                    commands.push_back(c);
-                    isThemeItem.push_back(file.compare(0, 6, "c0000_") != 0);
                 }
+                commands.push_back(c);
+                isThemeItem.push_back(file.compare(0, 6, "c0000_") != 0);
             }
         }
     }
@@ -279,6 +359,44 @@ int main(int argc, char * argv[])
         return x - UiTheme::BadgeGroupGap;
     };
 
+    // hold-to-delete hint, different color than the real B badge
+    Badge badgeHold{ Texture("B", 16, renderer, 0, 0, false, UiTheme::BadgeLetterColor, true), Texture(Translate("HINT_DELETE"), 16, renderer, 0, 0, false, 0xFFFFFFFF, true), UiTheme::BadgeXDark, UiTheme::BadgeX };
+
+    // true if deleted - caller should break out of the main loop
+    auto ConfirmDelete = [&]() -> bool
+    {
+        const std::string & confirmKey = commands[currentCommandId].deleteConfirmKey;
+        Texture confirmTitle(Translate(confirmKey.empty() ? "DELETE_CONFIRM_GENERIC" : confirmKey), 24, renderer, 640, 320, true, 0xFFFFFFFF, true);
+        Texture confirmHint(Translate("DELETE_CONFIRM_HINT"), 16, renderer, 640, 360, true, 0xFFFFFFFF, true);
+        controller.GetButtonStatus(B); // consume the still-held B from the triggering long-press
+        bool confirmed = false;
+        for(;;)
+        {
+            controller.Update();
+            if(controller.GetButtonStatus(B))
+                break;
+            if(controller.GetButtonStatus(A) || controller.GetButtonStatus(START))
+            {
+                confirmed = true;
+                break;
+            }
+            sdl_context.StartFrame();
+            DrawFillRect(renderer, UiTheme::FrameRect, UiTheme::BgR, UiTheme::BgG, UiTheme::BgB);
+            DrawStrokeRect(renderer, UiTheme::FrameRect, UiTheme::BorderR, UiTheme::BorderG, UiTheme::BorderB, UiTheme::BorderWidth, UiTheme::BorderRadius);
+            confirmTitle.Draw(renderer);
+            confirmHint.Draw(renderer);
+            SDL_SetRenderDrawColor(renderer, bgR, bgG, bgB, 0xFF); // flat helpers leave the draw color dirty
+            sdl_context.EndFrame();
+        }
+        if(!confirmed)
+            return false;
+        system(commands[currentCommandId].deleteCommand.c_str());
+        return true;
+    };
+
+    const unsigned int bHoldThresholdMs = 1000;
+    bool bWasHeld = false, bHoldFired = false;
+
     // shared chrome; section title is separate since grid positions it lower
     auto DrawChromeCommon = [&]()
     {
@@ -301,15 +419,25 @@ int main(int argc, char * argv[])
     if(gridLayout)
     {
         // ============================= GRID LAYOUT =============================
-        // squareTiles: pack more/narrower columns for square-ish previews
+        // squareTiles: pack more/narrower columns for square-ish previews,
+        // unless the category overrides the column count itself
         const bool squareTiles = themeStart < pinnedStartIndex && commands[themeStart].previewSquare;
-        const int GridCols = squareTiles ? 7 : 4;
+        const int explicitCols = themeStart < pinnedStartIndex ? commands[themeStart].previewGridCols : -1;
+        const int GridCols = explicitCols > 0 ? explicitCols : (squareTiles ? 7 : 4);
         const int GridGap = 20;
 
-        // strip = fixed actions [0,themeStart), skipping empty/separator rows.
-        // Back/Exit aren't chips here - hinted in the footer instead (badgeB)
-        std::vector<int> stripIndices;
+        // strip = fixed actions [0,themeStart). An empty entry stays a
+        // reserved-width slot rather than being compacted out, so a
+        // conditional button appearing/disappearing doesn't shift the rest.
+        // stripSlots drives layout; stripIndices is the navigable subset -
+        // the D-pad skips blank slots. Back/Exit aren't chips here - hinted
+        // in the footer instead (badgeB)
+        std::vector<int> stripSlots;
         for(int i = 0; i < themeStart; ++i)
+            stripSlots.push_back(i);
+        const int stripSlotCount = static_cast<int>(stripSlots.size());
+        std::vector<int> stripIndices;
+        for(int i : stripSlots)
             if(!commands[i].command.empty())
                 stripIndices.push_back(i);
         const int stripCount = static_cast<int>(stripIndices.size());
@@ -325,12 +453,14 @@ int main(int argc, char * argv[])
         const int chipIconSize = 22; // small, matches the 14px label's own scale
 
         // no strip on a pure-tile screen (e.g. a DIY category) - use the row for a 3rd grid row
-        const bool hasStrip = stripCount > 0;
+        const bool hasStrip = stripSlotCount > 0;
         const int StripTop = UiTheme::HeaderDividerY + 22;
         const int StripH = hasStrip ? 58 : 0;
         const int GridLeft = UiTheme::FrameX + 32;
         const int GridRight = UiTheme::FrameX + UiTheme::FrameW - 32;
-        const int chipW = hasStrip ? (GridRight - GridLeft - (stripCount-1)*chipGap) / stripCount : 0;
+        // capped so a strip with few slots doesn't stretch its chips wide
+        const int MaxChipW = 200;
+        const int chipW = hasStrip ? std::min(MaxChipW, (GridRight - GridLeft - (stripSlotCount-1)*chipGap) / stripSlotCount) : 0;
         titleText = Texture(Translate(titleKey), UiTheme::SectionTitleFontSize - 6, renderer, UiTheme::SectionTitleX, 0, false, 0xFFFFFFFF, true);
         titleText.rect.y = hasStrip ? (StripTop + StripH + 22) : (UiTheme::HeaderDividerY + 22);
         const int GridTop = titleText.rect.y + titleText.rect.h + 20;
@@ -366,11 +496,11 @@ int main(int argc, char * argv[])
         for(int i = 0; i < (int)commands.size(); ++i)
         {
             Command & c = commands[i];
+            if(c.command.empty())
+                continue; // reserved blank slot, not a chip or tile
             std::string label = Translate(c.name);
             if(i < themeStart || i >= pinnedStartIndex)
             {
-                if(commands[i].command.empty())
-                    continue; // separator, not a chip
                 int labelAvail = chipW - chipIconSize - 24;
                 if(c.previewImage.size())
                 {
@@ -387,8 +517,10 @@ int main(int argc, char * argv[])
             }
             else
             {
-                // tile image loaded lazily, see EnsureTileImage below
-                label = TruncateToWidth(label, 15, TileW - 12);
+                // tile image loaded lazily, see EnsureTileImage below -
+                // overlaid on the image's scrim, left-aligned with margins
+                // on both sides (see the draw loop)
+                label = TruncateToWidth(label, 15, TileW - 28);
                 tileLabels[i] = Texture(label, 15, renderer, 0, 0, false, 0xFFFFFFFF, true);
             }
         }
@@ -404,7 +536,8 @@ int main(int argc, char * argv[])
             SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, c.previewNearest ? "0" : "1");
             Texture art(c.previewImage, renderer, 0, 0);
             SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "0");
-            FitCentered(art, 0, 0, TileW - 16, TileH - 30, 0);
+            // fills the whole tile - matches the per-frame FitCover below
+            FitCover(art, 0, 0, TileW, TileH, 0);
             tileImages[idx] = art;
         };
 
@@ -450,21 +583,21 @@ int main(int argc, char * argv[])
                     break;
                 }
             }
-            else if(controller.GetButtonStatus(LEFT))
+            else if(controller.HeldRepeat(LEFT))
             {
                 if(inGrid && currentCommandId > themeStart)
                     SetCurrentCommand(currentCommandId - 1);
                 else if(!inGrid && stripCount > 0)
                     SetCurrentCommand(StripToCommand(std::max(0, CommandToStrip(currentCommandId) - 1)));
             }
-            else if(controller.GetButtonStatus(RIGHT))
+            else if(controller.HeldRepeat(RIGHT))
             {
                 if(inGrid && currentCommandId < pinnedStartIndex - 1)
                     SetCurrentCommand(currentCommandId + 1);
                 else if(!inGrid && stripCount > 0)
                     SetCurrentCommand(StripToCommand(std::min(stripCount - 1, CommandToStrip(currentCommandId) + 1)));
             }
-            else if(controller.GetButtonStatus(UP))
+            else if(controller.HeldRepeat(UP))
             {
                 if(inGrid)
                 {
@@ -478,7 +611,7 @@ int main(int argc, char * argv[])
                         SetCurrentCommand(currentCommandId - GridCols);
                 }
             }
-            else if(controller.GetButtonStatus(DOWN))
+            else if(controller.HeldRepeat(DOWN))
             {
                 if(!inGrid && themeStart < pinnedStartIndex)
                 {
@@ -488,34 +621,62 @@ int main(int argc, char * argv[])
                 else if(inGrid && currentCommandId + GridCols < pinnedStartIndex)
                     SetCurrentCommand(currentCommandId + GridCols);
             }
-            else if(controller.GetButtonStatus(B) && pinnedStartIndex < (int)commands.size())
+            // B tracked outside the else-if chain, independent of pinned Back/Exit
             {
-                // Back/Exit isn't a chip - B runs it directly
-                Command & backCmd = commands[pinnedStartIndex];
-                if(backCmd.runInternal)
+                bool bHeldNow = controller.PeekButtonStatus(B);
+                if(bHeldNow)
                 {
-                    backCmd.RunCommand(sdl_context, &controller, { gearIcon, appTitleText, appVersionText, creditText }, bgR, bgG, bgB);
-                    if(backCmd.isToggle)
-                        backCmd.UpdateState();
+                    if(!bHoldFired && controller.HeldMillis(B) >= bHoldThresholdMs)
+                    {
+                        bHoldFired = true;
+                        if(!commands[currentCommandId].deleteCommand.empty() && ConfirmDelete())
+                            break;
+                    }
                 }
                 else
                 {
-                    system(backCmd.command.c_str());
-                    break;
+                    if(bWasHeld && !bHoldFired && pinnedStartIndex < (int)commands.size())
+                    {
+                        // quick tap - Back/Exit isn't a chip, B runs it directly
+                        Command & backCmd = commands[pinnedStartIndex];
+                        if(backCmd.runInternal)
+                        {
+                            backCmd.RunCommand(sdl_context, &controller, { gearIcon, appTitleText, appVersionText, creditText }, bgR, bgG, bgB);
+                            if(backCmd.isToggle)
+                                backCmd.UpdateState();
+                        }
+                        else
+                        {
+                            system(backCmd.command.c_str());
+                            break;
+                        }
+                    }
+                    bHoldFired = false;
                 }
+                bWasHeld = bHeldNow;
             }
 
             DrawChromeCommon();
             DrawSectionTitle();
-            if(pinnedStartIndex < (int)commands.size())
-                DrawBadge(badgeB, UiTheme::BadgeClusterRightX - UiTheme::BadgeOuterSize - UiTheme::BadgeLabelGap - badgeA.label.rect.w - UiTheme::BadgeGroupGap);
+            {
+                int rightEdge = UiTheme::BadgeClusterRightX - UiTheme::BadgeOuterSize - UiTheme::BadgeLabelGap - badgeA.label.rect.w - UiTheme::BadgeGroupGap;
+                if(pinnedStartIndex < (int)commands.size())
+                    rightEdge = DrawBadge(badgeB, rightEdge);
+                if(!commands[currentCommandId].deleteCommand.empty())
+                    DrawBadge(badgeHold, rightEdge);
+            }
 
             // action strip
             {
                 int x = GridLeft;
-                for(int pos = 0; pos < stripCount; ++pos)
+                for(int pos = 0; pos < stripSlotCount; ++pos)
                 {
-                    int idx = StripToCommand(pos);
+                    int idx = stripSlots[pos];
+                    if(commands[idx].command.empty())
+                    {
+                        x += chipW + chipGap; // reserved gap - just leave it blank
+                        continue;
+                    }
                     bool selected = idx == currentCommandId;
                     SDL_Rect chipRect{ x, StripTop, chipW, StripH };
                     if(selected)
@@ -561,6 +722,8 @@ int main(int argc, char * argv[])
                         int idx = rowStart + col;
                         if(idx > lastThemeIndex)
                             break;
+                        if(commands[idx].command.empty())
+                            continue; // reserved blank cell, not a tile
                         int x = GridLeft + col*(TileW+GridGap);
                         bool selected = idx == currentCommandId;
                         SDL_Rect tileRect{ x, y, TileW, TileH };
@@ -568,12 +731,23 @@ int main(int argc, char * argv[])
                         EnsureTileImage(idx);
                         if(tileImages[idx].rect.w > 0)
                         {
-                            FitCentered(tileImages[idx], x, y+6, TileW, TileH-24, 8);
+                            // cover-fills the whole tile (crops overflow)
+                            // instead of letterboxing, touching all 4 edges -
+                            // clip to the tile so the crop doesn't bleed into
+                            // neighboring tiles, then mask the clip's square
+                            // corners back to rounded
+                            SDL_RenderSetClipRect(renderer, &tileRect);
+                            FitCover(tileImages[idx], x, y, TileW, TileH, 0);
                             tileImages[idx].Draw(renderer);
+                            const int ScrimH = 56;
+                            DrawBottomScrim(renderer, x, y + TileH - ScrimH, TileW, ScrimH);
+                            SDL_RenderSetClipRect(renderer, nullptr);
+                            DrawRoundedCornerMask(renderer, tileRect, UiTheme::SelectedRowBgR, UiTheme::SelectedRowBgG, UiTheme::SelectedRowBgB, UiTheme::BoxRadius);
                         }
                         DrawStrokeRect(renderer, tileRect, selected ? UiTheme::AccentR : UiTheme::BorderR, selected ? UiTheme::AccentG : UiTheme::BorderG, selected ? UiTheme::AccentB : UiTheme::BorderB, selected ? 3 : UiTheme::BorderWidth, UiTheme::BoxRadius);
-                        tileLabels[idx].rect.x = x + (TileW - tileLabels[idx].rect.w) / 2;
-                        tileLabels[idx].rect.y = y + TileH - tileLabels[idx].rect.h - 6;
+                        // overlaid on the scrim, left-aligned with a small margin
+                        tileLabels[idx].rect.x = x + 14;
+                        tileLabels[idx].rect.y = y + TileH - tileLabels[idx].rect.h - 12;
                         tileLabels[idx].Draw(renderer);
                     }
                 }
@@ -690,6 +864,8 @@ int main(int argc, char * argv[])
     {
         DrawChromeCommon();
         DrawSectionTitle();
+        if(!commands[currentCommandId].deleteCommand.empty())
+            DrawBadge(badgeHold, UiTheme::BadgeClusterRightX - UiTheme::BadgeOuterSize - UiTheme::BadgeLabelGap - badgeA.label.rect.w - UiTheme::BadgeGroupGap);
 
         DrawRoundedFillRect(renderer, selectedRowRect, UiTheme::SelectedRowBgR, UiTheme::SelectedRowBgG, UiTheme::SelectedRowBgB, UiTheme::BoxRadius);
         DrawStrokeRect(renderer, selectedRowRect, UiTheme::AccentR, UiTheme::AccentG, UiTheme::AccentB, 2, UiTheme::BoxRadius);
@@ -729,7 +905,7 @@ int main(int argc, char * argv[])
                 break;
             }
         }
-        else if(controller.GetButtonStatus(UP))
+        else if(controller.HeldRepeat(UP))
         {
             // bounded so an all-separator list can't spin forever
             int newCommandId = currentCommandId;
@@ -741,7 +917,7 @@ int main(int argc, char * argv[])
             }
             SetCurrentCommand(newCommandId);
         }
-        else if(controller.GetButtonStatus(DOWN))
+        else if(controller.HeldRepeat(DOWN))
         {
             int newCommandId = currentCommandId;
             for(size_t tries = 0; tries < commands.size(); ++tries)
@@ -752,11 +928,24 @@ int main(int argc, char * argv[])
             }
             SetCurrentCommand(newCommandId);
         }
-        // B = jump straight to the last row (BACK/EXIT)
-        else if(controller.GetButtonStatus(B))
+        // B tracked outside the else-if chain: tap = last row, hold ~1s = delete
+        bool bHeldNow = controller.PeekButtonStatus(B);
+        if(bHeldNow)
         {
-            SetCurrentCommand(commands.size()-1);
+            if(!bHoldFired && controller.HeldMillis(B) >= bHoldThresholdMs)
+            {
+                bHoldFired = true;
+                if(!commands[currentCommandId].deleteCommand.empty() && ConfirmDelete())
+                    break;
+            }
         }
+        else
+        {
+            if(bWasHeld && !bHoldFired)
+                SetCurrentCommand(commands.size()-1);
+            bHoldFired = false;
+        }
+        bWasHeld = bHeldNow;
 
         DrawChrome();
 

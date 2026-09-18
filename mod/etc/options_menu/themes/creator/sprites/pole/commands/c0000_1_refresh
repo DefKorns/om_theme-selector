@@ -1,5 +1,5 @@
 COMMAND_NAME=REFRESH
 COMMAND_TYPE=EXTERNAL
 RESTART_UI=FALSE
-COMMAND_STR=sh /etc/options_menu/scripts/om_themeselector reload
+COMMAND_STR=sh %options_path%/themes/creator/scripts/om_diy_asset pole force &
 PREVIEW_IMAGE=/etc/options_menu/images/chip_refresh.png

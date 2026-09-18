@@ -4,5 +4,3 @@ RESTART_UI=FALSE
 COMMAND_STR=sh %script_dir%/om_theme tpf
 STATE_STR=sh %script_dir%/om_state theme_per_folder
 PREVIEW_IMAGE=/etc/options_menu/images/randtheme.png
-PREVIEW_IMAGE_X=920
-PREVIEW_IMAGE_Y=262

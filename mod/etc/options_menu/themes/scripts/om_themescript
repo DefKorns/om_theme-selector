@@ -150,7 +150,7 @@ themeSelector() {
 
     FULL_THEME_PATH="$THEMES_PATH/$SELECTED_THEME"
 
-    if find "$DIY_THEME" -type f -print -quit 2>/dev/null | read -r; then
+    if find "$DIY_THEME" -type f 2>/dev/null | read -r; then
       FULL_THEME_PATH="$DIY_THEME"
     fi
 

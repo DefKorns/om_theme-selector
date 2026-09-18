@@ -28,12 +28,6 @@ fontfix_file="$mountpoint/etc/preinit.d/b8025_fontfix"
 chmenu_file="$root_bin/chmenu"
 has_folders="${gStorage}/001"
 
-downloadURL="http://hakchicloud.com/Hakchi_Themes/scripts"
-themeURL="http://hakchicloud.com/Hakchi_Themes/themes"
-# resolveDownloadUrls (below) does the actual availability check - two blocking
-# wget calls (~0.9s combined) here would run on every om_vars source, i.e. on
-# every screen of the theme selector, not just the ones that download anything
-
 # Options Menu
 omMod="$optionsMenu/$modtitle"
 omModImgs="$optionsMenu/images"
@@ -95,16 +89,14 @@ om_theme_count="$state_path/om_theme_count"
 omDummy="$omModCommands/c0000_0000"
 subDummy="$omModSubCmds/c0000_0000"
 omModSpacer="$omModCommands/c0000_separator"
-omModSubSpacer="$omModSubCmds/c9998_separator"
-omModGenSpacer="$omModGenCmds/c0000_separator"
 omModSettingsSpacer="$omModSettings/c0001_separator"
 #### ENABLE/DISABLE
-enableDownloads="$omModCommands/c0000_download"
-disableDownloads="$omModCommands/_download"
-enableClear="$omModCommands/c0000_remove"
-disableClear="$omModCommands/_remove"
-enableSettings="$omModCommands/c0000_options"
-disableSettings="$omModCommands/_options"
+enableDownloads="$omModCommands/c0000_2_download"
+disableDownloads="$omModCommands/_2_download"
+enableClear="$omModCommands/c0000_5_remove"
+disableClear="$omModCommands/_5_remove"
+enableSettings="$omModCommands/c0000_4_options"
+disableSettings="$omModCommands/_4_options"
 enableAudioSetting="$omModSettingsCmds/c0001_audiorandomizer"
 disableAudioSetting="$omModSettingsCmds/_audiorandomizer"
 enableAdvancedMusicHack="$omModSettingsCmds/c0001_audiorandomizerall"
@@ -113,16 +105,16 @@ enableThemeSetting="$omModSettingsCmds/c0000_themerandomizer"
 disableThemeSetting="$omModSettingsCmds/_themerandomizer"
 enableSystemCleanUp="$omModSettingsCmds/c0001_systemcleanup"
 disableSystemCleanUp="$omModSettingsCmds/_systemcleanup"
-enableThemeGenerator="$omModCommands/c0000_generatetheme"
-disableThemeGenerator="$omModCommands/_generatetheme"
+enableThemeGenerator="$omModCommands/c0000_3_generatetheme"
+disableThemeGenerator="$omModCommands/_3_generatetheme"
 enableUninstaller="$omModSettingsCmds/c0001_uninstaller"
 disableUninstaller="$omModSettingsCmds/_uninstaller"
-enableDiY="$omModGenCmds/c0000_apply"
-disableDiY="$omModGenCmds/_apply"
-enableDelDiY="$omModGenCmds/c0000_remove"
-disableDelDiY="$omModGenCmds/_remove"
-enablePreview="$omModGenCmds/c0000_preview"
-disablePreview="$omModGenCmds/_preview"
+enableDiY="$omModGenCmds/c0000_3_apply"
+disableDiY="$omModGenCmds/_3_apply"
+enableDelDiY="$omModGenCmds/c0000_5_remove"
+disableDelDiY="$omModGenCmds/_5_remove"
+enablePreview="$omModGenCmds/c0000_4_preview"
+disablePreview="$omModGenCmds/_4_preview"
 enablePole="$omModGenCmds/c0006_pole"
 disablePole="$omModGenCmds/_pole"
 enableColor="$omModGenCmds/c0006_colors"
@@ -159,14 +151,6 @@ snes_theme_path="${om_mod_path}/snes"
 
 #### ARRAYS
 diy_asset_array="diy_packed diy_wall diy_wall_far diy_wall_near diy_mario diy_luigi diy_colors diy_pole" # verify
-asset_nes_arr="$omModPackedNesAssets $omModSbmAssets"
-asset_snes_arr="$omModPoleAssets $omModMarioAssets $omModLuigiAssets $omModWallAssets $omModWallNAssets $omModWallFAssets $omModPackedAssets $omModColorsAssets"
-asset_arr="$asset_snes_arr $asset_nes_arr"
-scripts_arr="$omModPole/scripts $omModMario/scripts $omModLuigi/scripts $omModWall/scripts $omModWallN/scripts $omModWallF/scripts $omModPacked/scripts $omModColors/scripts"
-nes_cmds_arr="$omModPackedNes/commands $omModColorsNes/commands $omModSbm/commands"
-snes_cmds_arr="$omModPole/commands $omModMario/commands $omModLuigi/commands $omModWall/commands $omModWallN/commands $omModWallF/commands $omModPacked/commands $omModColors/commands"
-cmds_arr="$snes_cmds_arr $nes_cmds_arr"
-del_arr="$asset_arr $scripts_arr $cmds_arr"
 del_shared="$nes_theme_path $disableSmb $disablePackedNes $disableColorsNes $omModPackedNes $omModSbm $omModColorsNes ${omModImgs}/smb.png ${omModImgs}/packed_nes.png $disableColor $omModColors"
 
 del_on_nes="$snes_theme_path $shonen_theme_path $disableColor $disablePole $disableMario $disableLuigi $disablePacked $disableWall $disableWallFar $disableWallNear $omModPole $omModMario $omModLuigi $omModWall $omModWallN $omModWallF $omModPacked $omModColors ${omModImgs}/luigi.png ${omModImgs}/mario.png ${omModImgs}/packed.png ${omModImgs}/pole.png ${omModImgs}/wall*.png"
@@ -188,11 +172,11 @@ case "$sftype" in
 esac
 
 hasThemesToInstall() {
-  if [ "$has_theme" != 0 ]; then
-    for f in *.tar.gz; do
-      tar -xzvf "$f" && rm -f "$f"
-    done
-  fi
+  [ "$has_theme" = 0 ] && return
+  for f in "$theme_path/$system".*.tar.gz; do
+    [ -f "$f" ] || continue
+    tar -xzvf "$f" -C "$theme_path" && rm -f "$f"
+  done
 }
 
 clearList() {
@@ -342,10 +326,7 @@ sed -i \"s/SELECTED_THEME=\\\"CHANGEME\\\"/SELECTED_THEME=\\\"${thm}\\\"/g;\" \"
 COMMAND_TYPE=INTERNAL
 COMMAND_STR=sh $thm_script.sh
 PREVIEW_IMAGE=$preview_image
-PREVIEW_IMAGE_X=762
-PREVIEW_IMAGE_Y=276
-PREVIEW_IMAGE_WIDTH=0
-PREVIEW_IMAGE_HEIGHT=272" > "$cmd_list"
+DELETE_STR=rm -rf \"$full_path\" \"$full_path.png\" \"$cmd_list\" \"$thm_script.sh\" && usleep 50000 && %options_path%themes/theme_manager --title INSTALLED_THEMES --layout grid &" > "$cmd_list"
   done
 }
 
@@ -357,38 +338,21 @@ removeRegionalTheme() {
   [ -d "$theme_path/snesce-$sfregion" ] && rm -rf "$theme_path/snesce-$sfregion"
 }
 
-# picks the mirror that's actually reachable for downloadURL/themeURL - two
-# blocking wget calls, so only run this where a download is about to happen,
-# never unconditionally at om_vars source time
-resolveDownloadUrls() {
-  # -T bounds a bad/unreachable network to a few seconds instead of hanging
-  # the whole UI (theme_manager blocks on this the entire time it runs)
-  ! wget -q -T 5 --spider "$downloadURL" > /dev/null 2>&1 && downloadURL="http://classicmods.net/files/themes/themeselector-scripts/"
-  ! wget -q -T 5 --spider "$themeURL" > /dev/null 2>&1 && themeURL="http://classicmods.net/files/themes/themeselector/"
-}
-
 getThemeList() {
-  # splash first - resolveDownloadUrls can take a few seconds (bounded by its
-  # own -T 5 now, but still real) when hakchicloud.com is slow/unreachable,
-  # and that shouldn't be a blank screen before the loading indicator shows
+  # splash first - theme_downloader's own GitHub/classicmods fallback check
+  # can take a few seconds when a host is slow/unreachable, and that
+  # shouldn't be a blank screen before the loading indicator shows
   "$omScripts/gen_splash" /tmp/om_splash.png THEME_LIST_DOWNLOADING_LINE1 THEME_LIST_DOWNLOADING_LINE2 && decodepng /tmp/om_splash.png > /dev/fb0
-  resolveDownloadUrls
   cd "$omModSub" || exit
 
   if [ ! -e "${s_type}${listName}" ]; then
     clearDownloads
-    if wget -q -T 5 --spider "$downloadURL/${s_type}${listName}" > /dev/null 2>&1; then
-      wget -T 10 "$downloadURL/${s_type}${listName}"
-    else
-      netChecker
-    fi
-
+    theme_downloader catalog "$s_type" "${s_type}${listName}" || netChecker
   fi
   # shellcheck disable=SC2035
   tar -xzf "${s_type}${listName}" && rm -f *.tar.gz
   removeRegionalTheme
   touch "$subDummy"
-  create "$omModSubSpacer"
   usleep 1000
 }
 
@@ -438,7 +402,6 @@ loadThemeList() {
 
 # verify themeGenerator function
 themeGenerator() {
-  resolveDownloadUrls
   echo "Packaging: DefKorns"
   translate CATEGORY_UI_MOD
   echo ""
@@ -449,21 +412,27 @@ themeGenerator() {
   full_path="${theme_path}/${theme_name}"
   cd "${theme_path}" || exit
 
-  theme_pkg="${themeURL}/${system}.${theme_name}.tar.gz"
-  [ "${theme_name}" = "all" ] && theme_pkg="${downloadURL}/${sftype}-all"
-
-  if wget -q -T 5 --spider "${theme_pkg}" > /dev/null 2>&1; then
-    translate DOWNLOADING
-    wget -T 10 "${theme_pkg}"
-    if [ "${theme_name}" = "all" ]; then
+  if [ "${theme_name}" = "all" ]; then
+    ok=0
+    if theme_downloader all-manifest "$sftype" "${sftype}-all"; then
+      ok=1
+      translate DOWNLOADING
       while IFS= read -r t; do
         echo "$t"
         echo ""
-        theme_pkg="${themeURL}/${system}.${t}.tar.gz"
-        wget -T 10 "${theme_pkg}"
-        tar -xzvf "${system}.${t}.tar.gz" && remove "${system}.${t}.tar.gz"
+        theme_downloader theme "$sftype" "$t" "${system}.${t}.tar.gz" \
+          && tar -xzvf "${system}.${t}.tar.gz" && remove "${system}.${t}.tar.gz"
       done < "${sftype}-all"
     fi
+  else
+    ok=0
+    if theme_downloader theme "$sftype" "$theme_name" "${system}.${theme_name}.tar.gz"; then
+      ok=1
+      translate DOWNLOADING
+    fi
+  fi
+
+  if [ "$ok" = 1 ]; then
     [ -f "${system}.${theme_name}.tar.gz" ] && tar -xzvf "${system}.${theme_name}.tar.gz" && rm -f ./*.tar.gz
     remove "${sftype}-all"
     removeRegionalTheme
@@ -474,7 +443,6 @@ themeGenerator() {
   else
     netChecker
   fi
-
 }
 
 findDiyAsset() {
@@ -490,11 +458,8 @@ findDiyAsset() {
   chars="0"
   colors="0"
   preview_square="0"
+  preview_cols=""
   json=""
-  preview_x="920"
-  preview_y="275"
-  preview_w="250"
-  preview_h="250"
 
   case "$1" in
     luigi | mario)
@@ -502,10 +467,13 @@ findDiyAsset() {
       asset_path="layout/asset/sprite/${1}"
       asset="*.*"
       chars="1"
-      preview_w="0"
       preview_square="1"
       ;;
-    wall | wall_near | wall_far)
+    wall)
+      preview_square="1"
+      preview_cols="5"
+      ;;
+    wall_near | wall_far)
       preview_square="1"
       ;;
     sbm)
@@ -513,24 +481,19 @@ findDiyAsset() {
       asset_path="sprites"
       asset="characters_sbm.png"
       chars="1"
-      preview_w="0"
       ;;
     packed)
       asset_path="sprites"
-      preview_x="780"
-      preview_w="0"
-      preview_h="200"
       preview_square="1"
+      preview_cols="4" # full UI screenshots - too detailed to shrink to 7 cols
       ;;
     packed_nes)
       diy_file="${sftype}.png"
       [ "$sfregion" = "jpn" ] && diy_file="hvc.png"
       asset_path="sprites"
       asset="$diy_file"
-      preview_x="780"
-      preview_w="0"
       preview_square="1"
-      preview_h="200"
+      preview_cols="4" # full UI screenshots - too detailed to shrink to 7 cols
       ;;
     colors)
       asset_path="scripts/env"
@@ -549,7 +512,6 @@ findDiyAsset() {
       diy_file="${1}01.png"
       asset="*.*"
       chars="1"
-      preview_w="0"
       preview_square="1"
       ;;
   esac
@@ -571,8 +533,12 @@ findDiyAsset() {
   paths_to_search="$omModSprites/assets/$1 $theme_path"
 
   find "$diy_sprite/commands" "$diy_sprite/scripts" -type f \
-    -not -name 'om_*' -not -name 'c999[0-9]_*' \
+    -not -name 'om_*' -not -name 'c999[0-9]_*' -not -name 'c0000_*' \
     -not -name 'c0001_*' -not -name '_*' -exec rm {} +
+
+  # read once - avoids a [ -f ] stat() per theme below, slow on USB/SD
+  existing_cmds="$(ls -1 "$diy_sprite/commands" 2>/dev/null)"
+  existing_scripts="$(ls -1 "$diy_sprite/scripts" 2>/dev/null)"
 
   diy_crop_batch=0
   for p in $paths_to_search; do
@@ -623,7 +589,7 @@ findDiyAsset() {
             preview_image="$temp_preview" # cropped copy, queued above or already cached
           fi
 
-          if [ ! -f "$cmd_file" ]; then
+          if ! printf '%s\n' "$existing_cmds" | grep -qxF "c0001_$asset_name" || ! printf '%s\n' "$existing_scripts" | grep -qxF "$asset_name.sh"; then
             touch "$cmd_file"
             cmd_name="$(echo "$asset_name" | sed -e 's/_/ /g' | awk '{for(i=1;i<=NF;i++){$i=toupper(substr($i,1,1))substr($i,2)}}1')"
             [ "$p" = "$theme_path" ] && cmd_name="$(sed -r 's/NAME=//g' < "$info_path/info" | awk '{$NF="";sub(/[ \t]+$/,"")}1')"
@@ -635,14 +601,13 @@ PREVIEW_NEAREST=TRUE"
             preview_square_str=""
             [ "$preview_square" = "1" ] && preview_square_str="
 PREVIEW_SQUARE=TRUE"
+            preview_cols_str=""
+            [ -n "$preview_cols" ] && preview_cols_str="
+PREVIEW_GRID_COLS=$preview_cols"
             echo "COMMAND_NAME=$cmd_name
 COMMAND_TYPE=INTERNAL
 COMMAND_STR=sh $sprite_script.sh
-PREVIEW_IMAGE=$preview_image
-PREVIEW_IMAGE_X=$preview_x
-PREVIEW_IMAGE_Y=$preview_y
-PREVIEW_IMAGE_WIDTH=$preview_w
-PREVIEW_IMAGE_HEIGHT=$preview_h${preview_nearest}${preview_square_str}" > "$cmd_file"
+PREVIEW_IMAGE=$preview_image${preview_nearest}${preview_square_str}${preview_cols_str}" > "$cmd_file"
 
             copy "$omModLicense" "$sprite_script.sh"
             echo "diySpriteSelector \"$full_asset_path\" \"$asset_path\" \"$asset\"" >> "$sprite_script.sh"
@@ -690,7 +655,6 @@ diyThemeChecker() {
   [ "$1" = "loader" ] && { "$omScripts/gen_splash" /tmp/om_splash.png THEME_LOADING_ASSETS && decodepng /tmp/om_splash.png > /dev/fb0; }
 
   [ ! -d "$diyThemePath" ] && mkdir -p "$diyThemePath"
-  create "$omModGenSpacer"
   # shellcheck disable=SC3061
   if find "$diyThemePath" -type f | read -r; then
     enable_cmds "DiY" "DelDiY" "Preview"
@@ -704,10 +668,8 @@ diyThemeChecker() {
 diyThemeRemover() {
   disable_cmds "DiY" "DelDiY" "Preview"
 
-  for item in $del_arr; do
-    find "$item" -type f -not -name 'c999[0-9]_*' -not -name 'om_*' -maxdepth 1 -exec rm {} +
-  done
-
+  # only the applied selection - each category's own browse cache is
+  # refreshed by that category's own Refresh chip, not here
   [ -d "$diyThemePath" ] && find "$diyThemePath" -type f -not -name 'assets_here' -exec rm {} +
 
 }
