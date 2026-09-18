@@ -557,3 +557,4 @@ tools/MaterialSymbolsOutlined.codepoints
 tools/MaterialSymbolsOutlined.ttf
 theme_downloader/theme_downloader
 mod/etc/options_menu/themes/theme_manager
+theme_downloader/cacert.pem
