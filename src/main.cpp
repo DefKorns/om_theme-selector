@@ -190,6 +190,7 @@ int main(int argc, char * argv[])
 
     LoadLanguageFromConfig(optionsLocation);
     SetTTFFontPath(optionsLocation);
+    UiTheme::LoadThemeConfig(optionsLocation);
 
     // isThemeItem: false for a "c0000_*" fixed action, true for a theme/asset
     // row - only used by grid layout, to split strip vs. tile
@@ -327,15 +328,15 @@ int main(int argc, char * argv[])
     Texture switchOn(optionsLocation + UiTheme::AssetSwitchOn, renderer);
     Texture switchOff(optionsLocation + UiTheme::AssetSwitchOff, renderer);
 
-    Texture appTitleText("Theme Manager", UiTheme::TitleFontSize, renderer, UiTheme::TitleX, UiTheme::TitleY, false, 0xFFFFFFFF, true);
+    Texture appTitleText("Theme Manager", UiTheme::TitleFontSize, renderer, UiTheme::TitleX, UiTheme::TitleY, false, UiTheme::TextColor, true);
     appTitleText.rect.y -= appTitleText.rect.h / 2;
-    Texture appVersionText(MOD_VERSION, UiTheme::VersionFontSize, renderer, appTitleText.rect.x + appTitleText.rect.w + UiTheme::VersionGap, UiTheme::TitleY, false, 0xFFFFFFFF, true);
+    Texture appVersionText(MOD_VERSION, UiTheme::VersionFontSize, renderer, appTitleText.rect.x + appTitleText.rect.w + UiTheme::VersionGap, UiTheme::TitleY, false, UiTheme::TextColor, true);
     appVersionText.rect.y -= appVersionText.rect.h / 2;
-    Texture titleText(Translate(titleKey), UiTheme::SectionTitleFontSize, renderer, UiTheme::SectionTitleX, UiTheme::SectionTitleY, false, 0xFFFFFFFF, true);
-    Texture creditText("Theme Manager - by DefKorns", 16, renderer, UiTheme::CreditX, UiTheme::CreditY, false, 0xFFFFFFFF, true);
+    Texture titleText(Translate(titleKey), UiTheme::SectionTitleFontSize, renderer, UiTheme::SectionTitleX, UiTheme::SectionTitleY, false, UiTheme::TextColor, true);
+    Texture creditText("Theme Manager - by DefKorns", 16, renderer, UiTheme::CreditX, UiTheme::CreditY, false, UiTheme::TextColor, true);
 
     struct Badge { Texture letter; Texture label; UiTheme::BadgeColor rim; UiTheme::BadgeColor fill; };
-    Badge badgeA{ Texture("A", 16, renderer, 0, 0, false, UiTheme::BadgeLetterColor, true), Texture(Translate("HINT_SELECT"), 16, renderer, 0, 0, false, 0xFFFFFFFF, true), UiTheme::BadgeADark, UiTheme::BadgeA };
+    Badge badgeA{ Texture("A", 16, renderer, 0, 0, false, UiTheme::BadgeLetterColor, true), Texture(Translate("HINT_SELECT"), 16, renderer, 0, 0, false, UiTheme::TextColor, true), UiTheme::BadgeADark, UiTheme::BadgeA };
     Texture badgeOuter(optionsLocation + UiTheme::AssetBadgeOuter, renderer);
     Texture badgeInner(optionsLocation + UiTheme::AssetBadgeInner, renderer);
     auto DrawBadge = [&](Badge & badge, int rightEdgeX) -> int
@@ -350,8 +351,9 @@ int main(int argc, char * argv[])
         badgeInner.rect = { x+innerOffset, y+innerOffset, UiTheme::BadgeInnerSize, UiTheme::BadgeInnerSize };
         SDL_SetTextureColorMod(badgeInner.texture.get(), badge.fill.r, badge.fill.g, badge.fill.b);
         badgeInner.Draw(renderer);
-        badge.letter.rect.x = x + (UiTheme::BadgeOuterSize - badge.letter.rect.w)/2;
-        badge.letter.rect.y = y + (UiTheme::BadgeOuterSize - badge.letter.rect.h)/2;
+        // glyph bearing makes the pure-math center look 1px down/left - nudged
+        badge.letter.rect.x = x + (UiTheme::BadgeOuterSize - badge.letter.rect.w)/2 + 1;
+        badge.letter.rect.y = y + (UiTheme::BadgeOuterSize - badge.letter.rect.h)/2 - 1;
         badge.letter.Draw(renderer);
         badge.label.rect.x = x + UiTheme::BadgeOuterSize + UiTheme::BadgeLabelGap;
         badge.label.rect.y = y + (UiTheme::BadgeOuterSize - badge.label.rect.h)/2;
@@ -360,14 +362,14 @@ int main(int argc, char * argv[])
     };
 
     // hold-to-delete hint, different color than the real B badge
-    Badge badgeHold{ Texture("B", 16, renderer, 0, 0, false, UiTheme::BadgeLetterColor, true), Texture(Translate("HINT_DELETE"), 16, renderer, 0, 0, false, 0xFFFFFFFF, true), UiTheme::BadgeXDark, UiTheme::BadgeX };
+    Badge badgeHold{ Texture("B", 16, renderer, 0, 0, false, UiTheme::BadgeLetterColor, true), Texture(Translate("HINT_DELETE"), 16, renderer, 0, 0, false, UiTheme::TextColor, true), UiTheme::BadgeXDark, UiTheme::BadgeX };
 
     // true if deleted - caller should break out of the main loop
     auto ConfirmDelete = [&]() -> bool
     {
         const std::string & confirmKey = commands[currentCommandId].deleteConfirmKey;
-        Texture confirmTitle(Translate(confirmKey.empty() ? "DELETE_CONFIRM_GENERIC" : confirmKey), 24, renderer, 640, 320, true, 0xFFFFFFFF, true);
-        Texture confirmHint(Translate("DELETE_CONFIRM_HINT"), 16, renderer, 640, 360, true, 0xFFFFFFFF, true);
+        Texture confirmTitle(Translate(confirmKey.empty() ? "DELETE_CONFIRM_GENERIC" : confirmKey), 24, renderer, 640, 320, true, UiTheme::TextColor, true);
+        Texture confirmHint(Translate("DELETE_CONFIRM_HINT"), 16, renderer, 640, 360, true, UiTheme::TextColor, true);
         controller.GetButtonStatus(B); // consume the still-held B from the triggering long-press
         bool confirmed = false;
         for(;;)
@@ -461,7 +463,7 @@ int main(int argc, char * argv[])
         // capped so a strip with few slots doesn't stretch its chips wide
         const int MaxChipW = 200;
         const int chipW = hasStrip ? std::min(MaxChipW, (GridRight - GridLeft - (stripSlotCount-1)*chipGap) / stripSlotCount) : 0;
-        titleText = Texture(Translate(titleKey), UiTheme::SectionTitleFontSize - 6, renderer, UiTheme::SectionTitleX, 0, false, 0xFFFFFFFF, true);
+        titleText = Texture(Translate(titleKey), UiTheme::SectionTitleFontSize - 6, renderer, UiTheme::SectionTitleX, 0, false, UiTheme::TextColor, true);
         titleText.rect.y = hasStrip ? (StripTop + StripH + 22) : (UiTheme::HeaderDividerY + 22);
         const int GridTop = titleText.rect.y + titleText.rect.h + 20;
         const int GridBottom = UiTheme::FooterDividerY - 14;
@@ -479,14 +481,14 @@ int main(int argc, char * argv[])
         }
         const int GridRowPitch = TileH + GridGap;
 
-        Texture gridScrollUp("^", 16, renderer, GridRight + 22, GridTop + 24, false, 0xFFFFFFFF, true);
+        Texture gridScrollUp("^", 16, renderer, GridRight + 22, GridTop + 24, false, UiTheme::TextColor, true);
         gridScrollUp.rect.x -= gridScrollUp.rect.w / 2;
         Texture gridScrollDown = gridScrollUp;
         gridScrollDown.rect.y = GridBottom - 24 - gridScrollDown.rect.h;
 
         // Back/Exit hint, footer badge next to A's - B runs it directly
         Badge badgeB{ Texture("B", 16, renderer, 0, 0, false, UiTheme::BadgeLetterColor, true),
-                      Texture(pinnedStartIndex < (int)commands.size() ? Translate(commands[pinnedStartIndex].name) : "", 16, renderer, 0, 0, false, 0xFFFFFFFF, true),
+                      Texture(pinnedStartIndex < (int)commands.size() ? Translate(commands[pinnedStartIndex].name) : "", 16, renderer, 0, 0, false, UiTheme::TextColor, true),
                       UiTheme::BadgeBDark, UiTheme::BadgeB };
 
         std::vector<Texture> chipIcons(commands.size());
@@ -513,7 +515,7 @@ int main(int argc, char * argv[])
                     labelAvail = chipW - chipIconSize - 32;
                 }
                 label = TruncateToWidth(label, 14, labelAvail);
-                chipLabels[i] = Texture(label, 14, renderer, 0, 0, false, 0xFFFFFFFF, true);
+                chipLabels[i] = Texture(label, 14, renderer, 0, 0, false, UiTheme::TextColor, true);
             }
             else
             {
@@ -521,7 +523,7 @@ int main(int argc, char * argv[])
                 // overlaid on the image's scrim, left-aligned with margins
                 // on both sides (see the draw loop)
                 label = TruncateToWidth(label, 15, TileW - 28);
-                tileLabels[i] = Texture(label, 15, renderer, 0, 0, false, 0xFFFFFFFF, true);
+                tileLabels[i] = Texture(label, 15, renderer, 0, 0, false, UiTheme::TextColor, true);
             }
         }
         std::vector<bool> tileImageLoaded(commands.size(), false);
@@ -767,7 +769,7 @@ int main(int argc, char * argv[])
     }
 
     // ============================= LIST LAYOUT =============================
-    Texture scrollUp("^", 16, renderer, UiTheme::ScrollX, UiTheme::ScrollUpY, false, 0xFFFFFFFF, true);
+    Texture scrollUp("^", 16, renderer, UiTheme::ScrollX, UiTheme::ScrollUpY, false, UiTheme::TextColor, true);
     scrollUp.rect.x -= scrollUp.rect.w / 2;
     Texture scrollDown = scrollUp;
     scrollDown.rect.y = UiTheme::ScrollDownY;
@@ -780,7 +782,7 @@ int main(int argc, char * argv[])
     {
         int textX = UiTheme::RowTextX + (c.child ? ChildIndent : 0);
         std::string label = TruncateToWidth(Translate(c.name), RowGlyphSize, UiTheme::RowControlRightX - RowTextGapPx - textX);
-        c.texture = Texture(label, RowGlyphSize, renderer, textX, 0, false, 0xFFFFFFFF, true);
+        c.texture = Texture(label, RowGlyphSize, renderer, textX, 0, false, UiTheme::TextColor, true);
     }
 
     const int modernRowPitch = std::max(UiTheme::RowPitch, GetTTFLineHeight(RowGlyphSize));
