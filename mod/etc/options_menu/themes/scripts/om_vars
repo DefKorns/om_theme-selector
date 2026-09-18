@@ -468,6 +468,7 @@ findDiyAsset() {
       asset="*.*"
       chars="1"
       preview_square="1"
+      preview_cols="5"
       ;;
     wall)
       preview_square="1"
@@ -541,6 +542,9 @@ findDiyAsset() {
   existing_scripts="$(ls -1 "$diy_sprite/scripts" 2>/dev/null)"
 
   diy_crop_batch=0
+  # chars=1 only: many themes reuse byte-identical sprites under different
+  # names - collapse those into a single tile instead of one per theme
+  diy_seen_hashes=""
   for p in $paths_to_search; do
     if [ "$(ls -A "$p")" ]; then
       # shellcheck disable=SC2038
@@ -587,6 +591,18 @@ findDiyAsset() {
               usleep 1000
             fi
             preview_image="$temp_preview" # cropped copy, queued above or already cached
+          fi
+
+          if [ "$chars" = "1" ] && [ -f "$preview_image" ]; then
+            sprite_hash="$(md5sum "$preview_image" | cut -d' ' -f1)"
+            if printf '%s\n' "$diy_seen_hashes" | grep -qxF "$sprite_hash"; then
+              # identical sprite already listed under an earlier theme name -
+              # drop this one, and remove any tile already generated for it
+              rm -f "$cmd_file" "$sprite_script.sh"
+              continue
+            fi
+            diy_seen_hashes="$diy_seen_hashes
+$sprite_hash"
           fi
 
           if ! printf '%s\n' "$existing_cmds" | grep -qxF "c0001_$asset_name" || ! printf '%s\n' "$existing_scripts" | grep -qxF "$asset_name.sh"; then

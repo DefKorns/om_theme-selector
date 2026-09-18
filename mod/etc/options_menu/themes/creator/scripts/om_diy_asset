@@ -23,7 +23,7 @@ script_init
 case "$1" in
 luigi)
   diy_om_sprite_path="$omModLuigi"
-  diy_title="DEMO_CHARACTER_2_LUIGI"
+  diy_title="DEMO_CHARACTER_2"
   ;;
 pole)
   diy_om_sprite_path="$omModPole"
@@ -47,7 +47,7 @@ packed)
   ;;
 mario)
   diy_om_sprite_path="$omModMario"
-  diy_title="DEMO_CHARACTER_1_MARIO"
+  diy_title="DEMO_CHARACTER_1"
   ;;
 colors)
   diy_om_sprite_path="$omModColors"

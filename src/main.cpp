@@ -480,6 +480,7 @@ int main(int argc, char * argv[])
             TileH = (GridBottom - GridTop - (GridRowsVisible-1)*GridGap) / GridRowsVisible;
         }
         const int GridRowPitch = TileH + GridGap;
+        const int ScrimH = 56;
 
         Texture gridScrollUp("^", 16, renderer, GridRight + 22, GridTop + 24, false, UiTheme::TextColor, true);
         gridScrollUp.rect.x -= gridScrollUp.rect.w / 2;
@@ -495,6 +496,12 @@ int main(int argc, char * argv[])
         std::vector<Texture> chipLabels(commands.size());
         std::vector<Texture> tileImages(commands.size());
         std::vector<Texture> tileLabels(commands.size());
+        // sized >1 only for a mario/luigi tile with sibling _run02/_run03/...
+        // frames next to _run01 - cycled in the draw loop instead of static
+        std::vector<std::vector<Texture>> tileRunFrames(commands.size());
+        // true for any _run01.png tile (character sprite) - fit-centered
+        // instead of cover-filled, even when only one frame was found
+        std::vector<bool> tileIsCharacter(commands.size(), false);
         for(int i = 0; i < (int)commands.size(); ++i)
         {
             Command & c = commands[i];
@@ -538,9 +545,36 @@ int main(int argc, char * argv[])
             SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, c.previewNearest ? "0" : "1");
             Texture art(c.previewImage, renderer, 0, 0);
             SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "0");
-            // fills the whole tile - matches the per-frame FitCover below
-            FitCover(art, 0, 0, TileW, TileH, 0);
+
+            const std::string runSuffix = "_run01.png";
+            bool isRunCycle = c.previewImage.size() > runSuffix.size() &&
+               c.previewImage.compare(c.previewImage.size() - runSuffix.size(), runSuffix.size(), runSuffix) == 0;
+            tileIsCharacter[idx] = isRunCycle;
+
+            if(isRunCycle)
+                FitCentered(art, 0, 0, TileW, TileH, 0);
+            else
+                FitCover(art, 0, 0, TileW, TileH, 0);
             tileImages[idx] = art;
+
+            if(isRunCycle)
+            {
+                // probe for however many _run02/_run03/... siblings a theme
+                // shipped, cycled at 100ms/frame in the draw loop below
+                std::string base = c.previewImage.substr(0, c.previewImage.size() - runSuffix.size()) + "_run";
+                std::vector<Texture> frames{ art };
+                for(int n = 2; n <= 8; ++n)
+                {
+                    std::string framePath = base + (n < 10 ? "0" : "") + std::to_string(n) + ".png";
+                    if(!std::ifstream(framePath).good())
+                        break;
+                    Texture frame(framePath, renderer, 0, 0);
+                    FitCentered(frame, 0, 0, TileW, TileH, 0);
+                    frames.push_back(frame);
+                }
+                if(frames.size() > 1)
+                    tileRunFrames[idx] = std::move(frames);
+            }
         };
 
         int gridTopRow = 0;
@@ -731,26 +765,35 @@ int main(int argc, char * argv[])
                         SDL_Rect tileRect{ x, y, TileW, TileH };
                         DrawRoundedFillRect(renderer, tileRect, UiTheme::SelectedRowBgR, UiTheme::SelectedRowBgG, UiTheme::SelectedRowBgB, UiTheme::BoxRadius);
                         EnsureTileImage(idx);
-                        if(tileImages[idx].rect.w > 0)
+                        std::vector<Texture> & runFrames = tileRunFrames[idx];
+                        Texture & tileArt = runFrames.size() > 1
+                            ? runFrames[(SDL_GetTicks() / 100) % runFrames.size()]
+                            : tileImages[idx];
+                        if(tileArt.rect.w > 0)
                         {
-                            // cover-fills the whole tile (crops overflow)
-                            // instead of letterboxing, touching all 4 edges -
-                            // clip to the tile so the crop doesn't bleed into
+                            // clip to the tile so art doesn't bleed into
                             // neighboring tiles, then mask the clip's square
                             // corners back to rounded
                             SDL_RenderSetClipRect(renderer, &tileRect);
-                            FitCover(tileImages[idx], x, y, TileW, TileH, 0);
-                            tileImages[idx].Draw(renderer);
-                            const int ScrimH = 56;
-                            DrawBottomScrim(renderer, x, y + TileH - ScrimH, TileW, ScrimH);
+                            if(tileIsCharacter[idx])
+                                // 10px margin keeps clear of the rounded-corner mask below
+                                FitCentered(tileArt, x, y, TileW, TileH, 10);
+                            else
+                                FitCover(tileArt, x, y, TileW, TileH, 0);
+                            tileArt.Draw(renderer);
+                            if(!tileIsCharacter[idx])
+                                DrawBottomScrim(renderer, x, y + TileH - ScrimH, TileW, ScrimH);
                             SDL_RenderSetClipRect(renderer, nullptr);
                             DrawRoundedCornerMask(renderer, tileRect, UiTheme::SelectedRowBgR, UiTheme::SelectedRowBgG, UiTheme::SelectedRowBgB, UiTheme::BoxRadius);
                         }
                         DrawStrokeRect(renderer, tileRect, selected ? UiTheme::AccentR : UiTheme::BorderR, selected ? UiTheme::AccentG : UiTheme::BorderG, selected ? UiTheme::AccentB : UiTheme::BorderB, selected ? 3 : UiTheme::BorderWidth, UiTheme::BoxRadius);
-                        // overlaid on the scrim, left-aligned with a small margin
-                        tileLabels[idx].rect.x = x + 14;
-                        tileLabels[idx].rect.y = y + TileH - tileLabels[idx].rect.h - 12;
-                        tileLabels[idx].Draw(renderer);
+                        if(!tileIsCharacter[idx])
+                        {
+                            // overlaid on the scrim, left-aligned with a small margin
+                            tileLabels[idx].rect.x = x + 14;
+                            tileLabels[idx].rect.y = y + TileH - tileLabels[idx].rect.h - 12;
+                            tileLabels[idx].Draw(renderer);
+                        }
                     }
                 }
 
