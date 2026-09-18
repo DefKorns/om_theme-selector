@@ -24,7 +24,5 @@ fi
 echo "==> Running make inside the container..."
 docker run --rm -v "$PWD:/src" "$IMAGE" make -f Makefile.docker CROSS_PREFIX=arm-linux-gnueabihf- "$@"
 
-if [ -d out/ ]; then
-    echo "==> Build complete. Files in out/:"
-    ls -la out/
-fi
+echo "==> Build complete:"
+ls -la mod/etc/options_menu/themes/theme_manager mod/bin/theme_downloader 2>/dev/null

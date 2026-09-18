@@ -23,18 +23,25 @@ VENDOR_SRC_DIR = vendor/OptionsMenu/src
 SOURCES = src/main.cpp $(VENDOR_SRC_DIR)/command.cpp $(VENDOR_SRC_DIR)/localization.cpp $(FRAMEWORK_DIR)/sdl_context.cpp $(FRAMEWORK_DIR)/texture.cpp $(FRAMEWORK_DIR)/controller.cpp $(FRAMEWORK_DIR)/powerwatch.cpp $(FRAMEWORK_DIR)/draw_helpers.cpp $(FRAMEWORK_DIR)/utf8.cpp $(FRAMEWORK_DIR)/font8x8_lookup.cpp
 OBJECTS = $(SOURCES:.cpp=.o)
 
-all: out/theme_manager
+all: mod/etc/options_menu/themes/theme_manager mod/bin/theme_downloader
 
-out/theme_manager: $(OBJECTS)
-	mkdir -p out
-	$(CROSS_PREFIX)$(CXX) $(OBJECTS) $(LDLIBS) $(LDFLAGS) -Wl,-rpath,/etc/options_menu -o out/theme_manager
-	$(CROSS_PREFIX)$(STRIP) out/theme_manager
+mod/etc/options_menu/themes/theme_manager: $(OBJECTS)
+	$(CROSS_PREFIX)$(CXX) $(OBJECTS) $(LDLIBS) $(LDFLAGS) -Wl,-rpath,/etc/options_menu -o mod/etc/options_menu/themes/theme_manager
+	$(CROSS_PREFIX)$(STRIP) mod/etc/options_menu/themes/theme_manager
 
 %.o: %.cpp
 	$(CROSS_PREFIX)$(CXX) $(CXXFLAGS) -c $< -o $@
 
+# theme_downloader has its own Makefile (links the toolchain's static
+# libcurl+OpenSSL, not SDL2 - unrelated build inputs from theme_manager).
+.PHONY: mod/bin/theme_downloader
+mod/bin/theme_downloader:
+	$(MAKE) -C theme_downloader CROSS_PREFIX=$(CROSS_PREFIX)
+	cp theme_downloader/theme_downloader mod/bin/theme_downloader
+
 clean:
 	find . -name "*.o" -type f -delete
-	rm -rf out/
+	rm -f mod/etc/options_menu/themes/theme_manager mod/bin/theme_downloader
+	$(MAKE) -C theme_downloader clean
 
 .PHONY: clean
