@@ -27,6 +27,7 @@
 
 #include <algorithm>
 #include <csignal>
+#include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
@@ -269,7 +270,7 @@ int main(int argc, char * argv[])
         if(returnScript.good())
             back.command = "sh " + scriptLocation + "om_return &";
         else
-            back.command = "usleep 50000 && " + optionsLocation + "themes/theme_manager --title INSTALLED_THEMES --layout grid &";
+            back.command = "usleep 50000 && " + optionsLocation + "lib/theme_manager --title INSTALLED_THEMES --layout grid &";
         commands.push_back(back);
         isThemeItem.push_back(false);
     }
@@ -292,10 +293,13 @@ int main(int argc, char * argv[])
         ++themeStart;
 
     int currentCommandId = 0;
+    fprintf(stderr, "CHECKPOINT 1: commands loaded, count=%zu\n", commands.size()); fflush(stderr);
 
     SDL_Context sdl_context(std::chrono::milliseconds(33), false);
+    fprintf(stderr, "CHECKPOINT 2: sdl_context created\n"); fflush(stderr);
     auto renderer = sdl_context.renderer;
     Controller controller(1);
+    fprintf(stderr, "CHECKPOINT 3: controller created\n"); fflush(stderr);
 
     const Uint8 bgR = UiTheme::BgR;
     const Uint8 bgG = UiTheme::BgG;
@@ -312,6 +316,7 @@ int main(int argc, char * argv[])
     appVersionText.rect.y -= appVersionText.rect.h / 2;
     Texture titleText(Translate(titleKey), UiTheme::SectionTitleFontSize, renderer, UiTheme::SectionTitleX, UiTheme::SectionTitleY, false, UiTheme::TextColor, true);
     Texture creditText("Theme Manager - by DefKorns", 16, renderer, UiTheme::CreditX, UiTheme::CreditY, false, UiTheme::TextColor, true);
+    fprintf(stderr, "CHECKPOINT 4: basic textures created\n"); fflush(stderr);
 
     struct Badge { Texture letter; Texture label; UiTheme::BadgeColor rim; UiTheme::BadgeColor fill; };
     Badge badgeA{ Texture("A", 16, renderer, 0, 0, false, UiTheme::BadgeLetterColor, true), Texture(Translate("HINT_SELECT"), 16, renderer, 0, 0, false, UiTheme::TextColor, true), UiTheme::BadgeADark, UiTheme::BadgeA };
