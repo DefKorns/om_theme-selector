@@ -620,10 +620,16 @@ PREVIEW_SQUARE=TRUE"
             preview_cols_str=""
             [ -n "$preview_cols" ] && preview_cols_str="
 PREVIEW_GRID_COLS=$preview_cols"
+            # chars=1: portrait sprite art, not a wide/square screenshot -
+            # fit without cropping, and skip the title label entirely
+            preview_fit_str=""
+            [ "$chars" = "1" ] && preview_fit_str="
+PREVIEW_FIT_CONTAIN=TRUE
+PREVIEW_HIDE_LABEL=TRUE"
             echo "COMMAND_NAME=$cmd_name
 COMMAND_TYPE=INTERNAL
 COMMAND_STR=sh $sprite_script.sh
-PREVIEW_IMAGE=$preview_image${preview_nearest}${preview_square_str}${preview_cols_str}" > "$cmd_file"
+PREVIEW_IMAGE=$preview_image${preview_nearest}${preview_square_str}${preview_cols_str}${preview_fit_str}" > "$cmd_file"
 
             copy "$omModLicense" "$sprite_script.sh"
             echo "diySpriteSelector \"$full_asset_path\" \"$asset_path\" \"$asset\"" >> "$sprite_script.sh"

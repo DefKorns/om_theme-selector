@@ -60,28 +60,6 @@ static void FitCentered(Texture & tex, int boxX, int boxY, int boxW, int boxH, i
     tex.rect.y = boxY + (boxH - tex.rect.h) / 2;
 }
 
-// dark gradient over the tile's bottom edge, solid for the lower ~60% (where
-// the overlaid label sits) and fading to transparent above that, so the
-// label stays legible over any image - SDL has no gradient fill primitive,
-// so this is a stack of alpha-stepped bands
-static void DrawBottomScrim(SDL_Renderer * renderer, int x, int y, int w, int h)
-{
-    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
-    const int bands = 24;
-    const Uint8 maxAlpha = 235;
-    const double rampFrac = 0.4; // reaches maxAlpha by 40% down the scrim, solid for the rest - the label sits in that solid tail, not the fade
-    for(int i = 0; i < bands; ++i)
-    {
-        double t = (double)i / (bands - 1); // 0 at top of scrim, 1 at bottom
-        double ramp = std::min(1.0, t / rampFrac);
-        Uint8 alpha = static_cast<Uint8>(maxAlpha * ramp);
-        SDL_Rect band{ x, y + h * i / bands, w, h / bands + 1 };
-        SDL_SetRenderDrawColor(renderer, 0, 0, 0, alpha);
-        SDL_RenderFillRect(renderer, &band);
-    }
-    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
-}
-
 // scale-to-cover-centered (crops the overflow) - pair with a clip rect at
 // (boxX+padding, boxY+padding, boxW-2*padding, boxH-2*padding) so the
 // overflow doesn't bleed past the box, and DrawRoundedCornerMask afterwards
@@ -426,6 +404,9 @@ int main(int argc, char * argv[])
         const bool squareTiles = themeStart < pinnedStartIndex && commands[themeStart].previewSquare;
         const int explicitCols = themeStart < pinnedStartIndex ? commands[themeStart].previewGridCols : -1;
         const int GridCols = explicitCols > 0 ? explicitCols : (squareTiles ? 7 : 4);
+        // a screen where every tile hides its label (PREVIEW_HIDE_LABEL) needs
+        // no caption row at all - checked once here since it's uniform per screen
+        const bool hasCaptions = themeStart < pinnedStartIndex && !commands[themeStart].previewHideLabel;
         const int GridGap = 20;
 
         // strip = fixed actions [0,themeStart). An empty entry stays a
@@ -467,20 +448,29 @@ int main(int argc, char * argv[])
         titleText.rect.y = hasStrip ? (StripTop + StripH + 22) : (UiTheme::HeaderDividerY + 22);
         const int GridTop = titleText.rect.y + titleText.rect.h + 20;
         const int GridBottom = UiTheme::FooterDividerY - 14;
+        // caption sits below the tile's own border, on the plain screen
+        // background - not overlaid on the art, so no scrim/shadow is
+        // needed for legibility against busy preview images. Row-to-row
+        // spacing can be tighter than the column gap since the caption
+        // itself already reads as a separator between rows.
+        const int LabelH = hasCaptions ? 18 : 0;
+        const int RowGap = hasCaptions ? 8 : GridGap;
         const int TileW = (GridRight - GridLeft - (GridCols-1)*GridGap) / GridCols;
         int TileH, GridRowsVisible;
         if(hasStrip)
         {
-            TileH = TileW * 9 / 16;
-            GridRowsVisible = std::max(1, (GridBottom - GridTop + GridGap) / (TileH + GridGap));
+            // a bit shorter than a pure 16:9 crop when captions are shown,
+            // so 2 rows (the usual case at this width) plus their captions
+            // still fit the same vertical budget captions now share
+            TileH = hasCaptions ? TileW / 2 : TileW * 9 / 16;
+            GridRowsVisible = std::max(1, (GridBottom - GridTop + RowGap) / (TileH + LabelH + RowGap));
         }
         else
         {
             GridRowsVisible = 3;
-            TileH = (GridBottom - GridTop - (GridRowsVisible-1)*GridGap) / GridRowsVisible;
+            TileH = (GridBottom - GridTop - (GridRowsVisible-1)*RowGap - GridRowsVisible*LabelH) / GridRowsVisible;
         }
-        const int GridRowPitch = TileH + GridGap;
-        const int ScrimH = 56;
+        const int GridRowPitch = TileH + LabelH + RowGap;
 
         Texture gridScrollUp("^", 16, renderer, GridRight + 22, GridTop + 24, false, UiTheme::TextColor, true);
         gridScrollUp.rect.x -= gridScrollUp.rect.w / 2;
@@ -496,12 +486,11 @@ int main(int argc, char * argv[])
         std::vector<Texture> chipLabels(commands.size());
         std::vector<Texture> tileImages(commands.size());
         std::vector<Texture> tileLabels(commands.size());
-        // sized >1 only for a mario/luigi tile with sibling _run02/_run03/...
-        // frames next to _run01 - cycled in the draw loop instead of static
+        // sized >1 only for a _run01.png tile with sibling _run02/_run03/...
+        // frames found alongside it - cycled in the draw loop instead of static
         std::vector<std::vector<Texture>> tileRunFrames(commands.size());
-        // true for any _run01.png tile (character sprite) - fit-centered
-        // instead of cover-filled, even when only one frame was found
-        std::vector<bool> tileIsCharacter(commands.size(), false);
+        std::vector<bool> tileHideLabel(commands.size(), false); // PREVIEW_HIDE_LABEL
+        std::vector<bool> tileFitContain(commands.size(), false); // PREVIEW_FIT_CONTAIN
         for(int i = 0; i < (int)commands.size(); ++i)
         {
             Command & c = commands[i];
@@ -546,12 +535,17 @@ int main(int argc, char * argv[])
             Texture art(c.previewImage, renderer, 0, 0);
             SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "0");
 
+            tileHideLabel[idx] = c.previewHideLabel;
+            tileFitContain[idx] = c.previewFitContain;
+
+            // run-cycle animation only applies to a _run01.png sprite - this
+            // is a naming convention to discover however many sibling frames
+            // a theme shipped, not what drives previewFitContain/HideLabel
             const std::string runSuffix = "_run01.png";
             bool isRunCycle = c.previewImage.size() > runSuffix.size() &&
                c.previewImage.compare(c.previewImage.size() - runSuffix.size(), runSuffix.size(), runSuffix) == 0;
-            tileIsCharacter[idx] = isRunCycle;
 
-            if(isRunCycle)
+            if(tileFitContain[idx])
                 FitCentered(art, 0, 0, TileW, TileH, 0);
             else
                 FitCover(art, 0, 0, TileW, TileH, 0);
@@ -775,23 +769,22 @@ int main(int argc, char * argv[])
                             // neighboring tiles, then mask the clip's square
                             // corners back to rounded
                             SDL_RenderSetClipRect(renderer, &tileRect);
-                            if(tileIsCharacter[idx])
+                            if(tileFitContain[idx])
                                 // 10px margin keeps clear of the rounded-corner mask below
                                 FitCentered(tileArt, x, y, TileW, TileH, 10);
                             else
                                 FitCover(tileArt, x, y, TileW, TileH, 0);
                             tileArt.Draw(renderer);
-                            if(!tileIsCharacter[idx])
-                                DrawBottomScrim(renderer, x, y + TileH - ScrimH, TileW, ScrimH);
                             SDL_RenderSetClipRect(renderer, nullptr);
                             DrawRoundedCornerMask(renderer, tileRect, UiTheme::SelectedRowBgR, UiTheme::SelectedRowBgG, UiTheme::SelectedRowBgB, UiTheme::BoxRadius);
                         }
                         DrawStrokeRect(renderer, tileRect, selected ? UiTheme::AccentR : UiTheme::BorderR, selected ? UiTheme::AccentG : UiTheme::BorderG, selected ? UiTheme::AccentB : UiTheme::BorderB, selected ? 3 : UiTheme::BorderWidth, UiTheme::BoxRadius);
-                        if(!tileIsCharacter[idx])
+                        if(!tileHideLabel[idx])
                         {
-                            // overlaid on the scrim, left-aligned with a small margin
-                            tileLabels[idx].rect.x = x + 14;
-                            tileLabels[idx].rect.y = y + TileH - tileLabels[idx].rect.h - 12;
+                            // caption below the tile's own border, centered -
+                            // on the plain screen background, not the art
+                            tileLabels[idx].rect.x = x + (TileW - tileLabels[idx].rect.w) / 2;
+                            tileLabels[idx].rect.y = y + TileH + (LabelH - tileLabels[idx].rect.h) / 2;
                             tileLabels[idx].Draw(renderer);
                         }
                     }
