@@ -671,8 +671,8 @@ diyThemeChecker() {
   [ "$1" = "loader" ] && { "$omScripts/gen_splash" /tmp/om_splash.png THEME_LOADING_ASSETS && decodepng /tmp/om_splash.png > /dev/fb0; }
 
   [ ! -d "$diyThemePath" ] && mkdir -p "$diyThemePath"
-  # shellcheck disable=SC3061
-  if find "$diyThemePath" -type f | read -r; then
+
+  if find "$diyThemePath" -type f | read -r _; then
     enable_cmds "DiY" "DelDiY" "Preview"
   else
     disable_cmds "DiY" "DelDiY" "Preview"

@@ -68,7 +68,7 @@ sbm)
 esac
 
 # skip the rescan unless $2=force or nothing's been scanned yet
-if [ "$2" = "force" ] || ! find "$diy_om_sprite_path/commands" -maxdepth 1 -name 'c0001_*' 2>/dev/null | read -r; then
+if [ "$2" = "force" ] || ! find "$diy_om_sprite_path/commands" -maxdepth 1 -name 'c0001_*' 2>/dev/null | read -r _; then
   findDiyAsset "$1"
 fi
 
