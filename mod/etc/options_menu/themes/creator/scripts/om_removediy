@@ -22,4 +22,4 @@ script_init
 
 diyThemeRemover
 
-$optionsMenu/themes/theme_manager --commandPath $omModGenCmds/ --scriptPath $omModGenScripts --title "$omTitle" --layout grid &
+$optionsMenu/lib/theme_manager --commandPath $omModGenCmds/ --scriptPath $omModGenScripts --title "$omTitle" --layout grid &

@@ -42,15 +42,18 @@ musicHackUnbind() {
 }
 
 fontBindFix() {
-  [ "$1" == "backup" ] && FONT_TYPE="title s m l small medium large"
-  [ "$1" == "restore" ] && FONT_TYPE="s m l small medium large"
-  [ "$1" == "restore" ] && [ -f "$TITLE_FONT_BACKUP" ] && mv "$TITLE_FONT_BACKUP" "$TITLE_FONT"
-  for FONT in $FONT_TYPE; do
-    [ "$1" == "backup" ] && [ ! -f "$TITLE_FONT_BACKUP" ] && mv "${FONT_PATH}/${FONT}.fnt" "${FONT_PATH}/${FONT}.fnt.backup"
-    [ "$1" == "backup" ] && cp "$FULL_THEME_PATH/fonts/${FONT}.fnt" "${FONT_PATH}/${FONT}.fnt"
-    [ "$1" == "restore" ] && umount "${ORIGINAL_THEME}/resources/fonts/${UI1}/${FONT}.fnt"
-    [ "$1" == "restore" ] && rm "${FONT_PATH}/${FONT}.fnt"
-  done
+  if [ "$1" == "backup" ]; then
+    for FONT in title s m l small medium large; do
+      [ ! -f "$TITLE_FONT_BACKUP" ] && mv "${FONT_PATH}/${FONT}.fnt" "${FONT_PATH}/${FONT}.fnt.backup"
+      cp "$FULL_THEME_PATH/fonts/${FONT}.fnt" "${FONT_PATH}/${FONT}.fnt"
+    done
+  elif [ "$1" == "restore" ]; then
+    [ -f "$TITLE_FONT_BACKUP" ] && mv "$TITLE_FONT_BACKUP" "$TITLE_FONT"
+    for FONT in s m l small medium large; do
+      umount "${ORIGINAL_THEME}/resources/fonts/${UI1}/${FONT}.fnt"
+      rm "${FONT_PATH}/${FONT}.fnt"
+    done
+  fi
 }
 
 themeSelector() {
@@ -62,6 +65,7 @@ themeSelector() {
   local PARENT_THEME_TITLE
   local PREVIOUS_THEME
   local THEME_MATCH
+  local PARENT_DESKTOP_FILE
   local UI0="ui/$sftype-$sfregion"
   local UI1=""
   local SYSTEM_TYPE="$sftype"
@@ -122,11 +126,8 @@ themeSelector() {
         break
       fi
     done
-    find "." -maxdepth 3 -type f -name "$FULL_PARENT_ID.desktop" -exec grep -L -e "Name=Back" -e "Name=Home" {} \; >tmp
-    while IFS= read -r w; do
-      PARENT_THEME_TITLE="$(grep -F 'Name=' "$w" | sed -r 's/Name=//g;s/ /_/g' | awk '{print tolower($0)}')"
-    done <tmp
-    [ -f tmp ] && rm tmp
+    PARENT_DESKTOP_FILE="$(find "." -maxdepth 3 -type f -name "$FULL_PARENT_ID.desktop" -exec grep -L -e "Name=Back" -e "Name=Home" {} \; | tail -n1)"
+    [ -n "$PARENT_DESKTOP_FILE" ] && PARENT_THEME_TITLE="$(grep -F 'Name=' "$PARENT_DESKTOP_FILE" | sed -r 's/Name=//g;s/ /_/g' | awk '{print tolower($0)}')"
     IS_CHILD="$(printf '%s\n' "$THEME_DIR_LIST" | grep -w "$PARENT_THEME_TITLE")"
     GET_THEME_NAME="$(grep -F 'Name=' "$CONFIG_FILE" | sed -r '/[Bb]ack/d;s/Name=//g;s/ /_/g' | awk '{print tolower($0)}')"
 

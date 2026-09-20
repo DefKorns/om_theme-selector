@@ -104,7 +104,7 @@ remove "$rootfs/etc/options_menu/images/wall_far.png"
 remove "$rootfs/etc/usr/bin/pngpack-upx"
 remove "$rootfs/etc/usr/bin/sprite_crop"
 remove "$rootfs/etc/usr/bin/theme_downloader"
-remove "$rootfs/etc/options_menu/themes/theme_manager"
+remove "$rootfs/etc/options_menu/lib/theme_manager"
 
 [ -f "$TITLE_FONT_BACKUP" ] && mv "$TITLE_FONT_BACKUP" "$TITLE_FONT"
 for FONT in s m l small medium large; do

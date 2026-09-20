@@ -33,4 +33,4 @@ else
   loadThemeList
 fi
 
-$optionsMenu/themes/theme_manager --title INSTALLED_THEMES --layout grid &
+$optionsMenu/lib/theme_manager --title INSTALLED_THEMES --layout grid &

@@ -25,4 +25,4 @@ modCleanUp
 
 usleep 1000
 
-$optionsMenu/themes/theme_manager --commandPath $omModSettingsCmds/ --scriptPath $omModSettingsScripts --title THEME_SETTINGS &
+$optionsMenu/lib/theme_manager --commandPath $omModSettingsCmds/ --scriptPath $omModSettingsScripts --title THEME_SETTINGS &

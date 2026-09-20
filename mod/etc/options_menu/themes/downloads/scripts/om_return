@@ -29,4 +29,4 @@ else
   clearList
 fi
 
-usleep 50000 && $optionsMenu/themes/theme_manager --title INSTALLED_THEMES --layout grid &
+usleep 50000 && $optionsMenu/lib/theme_manager --title INSTALLED_THEMES --layout grid &

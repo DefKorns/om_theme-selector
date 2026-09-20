@@ -23,4 +23,4 @@ script_init
 remove "$b_file" "$p_file"
 hakchi reboot
 
-$optionsMenu/themes/theme_manager --commandPath $omModSettingsCmds/ --scriptPath $omModSettingsScripts --title THEME_SETTINGS &
+$optionsMenu/lib/theme_manager --commandPath $omModSettingsCmds/ --scriptPath $omModSettingsScripts --title THEME_SETTINGS &
