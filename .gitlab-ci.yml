@@ -3,8 +3,8 @@ stages:
   - build
 
 # om_chmenu_og / om_fontfix_og are frozen copies of base-OS files (used only
-# by mod/uninstall to restore the original chmenu/fontfix) - they're not
-# authored in our style and aren't meant to pass our lint conventions.
+# by mod/uninstall to restore the original chmenu/fontfix) - I didn't author
+# them in my style and don't expect them to pass my lint conventions.
 .script_files: &list_script_files |
   files=$(
     { echo mod/install; echo mod/uninstall; find mod -type f -name 'om_*'; } |
