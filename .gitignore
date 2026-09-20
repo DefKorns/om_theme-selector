@@ -554,6 +554,5 @@ _console_originals/
 tools/*.py
 tools/MaterialSymbolsOutlined.codepoints
 tools/MaterialSymbolsOutlined.ttf
-theme_downloader/theme_downloader
-theme_downloader/cacert.pem
+src/cacert.pem
 mod/etc/options_menu/lib/
