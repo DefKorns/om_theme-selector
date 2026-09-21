@@ -7,11 +7,8 @@
   * (at your option) any later version.
   */
 
-// Standalone theme manager for om_theme-selector, reusing OptionsMenu's
-// engine (framework/ + command.cpp + localization.cpp, vendored submodule)
-// instead of the generic `options` binary. Every screen is this same binary
-// relaunched with a different --commandPath, reading command files the
-// shell side already generates.
+// Standalone theme manager using the vendored OptionsMenu engine.
+// Each screen relaunches this binary with a different --commandPath.
 //
 // --layout list (default): single-column option picker.
 // --layout grid: fixed actions as a chip strip, everything else (themes,
@@ -61,11 +58,7 @@ static void FitCentered(Texture & tex, int boxX, int boxY, int boxW, int boxH, i
     tex.rect.y = boxY + (boxH - tex.rect.h) / 2;
 }
 
-// scale-to-cover-centered (crops the overflow) - pair with a clip rect at
-// (boxX+padding, boxY+padding, boxW-2*padding, boxH-2*padding) so the
-// overflow doesn't bleed past the box, and DrawRoundedCornerMask afterwards
-// to fake-round that clip rect's square corners back to match a rounded
-// container
+// Scale to cover, clip the overflow, then restore rounded corners.
 static void FitCover(Texture & tex, int boxX, int boxY, int boxW, int boxH, int padding)
 {
     const int maxW = boxW - 2*padding;
@@ -101,10 +94,8 @@ static std::string TruncateToWidth(const std::string & text, int glyphSize, int 
     return label;
 }
 
-// only one theme_manager should ever hold /dev/fb0 at a time - two screens
-// (e.g. a stuck/crashed instance plus a freshly-launched one) fight over it
-// and both flicker. Takes over rather than refusing to start, so a lock left
-// behind by a crash never blocks every future launch.
+// Keep one theme_manager on /dev/fb0 to prevent flicker.
+// Take over stale instances instead of rejecting future launches.
 static const char * LockPath = "/tmp/theme_manager.lock";
 
 static void ReleaseSingleInstanceLock()
@@ -129,7 +120,7 @@ static void AcquireSingleInstanceLock()
     }
     std::ofstream(LockPath, std::ios::trunc) << getpid();
     atexit(ReleaseSingleInstanceLock);
-    signal(SIGTERM, [](int) { exit(0); }); // so a newer instance's takeover runs our atexit cleanup too
+    signal(SIGTERM, [](int) { exit(0); }); // Run atexit cleanup during takeover.
 }
 
 int main(int argc, char * argv[])

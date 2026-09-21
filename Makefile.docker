@@ -1,9 +1,5 @@
-# Cross-compiles the standalone theme manager skeleton (src/main.cpp) against
-# the shared rendering framework vendored from OptionsMenu (vendor/OptionsMenu,
-# a git submodule - see that repo's src/framework/ for what's reused here).
-# This is a separate build from the existing Makefile (which only packages
-# the shell-script based hmod) - run via build.sh, mirroring OptionsMenu's
-# own Docker-toolchain setup.
+# Cross-compile against the vendored OptionsMenu framework, then package the
+# result as a .hmod. Run inside the Docker toolchain image from build.sh.
 FRAMEWORK_DIR = vendor/OptionsMenu/src/framework
 CXX = g++
 STRIP = strip
@@ -23,25 +19,130 @@ VENDOR_SRC_DIR = vendor/OptionsMenu/src
 SOURCES = src/main.cpp $(VENDOR_SRC_DIR)/command.cpp $(VENDOR_SRC_DIR)/localization.cpp $(FRAMEWORK_DIR)/sdl_context.cpp $(FRAMEWORK_DIR)/texture.cpp $(FRAMEWORK_DIR)/controller.cpp $(FRAMEWORK_DIR)/powerwatch.cpp $(FRAMEWORK_DIR)/draw_helpers.cpp $(FRAMEWORK_DIR)/utf8.cpp $(FRAMEWORK_DIR)/font8x8_lookup.cpp $(FRAMEWORK_DIR)/uitheme.cpp
 OBJECTS = $(SOURCES:.cpp=.o)
 
-all: mod/etc/options_menu/themes/theme_manager mod/bin/theme_downloader
+# Build theme_downloader with the toolchain's static curl+OpenSSL.
+CC = gcc
+CURL_PREFIX = /opt/curl-static
+CFLAGS = -O2 -Wall -I$(CURL_PREFIX)/include
+CURL_LDLIBS = -L$(CURL_PREFIX)/lib -L/usr/lib/arm-linux-gnueabihf -lcurl -lssl -lcrypto -lz -ldl -lpthread
 
-mod/etc/options_menu/themes/theme_manager: $(OBJECTS)
-	$(CROSS_PREFIX)$(CXX) $(OBJECTS) $(LDLIBS) $(LDFLAGS) -Wl,-rpath,/etc/options_menu -o mod/etc/options_menu/themes/theme_manager
-	$(CROSS_PREFIX)$(STRIP) mod/etc/options_menu/themes/theme_manager
+MOD_NAME := Options Menu - Theme Selector
+MOD_CREATOR := DefKorns
+MOD_CATEGORY := User Interface
+
+LAST_TAG_COMMIT := $(shell git rev-list --tags --max-count=1)
+LAST_TAG := $(shell git describe --tags $(LAST_TAG_COMMIT) 2> /dev/null || echo "v0.0.0")
+TAG_PREFIX := "v"
+GET_VER    := $(shell git describe --tags $(LAST_TAG_COMMIT) 2> /dev/null | sed "s/^$(TAG_PREFIX)//" || echo "0.0.0")
+MOD_VER    := $(shell [ -f VERSION ] && head VERSION || echo $(GET_VER))
+MAJOR      := $(shell echo $(MOD_VER) | sed "s/^\([0-9]*\).*/\1/")
+MINOR      := $(shell echo $(MOD_VER) | sed "s/[0-9]*\.\([0-9]*\).*/\1/")
+PATCH      := $(shell echo $(MOD_VER) | sed "s/[0-9]*\.[0-9]*\.\([0-9]*\).*/\1/")
+RC		   := $(shell echo $(MOD_VER) | sed -n "s/.*rc\([0-9]*\)$$/\1/p")
+RC		   := $(if $(RC),$(RC),0)
+
+# total number of commits
+BUILD      := $(shell git log --oneline | wc -l | sed -e "s/[ \t]*//g")
+NEXT_MAJOR_VERSION := $(shell expr $(MAJOR) + 1).0.0
+NEXT_MINOR_VERSION := $(MAJOR).$(shell expr $(MINOR) + 1).0-b$(BUILD)
+NEXT_PATCH_VERSION := $(MAJOR).$(MINOR).$(shell expr $(PATCH) + 1)-b$(BUILD)
+NEXT_RC_VERSION := $(MAJOR).$(MINOR).$(PATCH)-rc$(shell expr $(RC) + 1)
+
+GIT_COMMIT := $(shell git rev-parse --short HEAD)$(shell git diff-index --quiet HEAD -- || echo -dirty)
+MOD_URL := $(shell git config --get remote.origin.url)
+# Derive the package name from the remote; Docker mounts every repo at /src.
+MOD_FILENAME := $(shell basename $(MOD_URL) .git)
+DEV_DIR := $(CURDIR)
+OUT := $(DEV_DIR)/out
+
+# Avoid "build": GNU Make's .sh rule conflicts with build.sh.
+all: compile hmod
+
+compile: mod/etc/options_menu/lib/theme_manager mod/bin/theme_downloader
+
+mod/etc/options_menu/lib/theme_manager: $(OBJECTS)
+	$(CROSS_PREFIX)$(CXX) $(OBJECTS) $(LDLIBS) $(LDFLAGS) -Wl,-rpath,/etc/options_menu/lib -o mod/etc/options_menu/lib/theme_manager
+	$(CROSS_PREFIX)$(STRIP) mod/etc/options_menu/lib/theme_manager
 
 %.o: %.cpp
 	$(CROSS_PREFIX)$(CXX) $(CXXFLAGS) -c $< -o $@
 
-# theme_downloader has its own Makefile (links the toolchain's static
-# libcurl+OpenSSL, not SDL2 - unrelated build inputs from theme_manager).
-.PHONY: mod/bin/theme_downloader
-mod/bin/theme_downloader:
-	$(MAKE) -C theme_downloader CROSS_PREFIX=$(CROSS_PREFIX)
-	cp theme_downloader/theme_downloader mod/bin/theme_downloader
+%.o: %.c
+	$(CROSS_PREFIX)$(CC) $(CFLAGS) -c $< -o $@
+
+# Fetch the gitignored CA bundle for fresh builds.
+src/cacert.pem:
+	curl -fL -o src/cacert.pem https://curl.se/ca/cacert.pem
+
+# Embed cacert.pem from src/ to keep "src/" out of the symbol names.
+src/ca_bundle.o: src/cacert.pem
+	cd src && $(CROSS_PREFIX)ld -r -b binary -o ca_bundle.o cacert.pem
+
+mod/bin/theme_downloader: src/theme_downloader.o src/ca_bundle.o
+	$(CROSS_PREFIX)$(CC) src/theme_downloader.o src/ca_bundle.o $(CURL_LDLIBS) -o mod/bin/theme_downloader
+	$(CROSS_PREFIX)$(STRIP) mod/bin/theme_downloader
+	upx --best mod/bin/theme_downloader
+
+# Package mod/ without recompiling; run `all` first for fresh binaries.
+hmod:
+	mkdir -p out/ temp/
+	rsync -a --exclude-from=exclude-file.txt mod/ temp/ --links --delete
+
+	printf "%s\n" \
+	"---" \
+	"Name: $(MOD_NAME)" \
+	"Creator: $(MOD_CREATOR)" \
+	"Category: $(MOD_CATEGORY)" \
+	"Version: $(MOD_VER)" \
+	"Built on: $(shell date +"%A, %d %b %Y - %T")" \
+	"Git commit: $(GIT_COMMIT)" \
+	"---" > temp/readme.md
+
+	sed 1d mod/readme.md >> temp/readme.md
+
+	cd temp/; tar -czf $(OUT)/$(MOD_FILENAME)-$(MOD_VER).hmod *
+	rm -r temp/
+
+fix: hmod
+	@ver="$(NEXT_PATCH_VERSION)" && \
+	git tag "v$(MOD_VER)" && \
+	echo "$$ver" > VERSION && \
+	git add VERSION && \
+	git commit -m "Bump version to v$$ver"
+
+rc: hmod
+	@ver="$(NEXT_RC_VERSION)" && \
+	git tag "v$(MOD_VER)" && \
+	echo "$$ver" > VERSION && \
+	git add VERSION && \
+	git commit -m "Bump version to v$$ver"
+
+update: all
+	@ver="$(NEXT_MINOR_VERSION)" && \
+	git tag "v$(MOD_VER)" && \
+	echo "$$ver" > VERSION && \
+	git add VERSION && \
+	git commit -m "Bump version to v$$ver"
+
+upgrade: all
+	@ver="$(NEXT_MAJOR_VERSION)" && \
+	git tag "v$(MOD_VER)" && \
+	echo "$$ver" > VERSION && \
+	git add VERSION && \
+	git commit -m "Bump version to v$$ver"
+
+info:
+	@echo "Mod Dir: $(MOD_FILENAME)"
+	@echo "Current version: $(MOD_VER)"
+	@echo "Last tag: $(LAST_TAG)"
+	@echo "$(shell git rev-list $(LAST_TAG).. --count) commit(s) since last tag"
+	@echo "Build: $(BUILD) (total number of commits)"
+	@echo "next major version: $(NEXT_MAJOR_VERSION)"
+	@echo "next minor version: $(NEXT_MINOR_VERSION)"
+	@echo "next patch version: $(NEXT_PATCH_VERSION)"
 
 clean:
 	find . -name "*.o" -type f -delete
-	rm -f mod/etc/options_menu/themes/theme_manager mod/bin/theme_downloader
-	$(MAKE) -C theme_downloader clean
+	rm -f mod/etc/options_menu/lib/theme_manager mod/bin/theme_downloader
+	rm -rf out/ temp/
 
-.PHONY: clean
+.PHONY: all compile hmod fix rc update upgrade info clean

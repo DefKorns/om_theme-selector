@@ -15,13 +15,8 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* Fetches om_theme-selector's theme catalog/packages over HTTPS. The
- * console's own BusyBox wget can't negotiate TLS 1.2 at all, so this
- * replaces it - statically linked against curl+OpenSSL so it carries no
- * runtime library dependency on the console. Knows the GitHub release host
- * and the classicmods.net fallback itself (falls back automatically if
- * GitHub isn't reachable), so the shell side only needs to say what it
- * wants, not where to get it. */
+/* Fetch theme catalogs and packages over HTTPS using static curl+OpenSSL.
+ * Fall back from GitHub to classicmods.net automatically. */
 
 #include <ctype.h>
 #include <curl/curl.h>
@@ -46,8 +41,7 @@ static void to_upper(char *dst, const char *src, size_t dst_size) {
     dst[i] = '\0';
 }
 
-/* extracted once per boot into /tmp - cheap to redo, avoids re-embedding
- * the CA bundle as a shell-visible file inside the hmod itself */
+/* Extract the embedded CA bundle into /tmp once per boot. */
 static void ensure_ca_bundle(void) {
     FILE *f = fopen(CA_PATH, "rb");
     if (f) {

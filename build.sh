@@ -4,7 +4,7 @@ set -euo pipefail
 # stops Git Bash from mangling the /src path below into a Windows path
 export MSYS_NO_PATHCONV=1
 
-IMAGE="hakchi-toolchain:jessie-armhf"
+IMAGE="classicmini-cross-toolchain:jessie-armhf"
 
 if [ ! -f toolchain/Dockerfile.jessie-armhf ]; then
     echo "==> Fetching toolchain submodule..."
@@ -25,4 +25,4 @@ echo "==> Running make inside the container..."
 docker run --rm -v "$PWD:/src" "$IMAGE" make -f Makefile.docker CROSS_PREFIX=arm-linux-gnueabihf- "$@"
 
 echo "==> Build complete:"
-ls -la mod/etc/options_menu/themes/theme_manager mod/bin/theme_downloader 2>/dev/null
+ls -la mod/etc/options_menu/lib/theme_manager mod/bin/theme_downloader 2>/dev/null
