@@ -44,7 +44,6 @@ static void sReplace(std::string & command, std::string oldString, std::string n
         command.replace(pos, oldString.size(), newString);
 }
 
-// scale-to-fit-centered
 static void FitCentered(Texture & tex, int boxX, int boxY, int boxW, int boxH, int padding)
 {
     const int maxW = boxW - 2*padding;
@@ -58,7 +57,6 @@ static void FitCentered(Texture & tex, int boxX, int boxY, int boxW, int boxH, i
     tex.rect.y = boxY + (boxH - tex.rect.h) / 2;
 }
 
-// Scale to cover, clip the overflow, then restore rounded corners.
 static void FitCover(Texture & tex, int boxX, int boxY, int boxW, int boxH, int padding)
 {
     const int maxW = boxW - 2*padding;
@@ -429,7 +427,7 @@ int main(int argc, char * argv[])
             return 0;
         };
         const int chipGap = 14;
-        const int chipIconSize = 22; // small, matches the 14px label's own scale
+        const int chipIconSize = 22;
 
         // no strip on a pure-tile screen (e.g. a DIY category) - use the row for a 3rd grid row
         const bool hasStrip = stripSlotCount > 0;
