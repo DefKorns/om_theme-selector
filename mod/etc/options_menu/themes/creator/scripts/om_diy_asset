@@ -72,4 +72,4 @@ if [ "$2" = "force" ] || ! find "$diy_om_sprite_path/commands" -maxdepth 1 -name
   findDiyAsset "$1"
 fi
 
-$optionsMenu/lib/theme_manager --commandPath $diy_om_sprite_path/commands/ --scriptPath $diy_om_sprite_path/scripts --title $diy_title --layout grid &
+$optionsMenu/lib/theme_manager --commandPath $diy_om_sprite_path/commands/ --scriptPath $diy_om_sprite_path/scripts --title $diy_title &

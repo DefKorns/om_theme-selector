@@ -22,4 +22,4 @@ script_init
 
 getThemeList
 
-$optionsMenu/lib/theme_manager --commandPath $omModSubCmds/ --scriptPath $omModSubScripts --title AVAILABLE_THEMES --layout grid &
+$optionsMenu/lib/theme_manager --commandPath $omModSubCmds/ --scriptPath $omModSubScripts --title AVAILABLE_THEMES &

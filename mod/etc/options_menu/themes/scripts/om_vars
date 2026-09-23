@@ -326,7 +326,7 @@ sed -i \"s/SELECTED_THEME=\\\"CHANGEME\\\"/SELECTED_THEME=\\\"${thm}\\\"/g;\" \"
 COMMAND_TYPE=INTERNAL
 COMMAND_STR=sh $thm_script.sh
 PREVIEW_IMAGE=$preview_image
-DELETE_STR=rm -rf \"$full_path\" \"$full_path.png\" \"$cmd_list\" \"$thm_script.sh\" && usleep 50000 && %options_path%lib/theme_manager --title INSTALLED_THEMES --layout grid &" > "$cmd_list"
+DELETE_STR=rm -rf \"$full_path\" \"$full_path.png\" \"$cmd_list\" \"$thm_script.sh\" && usleep 50000 && %options_path%lib/theme_manager --title INSTALLED_THEMES &" > "$cmd_list"
   done
 }
 

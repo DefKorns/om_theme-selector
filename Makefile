@@ -51,7 +51,7 @@ endif
 CXXFLAGS = -std=c++11 -Os -Ivendor/OptionsMenu/src $(SDL_CFLAGS)
 LDLIBS = $(SDL_LIBS)
 VENDOR_SRC_DIR = vendor/OptionsMenu/src
-SOURCES = src/main.cpp $(VENDOR_SRC_DIR)/command.cpp $(VENDOR_SRC_DIR)/localization.cpp $(FRAMEWORK_DIR)/sdl_context.cpp $(FRAMEWORK_DIR)/texture.cpp $(FRAMEWORK_DIR)/controller.cpp $(FRAMEWORK_DIR)/powerwatch.cpp $(FRAMEWORK_DIR)/draw_helpers.cpp $(FRAMEWORK_DIR)/utf8.cpp $(FRAMEWORK_DIR)/font8x8_lookup.cpp $(FRAMEWORK_DIR)/uitheme.cpp
+SOURCES = src/main.cpp src/single_instance_lock.cpp src/command_loader.cpp src/texture_utils.cpp src/theme_manager_app.cpp $(VENDOR_SRC_DIR)/command.cpp $(VENDOR_SRC_DIR)/localization.cpp $(FRAMEWORK_DIR)/sdl_context.cpp $(FRAMEWORK_DIR)/texture.cpp $(FRAMEWORK_DIR)/controller.cpp $(FRAMEWORK_DIR)/powerwatch.cpp $(FRAMEWORK_DIR)/draw_helpers.cpp $(FRAMEWORK_DIR)/utf8.cpp $(FRAMEWORK_DIR)/font8x8_lookup.cpp $(FRAMEWORK_DIR)/uitheme.cpp
 OBJECTS = $(SOURCES:.cpp=.o)
 
 # Build theme_downloader with the Docker toolchain's static curl+OpenSSL.

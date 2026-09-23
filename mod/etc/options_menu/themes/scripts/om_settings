@@ -37,4 +37,4 @@ else
   [ ! -f "$enableSystemCleanUp" ] && remove "$omModSettingsSpacer"
 fi
 
-$optionsMenu/lib/theme_manager --commandPath $omModSettingsCmds/ --scriptPath $omModSettingsScripts --title THEME_SETTINGS &
+$optionsMenu/lib/theme_manager --commandPath $omModSettingsCmds/ --scriptPath $omModSettingsScripts --title THEME_SETTINGS --layout list &
