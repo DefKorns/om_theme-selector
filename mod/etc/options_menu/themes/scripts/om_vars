@@ -193,7 +193,7 @@ clearDownloads() {
 }
 
 enableMenuOptions() {
-  enable_cmds "Pole Mario" "Luigi" "Wall" "WallNear" "WallFar" "Packed" "ThemeGenerator" "Clear"
+  enable_cmds "Pole" "Mario" "Luigi" "Wall" "WallNear" "WallFar" "Packed" "ThemeGenerator" "Clear"
   disable_cmds "ColorsNes" "PackedNes" "Smb" "Settings" "Color"
 
   if [ ! -f "$omDummy" ]; then
@@ -236,9 +236,7 @@ enableMenuOptions() {
   [ ! -d "$has_folders" ] && disable_cmds "ThemeGenerator"
 }
 
-# cheap stand-in for "did the installed theme list actually change" - avoids
-# re-running the full themeLoader scan (~1.7s with a few dozen themes) when
-# nothing was added or removed, e.g. just browsing Downloads then going Back
+# avoids re-running the full themeLoader scan (~1.7s) when nothing changed
 themeCountChanged() {
   new_count="$(find "$theme_path" -mindepth 1 -maxdepth 1 -type d | wc -l)"
   old_count="$(cat "$om_theme_count" 2> /dev/null)"
@@ -339,9 +337,6 @@ removeRegionalTheme() {
 }
 
 getThemeList() {
-  # splash first - theme_downloader's own GitHub/classicmods fallback check
-  # can take a few seconds when a host is slow/unreachable, and that
-  # shouldn't be a blank screen before the loading indicator shows
   "$omScripts/gen_splash" /tmp/om_splash.png THEME_LIST_DOWNLOADING_LINE1 THEME_LIST_DOWNLOADING_LINE2 && decodepng /tmp/om_splash.png > /dev/fb0
   cd "$omModSub" || exit
 
@@ -400,7 +395,6 @@ loadThemeList() {
   fi
 }
 
-# verify themeGenerator function
 themeGenerator() {
   echo "Packaging: DefKorns"
   translate CATEGORY_UI_MOD
@@ -446,9 +440,6 @@ themeGenerator() {
 }
 
 findDiyAsset() {
-  # drawn once, up front - previously this was redrawn per theme inside the
-  # loop below, which (now that the crops run backgrounded/parallel instead
-  # of one at a time) no longer reliably stays on screen for the whole scan
   "$omScripts/gen_splash" /tmp/om_splash.png THEME_LOADING && decodepng /tmp/om_splash.png > /dev/fb0
 
   diy_file="${1}.png"
@@ -517,9 +508,6 @@ findDiyAsset() {
       ;;
   esac
 
-  # the crop rectangle is the same for every theme in this category (it's
-  # the same region of each theme's own packed.png/wall.png every time, only
-  # the source theme differs) - read it once here, not per theme
   diy_crop_x=""
   diy_sprites_json="$omModScripts/om_${1}.sprites.json"
   if [ "$colors" = "0" ] && [ -f "$diy_sprites_json" ]; then
@@ -542,18 +530,11 @@ findDiyAsset() {
   existing_scripts="$(ls -1 "$diy_sprite/scripts" 2>/dev/null)"
 
   diy_crop_batch=0
-  # chars=1 only: many themes reuse byte-identical sprites under different
-  # names - collapse those into a single tile instead of one per theme
-  diy_seen_hashes=""
+  diy_seen_hashes="" # collapses themes that reuse a byte-identical source asset under a different name
   for p in $paths_to_search; do
     if [ "$(ls -A "$p")" ]; then
       # shellcheck disable=SC2038
-      # listed to a temp file and read via redirection, not piped straight
-      # into the while loop - a pipe would run the loop in a subshell, and
-      # the backgrounded sprite_crop jobs below would then belong to that
-      # subshell, not this function, so the "wait" after the loop (needed to
-      # not return before the last, sub-4 batch of crops finishes) wouldn't
-      # actually catch them
+      # a temp file, not a pipe into the while loop: a pipe would put the backgrounded crops in a subshell the wait below can't catch
       cd "$p" && find . -mindepth 1 -maxdepth 1 -type d | xargs -n 1 basename | sort -u > /tmp/diy_asset_list
       while IFS= read -r asset_name; do
 
@@ -573,6 +554,18 @@ findDiyAsset() {
           [ "$p" = "$theme_path" ] && full_asset_path="$resource_path/$asset_path"
 
           preview_image="$full_asset_path/$diy_file"
+
+          # hashed pre-crop, so this doesn't have to wait on the backgrounded crop job below
+          if [ -f "$preview_image" ]; then
+            sprite_hash="$(md5sum "$preview_image" | cut -d' ' -f1)"
+            if printf '%s\n' "$diy_seen_hashes" | grep -qxF "$sprite_hash"; then
+              rm -f "$cmd_file" "$sprite_script.sh"
+              continue
+            fi
+            diy_seen_hashes="$diy_seen_hashes
+$sprite_hash"
+          fi
+
           temp_preview="${omModSprites}/assets/${1}/${1}_${asset_name}.png"
 
           if [ "$colors" = "1" ]; then
@@ -593,18 +586,6 @@ findDiyAsset() {
             preview_image="$temp_preview" # cropped copy, queued above or already cached
           fi
 
-          if [ "$chars" = "1" ] && [ -f "$preview_image" ]; then
-            sprite_hash="$(md5sum "$preview_image" | cut -d' ' -f1)"
-            if printf '%s\n' "$diy_seen_hashes" | grep -qxF "$sprite_hash"; then
-              # identical sprite already listed under an earlier theme name -
-              # drop this one, and remove any tile already generated for it
-              rm -f "$cmd_file" "$sprite_script.sh"
-              continue
-            fi
-            diy_seen_hashes="$diy_seen_hashes
-$sprite_hash"
-          fi
-
           if ! printf '%s\n' "$existing_cmds" | grep -qxF "c0001_$asset_name" || ! printf '%s\n' "$existing_scripts" | grep -qxF "$asset_name.sh"; then
             touch "$cmd_file"
             cmd_name="$(echo "$asset_name" | sed -e 's/_/ /g' | awk '{for(i=1;i<=NF;i++){$i=toupper(substr($i,1,1))substr($i,2)}}1')"
@@ -620,8 +601,6 @@ PREVIEW_SQUARE=TRUE"
             preview_cols_str=""
             [ -n "$preview_cols" ] && preview_cols_str="
 PREVIEW_GRID_COLS=$preview_cols"
-            # chars=1: portrait sprite art, not a wide/square screenshot -
-            # fit without cropping, and skip the title label entirely
             preview_fit_str=""
             [ "$chars" = "1" ] && preview_fit_str="
 PREVIEW_FIT_CONTAIN=TRUE
@@ -690,8 +669,6 @@ diyThemeChecker() {
 diyThemeRemover() {
   disable_cmds "DiY" "DelDiY" "Preview"
 
-  # only the applied selection - each category's own browse cache is
-  # refreshed by that category's own Refresh chip, not here
   [ -d "$diyThemePath" ] && find "$diyThemePath" -type f -not -name 'assets_here' -exec rm {} +
 
 }
@@ -731,9 +708,7 @@ audioSettings() {
 }
 
 toggleOptions() {
-  # $1=this flag file, $2=paired parent/child flag file, $3=set to skip the
-  # cascade (used for a parent toggling itself back on - its own child's
-  # state stays whatever it already was)
+  # $1=this flag file, $2=paired parent/child flag file, $3=set to skip the cascade
   if [ ! -f "$1" ]; then
     settingsOptionChecker "on" "$1"
     [ -z "$3" ] && [ ! -f "$2" ] && settingsOptionChecker "on" "$2"
