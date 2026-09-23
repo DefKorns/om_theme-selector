@@ -193,8 +193,8 @@ clearDownloads() {
 }
 
 enableMenuOptions() {
-  enable_cmds "Pole" "Mario" "Luigi" "Wall" "WallNear" "WallFar" "Packed" "ThemeGenerator" "Clear"
-  disable_cmds "ColorsNes" "PackedNes" "Smb" "Settings" "Color"
+  enable_cmds "ThemeGenerator" "Clear"
+  disable_cmds "Settings" "Color"
 
   if [ ! -f "$omDummy" ]; then
     disable_cmds "Clear"
@@ -216,22 +216,17 @@ enableMenuOptions() {
   done < "$thmOverlay"
 
   if [ "$sftype" = "nes" ]; then
-    disable_cmds "Pole" "Mario" "Luigi" "Wall" "WallNear" "WallFar" "Color" "Packed"
-    enable_cmds "ColorsNes" "PackedNes" "Smb"
+    src="hvc"
+    dest="nes"
 
-    if [ "$sftype" = "nes" ]; then
-      src="hvc"
-      dest="nes"
-
-      if [ "$sfregion" = "jpn" ]; then
-        src="nes"
-        dest="hvc"
-      fi
-
-      for subdir in "${omModPackedNes}/assets"/*; do
-        rename "${subdir}/${src}.png" "${subdir}/${dest}.png"
-      done
+    if [ "$sfregion" = "jpn" ]; then
+      src="nes"
+      dest="hvc"
     fi
+
+    for subdir in "${omModPackedNes}/assets"/*; do
+      rename "${subdir}/${src}.png" "${subdir}/${dest}.png"
+    done
   fi
   [ ! -d "$has_folders" ] && disable_cmds "ThemeGenerator"
 }

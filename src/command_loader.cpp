@@ -9,6 +9,7 @@
 
 #include "command_loader.h"
 
+#include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <fstream>
@@ -28,6 +29,53 @@ void ReplaceAll(std::string & command, const std::string & oldString, const std:
 
 struct DirCloser { void operator()(DIR * dir) const { if(dir) closedir(dir); } };
 using DirHandle = std::unique_ptr<DIR, DirCloser>;
+
+struct PipeCloser { void operator()(FILE * pipe) const { if(pipe) pclose(pipe); } };
+using PipeHandle = std::unique_ptr<FILE, PipeCloser>;
+
+// cached in /tmp (wiped on reboot) - sftype never changes within a boot, so only the first screen
+// that needs it pays for the shell fork
+std::string ReadSftype()
+{
+    static constexpr const char * CachePath = "/tmp/om_sftype";
+    std::string result;
+    std::ifstream cached(CachePath);
+    if(std::getline(cached, result) && !result.empty())
+        return result;
+
+    PipeHandle pipe(popen("source /etc/preinit; script_init; echo $sftype", "r"));
+    if(pipe)
+    {
+        char buffer[32] = {0};
+        if(fgets(buffer, sizeof(buffer), pipe.get()))
+            result = buffer;
+    }
+    while(!result.empty() && (result.back() == '\n' || result.back() == '\r'))
+        result.pop_back();
+
+    std::ofstream(CachePath, std::ios::trunc) << result;
+    return result;
+}
+
+// my own convention, not vendor's Command format - read directly instead of extending that parser
+struct ConsoleOnlyFlags { bool nesOnly = false; bool snesOnly = false; };
+
+ConsoleOnlyFlags ReadConsoleOnlyFlags(const std::string & path)
+{
+    ConsoleOnlyFlags flags;
+    std::ifstream in(path);
+    std::string line;
+    while(std::getline(in, line))
+    {
+        if(!line.empty() && line.back() == '\r')
+            line.pop_back();
+        if(line == "NES_ONLY=TRUE")
+            flags.nesOnly = true;
+        else if(line == "SNES_ONLY=TRUE")
+            flags.snesOnly = true;
+    }
+    return flags;
+}
 
 } // namespace
 
@@ -81,6 +129,8 @@ bool LoadCommands(const std::string & commandLocation, const std::string & scrip
     fileList.sort();
 
     std::ifstream in;
+    std::string sftype;
+    bool sftypeLoaded = false;
     for(auto & file : fileList)
     {
         in.open(commandLocation + file);
@@ -91,6 +141,17 @@ bool LoadCommands(const std::string & commandLocation, const std::string & scrip
         // c0000_0000 leading sentinel only - a later empty COMMAND_STR is a reserved blank slot instead
         if(commands.empty() && c.command.empty())
             continue;
+        ConsoleOnlyFlags consoleOnly = ReadConsoleOnlyFlags(commandLocation + file);
+        if(consoleOnly.nesOnly || consoleOnly.snesOnly)
+        {
+            if(!sftypeLoaded)
+            {
+                sftype = ReadSftype();
+                sftypeLoaded = true;
+            }
+            if((consoleOnly.nesOnly && sftype != "nes") || (consoleOnly.snesOnly && sftype == "nes"))
+                continue;
+        }
         if(!c.command.empty())
         {
             ReplaceAll(c.command, "%options_path%", optionsLocation);
