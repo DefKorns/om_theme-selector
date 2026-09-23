@@ -33,16 +33,14 @@ using DirHandle = std::unique_ptr<DIR, DirCloser>;
 struct PipeCloser { void operator()(FILE * pipe) const { if(pipe) pclose(pipe); } };
 using PipeHandle = std::unique_ptr<FILE, PipeCloser>;
 
-// cached in /tmp (wiped on reboot) - sftype never changes within a boot, so only the first screen
-// that needs it pays for the shell fork
+// child screens inherit this via fork+exec, same as OM_BACK_STACK - so only the first screen
+// that needs sftype pays for the shell fork
 std::string ReadSftype()
 {
-    static constexpr const char * CachePath = "/tmp/om_sftype";
-    std::string result;
-    std::ifstream cached(CachePath);
-    if(std::getline(cached, result) && !result.empty())
-        return result;
+    if(const char * env = std::getenv("OM_SFTYPE"))
+        return env;
 
+    std::string result;
     PipeHandle pipe(popen("source /etc/preinit; script_init; echo $sftype", "r"));
     if(pipe)
     {
@@ -53,11 +51,11 @@ std::string ReadSftype()
     while(!result.empty() && (result.back() == '\n' || result.back() == '\r'))
         result.pop_back();
 
-    std::ofstream(CachePath, std::ios::trunc) << result;
+    setenv("OM_SFTYPE", result.c_str(), 1);
     return result;
 }
 
-// my own convention, not vendor's Command format - read directly instead of extending that parser
+// my own convention, not OptionsMenu's Command format
 struct ConsoleOnlyFlags { bool nesOnly = false; bool snesOnly = false; };
 
 ConsoleOnlyFlags ReadConsoleOnlyFlags(const std::string & path)
@@ -77,7 +75,7 @@ ConsoleOnlyFlags ReadConsoleOnlyFlags(const std::string & path)
     return flags;
 }
 
-} // namespace
+}
 
 AppOptions ParseArgs(int argc, char * argv[], const std::string & optionsLocation)
 {
