@@ -68,6 +68,12 @@ private:
     bool ActivateCommand(Command & cmd); // true if the caller's loop should break
     bool UpdateBButton(bool & tapped); // true if delete confirmed (caller should break); tapped on a quick tap
 
+    void ResumeUnderlyingUi() const; // CONTs the game PauseUI.sh stopped - nothing else does this on power-button exit
+
+    std::string FocusStatePath() const;
+    void SaveFocusState() const;
+    int LoadFocusIndex() const; // -1 if none saved
+
     int RunGridLayout();
     int RunListLayout();
 };

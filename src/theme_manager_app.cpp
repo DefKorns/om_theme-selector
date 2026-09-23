@@ -156,6 +156,31 @@ Texture ThemeManagerApp::MakeScrollArrow(int x, int y) const
     return arrow;
 }
 
+std::string ThemeManagerApp::FocusStatePath() const
+{
+    std::string sanitized = options_.commandLocation;
+    for(char & c : sanitized)
+        if(c == '/') c = '_';
+    return "/tmp/om_focus" + sanitized;
+}
+
+void ThemeManagerApp::SaveFocusState() const
+{
+    std::ofstream(FocusStatePath(), std::ios::trunc) << commands_[currentCommandId_].name;
+}
+
+int ThemeManagerApp::LoadFocusIndex() const
+{
+    std::ifstream in(FocusStatePath());
+    std::string name;
+    if(!std::getline(in, name) || name.empty())
+        return -1;
+    for(int i = 0; i < static_cast<int>(commands_.size()); ++i)
+        if(commands_[i].name == name)
+            return i;
+    return -1;
+}
+
 ThemeManagerApp::FrameEvent ThemeManagerApp::PollFrameEvents()
 {
     sdlContext_->StartFrame();
@@ -170,6 +195,11 @@ ThemeManagerApp::FrameEvent ThemeManagerApp::PollFrameEvents()
         return FrameEvent::PowerButtonPressed;
 
     return FrameEvent::Continue;
+}
+
+void ThemeManagerApp::ResumeUnderlyingUi() const
+{
+    system(("/bin/sh " + optionsLocation_ + "scripts/ResumeUI.sh").c_str());
 }
 
 bool ThemeManagerApp::ActivateCommand(Command & cmd)
@@ -365,8 +395,10 @@ int ThemeManagerApp::RunGridLayout()
             if(row < gridTopRow) gridTopRow = row;
             else if(row >= gridTopRow + GridRowsVisible) gridTopRow = row - GridRowsVisible + 1;
         }
+        SaveFocusState();
     };
-    SetCurrentCommand(themeStart_ < pinnedStartIndex_ ? themeStart_ : (stripCount > 0 ? StripToCommand(0) : 0));
+    int restoredId = LoadFocusIndex();
+    SetCurrentCommand(restoredId >= 0 ? restoredId : (themeStart_ < pinnedStartIndex_ ? themeStart_ : (stripCount > 0 ? StripToCommand(0) : 0)));
 
     // fixed for the whole screen (only gridTopRow scrolls within them)
     const int lastThemeIndex = pinnedStartIndex_ - 1;
@@ -378,7 +410,10 @@ int ThemeManagerApp::RunGridLayout()
         if(frameEvent == FrameEvent::Quit)
             return 0;
         if(frameEvent == FrameEvent::PowerButtonPressed)
+        {
+            ResumeUnderlyingUi();
             break;
+        }
 
         bool inGrid = currentCommandId_ >= themeStart_ && currentCommandId_ < pinnedStartIndex_;
 
@@ -575,7 +610,7 @@ int ThemeManagerApp::RunListLayout()
     }
     const int DisplayItemCount = std::max(1, (pinnedAreaTop - UiTheme::RowFirstY) / modernRowPitch);
 
-    int topListItemNumber = 1; // forces SetCurrentCommand(0) below to lay out row Y positions the first time
+    int topListItemNumber = pinnedStartIndex_ + 1; // forces the first SetCurrentCommand to lay out row positions
     std::shared_ptr<Texture> PreviewImage;
     auto SetCurrentCommand = [&] (int newCommandId)
     {
@@ -619,8 +654,10 @@ int ThemeManagerApp::RunListLayout()
         }
         else
             PreviewImage.reset();
+        SaveFocusState();
     };
-    SetCurrentCommand(0);
+    int restoredId = LoadFocusIndex();
+    SetCurrentCommand(restoredId >= 0 ? restoredId : 0);
 
     auto DrawRow = [&](Command & rowCommand, bool isLastOverall)
     {
@@ -664,7 +701,10 @@ int ThemeManagerApp::RunListLayout()
         if(frameEvent == FrameEvent::Quit)
             return 0;
         if(frameEvent == FrameEvent::PowerButtonPressed)
+        {
+            ResumeUnderlyingUi();
             break;
+        }
 
         if(controller_->GetButtonStatus(A) || controller_->GetButtonStatus(START))
         {
