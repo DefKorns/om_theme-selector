@@ -42,18 +42,17 @@ musicHackUnbind() {
 }
 
 fontBindFix() {
-  if [ "$1" == "backup" ]; then
-    for FONT in title s m l small medium large; do
-      [ ! -f "$TITLE_FONT_BACKUP" ] && mv "${FONT_PATH}/${FONT}.fnt" "${FONT_PATH}/${FONT}.fnt.backup"
+  [ ! -f "${FONT_PATH}/title.fnt.backup" ] && cp "${FONT_PATH}/title.fnt" "${FONT_PATH}/title.fnt.backup"
+  for FONT in title s m l small medium large; do
+    if [ "$1" == "backup" ] && [ -f "$FULL_THEME_PATH/fonts/${FONT}.fnt" ]; then
       cp "$FULL_THEME_PATH/fonts/${FONT}.fnt" "${FONT_PATH}/${FONT}.fnt"
-    done
-  elif [ "$1" == "restore" ]; then
-    [ -f "$TITLE_FONT_BACKUP" ] && mv "$TITLE_FONT_BACKUP" "$TITLE_FONT"
-    for FONT in s m l small medium large; do
-      umount "${ORIGINAL_THEME}/resources/fonts/${UI1}/${FONT}.fnt"
-      rm "${FONT_PATH}/${FONT}.fnt"
-    done
-  fi
+    elif [ "$FONT" == "title" ]; then
+      cp "${FONT_PATH}/title.fnt.backup" "${FONT_PATH}/title.fnt"
+    else
+      umount "${ORIGINAL_THEME}/resources/fonts/${UI1}/${FONT}.fnt" 2>/dev/null
+      rm -f "${FONT_PATH}/${FONT}.fnt"
+    fi
+  done
 }
 
 themeSelector() {
@@ -107,7 +106,6 @@ themeSelector() {
   local FONT_PATH="$mountpoint/media/$modname/fonts"
   [ ! -d "$FONT_PATH" ] && FONT_PATH="$rootfs/usr/share/fonts"
   local TITLE_FONT="$FONT_PATH/title.fnt"
-  local TITLE_FONT_BACKUP="${TITLE_FONT}.backup"
   local THEME_FONT_PATH="$FULL_THEME_PATH/fonts"
 
   SILENT_WAV="$rootfs/usr/share/themes/bgm_boot.wav"

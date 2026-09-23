@@ -23,8 +23,6 @@ remove() {
 }
 
 FONT_PATH="$rootfs/usr/share/fonts"
-TITLE_FONT="$FONT_PATH/title.fnt"
-TITLE_FONT_BACKUP="${TITLE_FONT}.backup"
 UI0="ui/$sftype-$sfregion"
 UI1=""
 
@@ -106,10 +104,10 @@ remove "$rootfs/etc/usr/bin/sprite_crop"
 remove "$rootfs/etc/usr/bin/theme_downloader"
 remove "$rootfs/etc/options_menu/lib/theme_manager"
 
-[ -f "$TITLE_FONT_BACKUP" ] && mv "$TITLE_FONT_BACKUP" "$TITLE_FONT"
+[ -f "${FONT_PATH}/title.fnt.backup" ] && cp "${FONT_PATH}/title.fnt.backup" "${FONT_PATH}/title.fnt"
 for FONT in s m l small medium large; do
-  umount "${ORIGINAL_THEME}/resources/fonts/${UI1}/${FONT}.fnt"
-  rm "${FONT_PATH}/${FONT}.fnt"
+  umount "${ORIGINAL_THEME}/resources/fonts/${UI1}/${FONT}.fnt" 2>/dev/null
+  rm -f "${FONT_PATH}/${FONT}.fnt"
 done
 
 unset cfg_OM_ThemeSelector_enabled

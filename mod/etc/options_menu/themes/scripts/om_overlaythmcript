@@ -16,14 +16,16 @@
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 fontBindFix() {
-  [ "$1" == "backup" ] && FONT_TYPE="title s m l small medium large"
-  [ "$1" == "restore" ] && FONT_TYPE="s m l small medium large"
-  [ "$1" == "restore" ] && [ -f "$TITLE_FONT_BACKUP" ] && mv "$TITLE_FONT_BACKUP" "$TITLE_FONT"
-  for FONT in $FONT_TYPE; do
-    [ "$1" == "backup" ] && [ ! -f "$TITLE_FONT_BACKUP" ] && mv "${FONT_PATH}/${FONT}.fnt" "${FONT_PATH}/${FONT}.fnt.backup"
-    [ "$1" == "backup" ] && cp "$FULL_THEME_PATH/fonts/${FONT}.fnt" "${FONT_PATH}/${FONT}.fnt"
-    [ "$1" == "restore" ] && umount "${ORIGINAL_THEME}/resources/fonts/${UI1}/${FONT}.fnt"
-    [ "$1" == "restore" ] && rm "${FONT_PATH}/${FONT}.fnt"
+  [ ! -f "${FONT_PATH}/title.fnt.backup" ] && cp "${FONT_PATH}/title.fnt" "${FONT_PATH}/title.fnt.backup"
+  for FONT in title s m l small medium large; do
+    if [ "$1" == "backup" ] && [ -f "$FULL_THEME_PATH/fonts/${FONT}.fnt" ]; then
+      cp "$FULL_THEME_PATH/fonts/${FONT}.fnt" "${FONT_PATH}/${FONT}.fnt"
+    elif [ "$FONT" == "title" ]; then
+      cp "${FONT_PATH}/title.fnt.backup" "${FONT_PATH}/title.fnt"
+    else
+      umount "${ORIGINAL_THEME}/resources/fonts/${UI1}/${FONT}.fnt" 2>/dev/null
+      rm -f "${FONT_PATH}/${FONT}.fnt"
+    fi
   done
 }
 
@@ -74,7 +76,6 @@ themeSelector() {
   local FONT_PATH="$mountpoint/media/$modname/fonts"
   [ ! -d "$FONT_PATH" ] && FONT_PATH="$rootfs/usr/share/fonts"
   local TITLE_FONT="$FONT_PATH/title.fnt"
-  local TITLE_FONT_BACKUP="${TITLE_FONT}.backup"
   local TITLE_THEME_FONT="$FULL_THEME_PATH/fonts/title.fnt"
 
   if [ "$SELECTED_THEME" != "$PREVIOUS_THEME" ] || [ ! -f "$LAST_THEME" ] || [ ! -f "$ACTIVE_THEME" ]; then
