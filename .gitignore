@@ -556,3 +556,4 @@ tools/MaterialSymbolsOutlined.codepoints
 tools/MaterialSymbolsOutlined.ttf
 src/cacert.pem
 mod/etc/options_menu/lib/
+vendor/chmenu
