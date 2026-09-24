@@ -1,73 +1,78 @@
 # Options Menu - Theme Selector
-**This modification is only for use with [CompCom's](https://github.com/CompCom) Options Menu.**
-### HMOD NOT COMPATIBLE WITH EXTERNAL UI.<br/>PREVIOUS VERSIONS OF THEME RANDOMIZER AND ADVANCED MUSIC HACK WILL BE UNINSTALLED.
 
-### What is it?
-This [Options Menu](https://github.com/CompCom/OptionsMenu/releases/latest) module gives you the possibility to choose your favorite theme and apply it on your NESCE or SNESCE.<br/>
-It includes all the features of it's predecessor and much more
+**Requires [my Options Menu fork](https://github.com/DefKorns/OptionsMenu/releases/latest) as a base — not compatible with any other UI.**
 
-[![Theme Selector](https://i.imgur.com/WXN7Nwl.png)](https://i.imgur.com/qyTv9Fs.png)
-### Features
-*  Graphical interface to allow you to select themes
-*  Download themes directy from the internet (Wi-Fi mod required)
-*  Theme randomizer (Off by default)
-*  Audio randomizer on home folder (Off by default)
-*  Set theme per folder (keeping the same the per sub-folder)
-*  Create a theme based your existent theme resources
-*  Custom fonts per theme
-*  Select a theme for the entire system
-*  Select a theme just for the home folder
-*  Custom icons for Option Menu
+[![Theme Selector](https://i.imgur.com/7JgP6JI.png)](https://i.imgur.com/7JgP6JI.png)
 
-### Can i use it with NAND
-Well, yes. But this mod was designed for USB-HOST, as the themes may include audio files and they may get over 10mb.
+## What is it?
 
-### Set theme per folder, what is that?
-If you are like me and have tons of games organized with tons of system folders... Wouldn't be nice if you could have a theme associated with each system? Now you can, just create your own theme and add it to the HMOD or directly to your USB/SD theme folder.
-On this version all subfolders, will keep the parent theme.
+A graphical theme manager for NES/SNES/Famicom/Super Famicom Classic consoles, built on top of [my fork](https://github.com/DefKorns/OptionsMenu) of [CompCom's OptionsMenu](https://github.com/CompCom/OptionsMenu). Pick a theme from a preview grid, download more from a catalog, build your own from pieces of the themes you already have, and tune per-folder/randomizer/audio behavior — all from the console itself, no PC required after install.
 
-### Ok and how will the system load the theme?
-Just give it the same name as your folder (lower snake_case). Eg: game folder: `Nintendo - Nintendo Entertainment System` theme folder: `nintendo_-_nintendo_entertainment_system`.
+The UI is my own standalone C++/SDL app (`theme_manager`), not a set of Lua scripts layered on the stock menu.
 
-### What if i want a specific theme on my main menu?
-Add a theme as before but name it `default` in order to make it you home menu theme. 
-That simple.
+## Features
 
-### I own a Famicom/Shonen/Super Famicom, can i install this?
-The mod is compatible with all Nintendo Classic consoles including all regions.
+- Preview grid to browse and apply installed themes; the theme currently applied is outlined so you can spot it at a glance
+- Download themes directly from the internet (**Wi-Fi mod required**)
+- Build your own DIY theme from pieces of the themes you already have (background, sprites, colors, packed art, fonts...)
+- Theme randomizer — a different theme each time you go Home (off by default)
+- Audio randomizer on the Home folder, optionally extended to every folder (off by default)
+- Theme per folder: give a folder its own theme by naming a theme after it; a folder with its own theme keeps its own icon instead of inheriting the parent theme's
+- Custom fonts per theme
+- Custom color palette for the Theme Manager UI itself (`theme.cfg`)
+- System clean-up to remove files your console type doesn't need
+- Reset just this mod's settings without a full uninstall
 
-### What do you mean with "Create a theme based your existent theme resources"?
-Exactly that! If you have several themes on your console/usb, why not take advantage of their resources and create your own DIY theme? 
-Simply select from the listed previews and create your own DIY theme.
+## Set a theme per folder, what is that?
 
-### Requirements
-*  [Hakchi CE v3.5.0 >=](https://github.com/TeamShinkansen/hakchi2/releases/latest)
-*  [Options Menu v.1.3.4 >=](https://github.com/CompCom/OptionsMenu/releases/latest)
-*  [Hakchi Wi-Fi mod (WPA Supplicant)](https://hakchi.net/hakchi/hmods/wpa-supplicant.hmod)
+If you have your games organized into system folders, you can give each one its own theme instead of one theme for the whole console. Turn on **Theme Per Folder** in Settings, then name a theme folder after the game folder it should apply to (lower snake_case). Eg: game folder `Nintendo - Nintendo Entertainment System` → theme folder `nintendo_-_nintendo_entertainment_system`.
 
-### How do i use it
+By default, a subfolder inherits its parent's theme. Turn on **Allow Different Theme To Subfolder** if you want a subfolder to use its own matching theme instead — and if it does, that subfolder keeps its own real icon rather than being overwritten by the parent theme's.
 
-**NAND or USB/SD**
+## What if I want a specific theme on my main menu?
 
-- Install Hmod
-- Download the themes and enjoy
+Name a theme `default` and it becomes your Home menu theme.
 
-on NAND themes will be on `/var/lib/hakchi/usr/share/themes/consoletype`
-on USB/SD themes will be on `/media/hakchi/themes/consoletype`
+## What do you mean by "build your own DIY theme"?
 
-*consoletype is just `nes`, `snes`  or `shonen`*
+Exactly that — pick and mix backgrounds, sprites, colors and packed art from the themes already on your console/USB into a theme of your own, previewed live as you build it.
 
-### Notes
-Enjoy it as much as i did making it.
+## I own a Famicom/Shonen/Super Famicom, can I install this?
 
-### Credits
+Yes — it supports all Nintendo Classic consoles, all regions.
+
+## Requirements
+
+- [Hakchi CE](https://github.com/TeamShinkansen/hakchi2/releases/latest)
+- [My Options Menu fork](https://github.com/DefKorns/OptionsMenu/releases/latest) — the base UI this mod plugs into
+- [Hakchi Wi-Fi mod (WPA Supplicant)](https://hakchi.net/hakchi/hmods/wpa-supplicant.hmod) — only needed to download themes from the internet
+
+## How do I use it
+
+Works the same whether your games are on NAND or USB/SD:
+
+- Install the hmod
+- Open Theme Options from the Options Menu, download or build a theme, and apply it
+
+On NAND, themes live at `/var/lib/hakchi/usr/share/themes/<consoletype>`.
+On USB/SD, themes live at `/media/hakchi/themes/<consoletype>`.
+
+*`consoletype` is `nes`, `snes` or `shonen`.*
+
+## Customizing the look
+
+The Theme Manager's own UI (not your game themes) reads its color palette from `/etc/options_menu/theme.cfg` at startup — edit `Key=R,G,B` lines there (background, borders, accent, badges, the active-theme border...) to restyle it, or delete a line to fall back to the default.
+
+## Credits
+
 - [DefKorns](https://gitlab.com/DefKorns)
 - [DanTheMan827](https://github.com/DanTheMan827) (packed.png extractor)
 
-### Thanks
+## Thanks
+
 - AluCarD
 - [BsLeNuL](https://github.com/bslenul)
-- [CompCom](https://github.com/CompCom)
+- [CompCom](https://github.com/CompCom) — original Options Menu
 - [KMFDManic](https://github.com/KMFDManic)
 - [ModMyClassic](https://modmyclassic.com/)
 - NESminiling0618
