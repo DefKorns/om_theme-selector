@@ -23,12 +23,39 @@
 #define MOD_VERSION "dev"
 #endif
 
+namespace
+{
+    Uint8 ActiveThemeBorderR = 0x4C, ActiveThemeBorderG = 0xAF, ActiveThemeBorderB = 0x6E; // green
+
+    void LoadActiveThemeBorderColor(const std::string & optionsLocation)
+    {
+        std::ifstream in(optionsLocation + "theme.cfg");
+        std::string line;
+        while(std::getline(in, line))
+        {
+            if(!line.empty() && line.back() == '\r')
+                line.pop_back();
+            size_t eq = line.find('=');
+            if(eq == std::string::npos || line[0] == '#' || line.compare(0, eq, "ActiveThemeBorder") != 0)
+                continue;
+            int r, g, b;
+            if(std::sscanf(line.c_str() + eq + 1, "%d,%d,%d", &r, &g, &b) == 3)
+            {
+                ActiveThemeBorderR = static_cast<Uint8>(r);
+                ActiveThemeBorderG = static_cast<Uint8>(g);
+                ActiveThemeBorderB = static_cast<Uint8>(b);
+            }
+        }
+    }
+}
+
 ThemeManagerApp::ThemeManagerApp(std::string optionsLocation, AppOptions options, std::vector<Command> commands, std::vector<bool> isThemeItem)
     : optionsLocation_(std::move(optionsLocation))
     , options_(std::move(options))
     , commands_(std::move(commands))
     , isThemeItem_(std::move(isThemeItem))
 {
+    LoadActiveThemeBorderColor(optionsLocation_);
     fprintf(stderr, "CHECKPOINT 1: commands loaded, count=%zu\n", commands_.size()); fflush(stderr);
 
     // std::make_unique is C++14; this project builds as C++11
@@ -385,6 +412,33 @@ int ThemeManagerApp::RunGridLayout()
         }
     };
 
+    // marks the tile of the theme currently applied on the console, so it stays visually
+    // distinguishable from the rest of the grid regardless of where the cursor is
+    std::vector<bool> isActiveTheme(commands_.size(), false);
+    if(options_.titleKey == "INSTALLED_THEMES")
+    {
+        std::string activeTheme;
+        std::ifstream in("/var/lib/clover/profiles/0/hakchi/lastTheme");
+        std::getline(in, activeTheme);
+        if(!activeTheme.empty() && activeTheme.back() == '\r')
+            activeTheme.pop_back();
+
+        if(!activeTheme.empty())
+        {
+            const std::string suffix = ".sh";
+            for(int i = themeStart_; i < pinnedStartIndex_; ++i)
+            {
+                const std::string & cmd = commands_[i].command;
+                if(cmd.size() <= suffix.size() || cmd.compare(cmd.size()-suffix.size(), suffix.size(), suffix) != 0)
+                    continue;
+                size_t slashPos = cmd.find_last_of('/');
+                size_t start = (slashPos == std::string::npos) ? 0 : slashPos+1;
+                if(cmd.compare(start, cmd.size()-suffix.size()-start, activeTheme) == 0)
+                    isActiveTheme[i] = true;
+            }
+        }
+    }
+
     int gridTopRow = 0;
     auto SetCurrentCommand = [&](int newId)
     {
@@ -556,7 +610,19 @@ int ThemeManagerApp::RunGridLayout()
                         SDL_RenderSetClipRect(renderer_, nullptr);
                         DrawRoundedCornerMask(renderer_, tileRect, UiTheme::SelectedRowBgR, UiTheme::SelectedRowBgG, UiTheme::SelectedRowBgB, UiTheme::BoxRadius);
                     }
-                    DrawStrokeRect(renderer_, tileRect, selected ? UiTheme::AccentR : UiTheme::BorderR, selected ? UiTheme::AccentG : UiTheme::BorderG, selected ? UiTheme::AccentB : UiTheme::BorderB, selected ? 3 : UiTheme::BorderWidth, UiTheme::BoxRadius);
+                    Uint8 strokeR = UiTheme::BorderR, strokeG = UiTheme::BorderG, strokeB = UiTheme::BorderB;
+                    int strokeW = UiTheme::BorderWidth;
+                    if(selected)
+                    {
+                        strokeR = UiTheme::AccentR; strokeG = UiTheme::AccentG; strokeB = UiTheme::AccentB;
+                        strokeW = 3;
+                    }
+                    else if(isActiveTheme[idx])
+                    {
+                        strokeR = ActiveThemeBorderR; strokeG = ActiveThemeBorderG; strokeB = ActiveThemeBorderB;
+                        strokeW = 3;
+                    }
+                    DrawStrokeRect(renderer_, tileRect, strokeR, strokeG, strokeB, strokeW, UiTheme::BoxRadius);
                     if(!tileHideLabel[idx])
                     {
                         tileLabels[idx].rect.x = x + (TileW - tileLabels[idx].rect.w) / 2;
@@ -586,6 +652,11 @@ int ThemeManagerApp::RunListLayout()
     scrollDown.rect.y = UiTheme::ScrollDownY;
     SDL_Rect selectedRowRect{ UiTheme::ListX, UiTheme::RowFirstY - 2, UiTheme::ListContentRightX - UiTheme::ListX, 0 };
 
+    // B runs Back/Exit directly - same footer badge and behavior as the grid layout
+    Badge badgeB{ Texture("B", 16, renderer_, 0, 0, false, UiTheme::BadgeLetterColor, true),
+                  Texture(pinnedStartIndex_ < (int)commands_.size() ? Translate(commands_[pinnedStartIndex_].name) : "", 16, renderer_, 0, 0, false, UiTheme::TextColor, true),
+                  UiTheme::BadgeBDark, UiTheme::BadgeB };
+
     const int RowGlyphSize = 16;
     const int RowTextGapPx = 16;
     const int ChildIndent = 4*16;
@@ -597,18 +668,8 @@ int ThemeManagerApp::RunListLayout()
     }
 
     const int modernRowPitch = std::max(UiTheme::RowPitch, GetTTFLineHeight(RowGlyphSize));
-    int pinnedAreaTop;
-    {
-        int slotBottom = UiTheme::FooterDividerY - UiTheme::PinnedBottomMargin;
-        for(int i = static_cast<int>(commands_.size())-1; i >= pinnedStartIndex_; --i)
-        {
-            int slotTop = slotBottom - modernRowPitch;
-            commands_[i].texture.rect.y = slotTop + (modernRowPitch - commands_[i].texture.rect.h) / 2 + UiTheme::RowTextYNudge;
-            slotBottom = slotTop;
-        }
-        pinnedAreaTop = slotBottom;
-    }
-    const int DisplayItemCount = std::max(1, (pinnedAreaTop - UiTheme::RowFirstY) / modernRowPitch);
+    // Back/Exit no longer takes a row of its own here - B runs it directly via the footer badge above
+    const int DisplayItemCount = std::max(1, (UiTheme::FooterDividerY - UiTheme::PinnedBottomMargin - UiTheme::RowFirstY) / modernRowPitch);
 
     int topListItemNumber = pinnedStartIndex_ + 1; // forces the first SetCurrentCommand to lay out row positions
     std::shared_ptr<Texture> PreviewImage;
@@ -629,6 +690,16 @@ int ThemeManagerApp::RunListLayout()
         else if(scrollTarget >= topListItemNumber+DisplayItemCount)
         {
             topListItemNumber = scrollTarget-DisplayItemCount+1;
+            updateCommandYPos = true;
+        }
+
+        // never scroll past the point where the list stops filling the display area -
+        // otherwise restoring focus on a short list (e.g. after a toggle relaunches this
+        // screen) scrolls the focused row to the top and hides earlier rows for no reason
+        const int maxTopListItemNumber = std::max(0, pinnedStartIndex_-DisplayItemCount);
+        if(topListItemNumber > maxTopListItemNumber)
+        {
+            topListItemNumber = maxTopListItemNumber;
             updateCommandYPos = true;
         }
         if(updateCommandYPos)
@@ -657,7 +728,7 @@ int ThemeManagerApp::RunListLayout()
         SaveFocusState();
     };
     int restoredId = LoadFocusIndex();
-    SetCurrentCommand(restoredId >= 0 ? restoredId : 0);
+    SetCurrentCommand(restoredId >= 0 && restoredId < pinnedStartIndex_ ? restoredId : 0);
 
     auto DrawRow = [&](Command & rowCommand, bool isLastOverall)
     {
@@ -679,8 +750,13 @@ int ThemeManagerApp::RunListLayout()
     {
         DrawChromeCommon();
         DrawSectionTitle();
-        if(!commands_[currentCommandId_].deleteCommand.empty())
-            DrawBadge(badgeHold_, badgeRowRightEdge_);
+        {
+            int rightEdge = badgeRowRightEdge_;
+            if(pinnedStartIndex_ < (int)commands_.size())
+                rightEdge = DrawBadge(badgeB, rightEdge);
+            if(!commands_[currentCommandId_].deleteCommand.empty())
+                DrawBadge(badgeHold_, rightEdge);
+        }
 
         DrawRoundedFillRect(renderer_, selectedRowRect, UiTheme::SelectedRowBgR, UiTheme::SelectedRowBgG, UiTheme::SelectedRowBgB, UiTheme::BoxRadius);
         DrawStrokeRect(renderer_, selectedRowRect, UiTheme::AccentR, UiTheme::AccentG, UiTheme::AccentB, 2, UiTheme::BoxRadius);
@@ -692,8 +768,6 @@ int ThemeManagerApp::RunListLayout()
             PreviewImage->Draw(renderer_);
         }
     };
-
-    const int lastCommandIndex = static_cast<int>(commands_.size()) - 1; // commands_ never resized during this loop
 
     for(;;)
     {
@@ -711,24 +785,25 @@ int ThemeManagerApp::RunListLayout()
             if(ActivateCommand(commands_[currentCommandId_]))
                 break;
         }
-        else if(controller_->HeldRepeat(UP))
+        else if(controller_->HeldRepeat(UP) && pinnedStartIndex_ > 0)
         {
-            // bounded so an all-separator list can't spin forever
+            // bounded so an all-separator list can't spin forever; stays below
+            // pinnedStartIndex_ - Back/Exit isn't a row here, B runs it directly
             int newCommandId = currentCommandId_;
-            for(size_t tries = 0; tries < commands_.size(); ++tries)
+            for(int tries = 0; tries < pinnedStartIndex_; ++tries)
             {
-                newCommandId = (newCommandId-1+commands_.size())%commands_.size();
+                newCommandId = (newCommandId-1+pinnedStartIndex_)%pinnedStartIndex_;
                 if(commands_[newCommandId].command.size() != 0)
                     break;
             }
             SetCurrentCommand(newCommandId);
         }
-        else if(controller_->HeldRepeat(DOWN))
+        else if(controller_->HeldRepeat(DOWN) && pinnedStartIndex_ > 0)
         {
             int newCommandId = currentCommandId_;
-            for(size_t tries = 0; tries < commands_.size(); ++tries)
+            for(int tries = 0; tries < pinnedStartIndex_; ++tries)
             {
-                newCommandId = (newCommandId+1)%commands_.size();
+                newCommandId = (newCommandId+1)%pinnedStartIndex_;
                 if(commands_[newCommandId].command.size() != 0)
                     break;
             }
@@ -738,17 +813,15 @@ int ThemeManagerApp::RunListLayout()
             bool tapped = false;
             if(UpdateBButton(tapped))
                 break;
-            if(tapped)
-                SetCurrentCommand(commands_.size()-1);
+            // quick tap - Back/Exit isn't a row you navigate to, B runs it directly (matches the grid layout)
+            if(tapped && pinnedStartIndex_ < (int)commands_.size() && ActivateCommand(commands_[pinnedStartIndex_]))
+                break;
         }
 
         DrawChrome();
 
         for(int i = 0, count = std::min(DisplayItemCount, pinnedStartIndex_-topListItemNumber); i < count; ++i)
-            DrawRow(commands_[i+topListItemNumber], (i+topListItemNumber) == lastCommandIndex);
-
-        for(int i = pinnedStartIndex_; i <= lastCommandIndex; ++i)
-            DrawRow(commands_[i], i == lastCommandIndex);
+            DrawRow(commands_[i+topListItemNumber], (i+topListItemNumber) == pinnedStartIndex_-1);
 
         // bounded by pinnedStartIndex_, not commands_.size() - pinned rows need no scroll
         if(topListItemNumber != 0)

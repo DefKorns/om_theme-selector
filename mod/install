@@ -72,6 +72,11 @@ chmod +x "$usr/bin/sprite_crop"
 chmod +x "$usr/bin/theme_downloader"
 chmod +x "$rootfs/etc/options_menu/lib/theme_manager"
 
+theme_cfg="$rootfs/etc/options_menu/theme.cfg"
+if [ -f "$theme_cfg" ] && ! grep -q "^ActiveThemeBorder=" "$theme_cfg"; then
+  echo "ActiveThemeBorder=76,175,110" >> "$theme_cfg"
+fi
+
 sed '1,2d' "$om_themes_scripts/om_themescript" >"$b_file"
 [ ! -f "$p_file" ] && echo themeSelector >"$p_file"
 
