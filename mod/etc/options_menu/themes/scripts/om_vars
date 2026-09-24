@@ -310,7 +310,8 @@ themeLoader() {
 sed -i \"s/SELECTED_THEME=\\\"CHANGEME\\\"/SELECTED_THEME=\\\"${thm}\\\"/g;\" \"$b_file\"
 " >> "$thm_script.sh"
 
-    echo "sleep 1
+    echo "\"\$omScripts/gen_splash\" /tmp/om_splash.png THEME_APPLYING_LINE1 THEME_APPLYING_LINE2 && decodepng /tmp/om_splash.png > /dev/fb0
+sleep 1
     hakchi reboot" >> "$thm_script.sh"
 
     preview_image="$thmPreview/$thm.png"
@@ -320,7 +321,7 @@ sed -i \"s/SELECTED_THEME=\\\"CHANGEME\\\"/SELECTED_THEME=\\\"${thm}\\\"/g;\" \"
 
     cmd_name="$(sed -r 's/NAME=//g' < "$full_path/info")"
     echo "COMMAND_NAME=$cmd_name
-COMMAND_TYPE=INTERNAL
+COMMAND_TYPE=EXTERNAL
 COMMAND_STR=sh $thm_script.sh
 PREVIEW_IMAGE=$preview_image
 DELETE_STR=rm -rf \"$full_path\" \"$full_path.png\" \"$cmd_list\" \"$thm_script.sh\" && usleep 50000 && %options_path%lib/theme_manager --title INSTALLED_THEMES &" > "$cmd_list"
