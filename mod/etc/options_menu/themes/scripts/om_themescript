@@ -1,5 +1,5 @@
 #!/bin/bash
-# shellcheck disable=SC2154,SC2038,SC2143
+# shellcheck disable=SC2154,SC2038,SC2143,SC2030,SC2031,SC2001
 #  Copyright (c) 2026 DefKorns (https://defkorns.github.io/LICENSE)
 #
 #  This program is free software: you can redistribute it and/or modify
@@ -164,26 +164,32 @@ themeSelector() {
       fontBindFix "restore"
     fi
 
+    mountpoint -q "$ORIGINAL_THEME" && umount "$ORIGINAL_THEME"
     musicHackUnbind
 
-    cd "$THEMES_PATH/$PREVIOUS_THEME" && find ./* -type f ! -name "*.wav" ! -path "./xtras/*" ! -path "./fonts/*" | cut -c3- | while IFS= read -r UMOUNT_FILE; do
+    cd "$THEMES_PATH/$PREVIOUS_THEME" && find ./* -type f ! -name "*.wav" ! -path "./fonts/*" | cut -c3- | while IFS= read -r UMOUNT_FILE; do
       umount "$ORIGINAL_THEME/$UMOUNT_FILE"
     done
 
-    if [ -f "$STATE_PATH/om_audiorandomizer" ] && [ -n "$(ls -A "$MUSIC_PATH")" ]; then
-      [ -z "$BGM_HOME" ] && BGM_HOME="$(find "$MUSIC_PATH" -maxdepth 1 -type f -iname "*.wav" | shuf | head -n1)"
-      if [ "$FOLDER_ID" = "000" ]; then
-        musicHackBind "$BGM_HOME" "$BGM_HOME" "$ORIGINAL_THEME_AUDIO"
-      else
-        [ -f "$STATE_PATH/om_advmusichack" ] && [ -z "$(find "$FULL_THEME_PATH" -type f -name "*.wav")" ] && musicHackBind "$BGM_HOME" "$BGM_HOME" "$ORIGINAL_THEME_AUDIO"
+    if [ "$FULL_THEME_PATH" != "$DIY_THEME" ] && [ -f "$FULL_THEME_PATH/needs_overlay" ]; then
+      [ -d "$FULL_THEME_PATH" ] && mount -t overlayfs -o lowerdir="$ORIGINAL_THEME",upperdir="$FULL_THEME_PATH" overlayfs "$ORIGINAL_THEME"
+    else
+      if [ -f "$STATE_PATH/om_audiorandomizer" ] && [ -n "$(ls -A "$MUSIC_PATH")" ]; then
+        [ -z "$BGM_HOME" ] && BGM_HOME="$(find "$MUSIC_PATH" -maxdepth 1 -type f -iname "*.wav" | shuf | head -n1)"
+        if [ "$FOLDER_ID" = "000" ]; then
+          musicHackBind "$BGM_HOME" "$BGM_HOME" "$ORIGINAL_THEME_AUDIO"
+        else
+          [ -f "$STATE_PATH/om_advmusichack" ] && [ -z "$(find "$FULL_THEME_PATH" -type f -name "*.wav")" ] && musicHackBind "$BGM_HOME" "$BGM_HOME" "$ORIGINAL_THEME_AUDIO"
+        fi
       fi
+
+      cd "$FULL_THEME_PATH" && find . -type f ! -path "./fonts/*" | while IFS= read -r THEME_FILE; do
+        mount_bind "$FULL_THEME_PATH/$THEME_FILE" "$ORIGINAL_THEME/$THEME_FILE"
+      done
     fi
 
-    cd "$FULL_THEME_PATH" && find . -type f ! -path "./xtras/*" ! -path "./fonts/*" | while IFS= read -r THEME_FILE; do
-      mount_bind "$FULL_THEME_PATH/$THEME_FILE" "$ORIGINAL_THEME/$THEME_FILE"
-    done
-
-    cd - >/dev/ || exit
+    cd - >/dev/null || exit
+    break
   done
 
 }

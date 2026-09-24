@@ -45,7 +45,7 @@ esac
 
 ORIGINAL_THEME="$mountpoint/usr/share/$UI0"
 
-sed -i '/# themeselector fix$/,+2d' "$rootfs/bin/chmenu"
+sed -i '/# themeselector fix *$/,+2d' "$rootfs/bin/chmenu"
 sed -i '/# themeselector$/,+4d' "$rootfs/etc/preinit.d/b8025_fontfix"
 remove "$mountpoint/$profilepath/$modname/lastTheme"
 remove "$mountpoint/$profilepath/$modname/prevTheme"

@@ -75,7 +75,6 @@ omModLicense="$omModScripts/om_license"
 thmPreview="$omModSub/images"
 omThemeScript="$omModScripts/om_themescript"
 omOverlayThemeScript="$omModScripts/om_overlaythmcript"
-thmOverlay="$omModScripts/om_overlay"
 
 om_themerandomizer="$state_path/om_themerandomizer"
 om_themeperfolder="$state_path/om_themeperfolder"
@@ -162,14 +161,29 @@ items_to_delete="$del_on_snes"
 has_theme="$(ls -1 "$theme_path/$system".*.tar.gz 2> /dev/null | wc -l)"
 
 ################
+original_theme_ui0="ui/$sftype-$sfregion"
 case "$sftype" in
   hvcj)
     items_to_delete="$del_on_shonen"
+    original_theme_ui0="ui/hvc"
     ;;
   nes)
     items_to_delete="$del_on_nes"
+    original_theme_ui0="clover-ui"
+    ;;
+  snes)
+    [ "$sfregion" = "jpn" ] && original_theme_ui0="ui/shvc"
     ;;
 esac
+original_theme_path="$mountpoint/usr/share/$original_theme_ui0"
+
+themeIsBindable() {
+  find "$1" -type f ! -path "$1/fonts/*" ! -path "$1/info" ! -path "$1/dependencies.json" \
+    ! -path "$1/resources/scripts/env/env_*.lua" | while IFS= read -r f; do
+    [ -f "$original_theme_path/${f#"$1"/}" ] || exit 1
+  done
+}
+
 
 hasThemesToInstall() {
   [ "$has_theme" = 0 ] && return
@@ -208,12 +222,8 @@ enableMenuOptions() {
     enable_cmds "Settings"
   fi
 
-  while IFS='' read -r advThm || [ -n "$advThm" ]; do
-    enable_cmds "AudioSetting" "ThemeSetting" "AdvancedMusicHack"
-    if grep -q "$advThm" "$thm_chk"; then
-      disable_cmds "AudioSetting" "ThemeSetting" "AdvancedMusicHack"
-    fi
-  done < "$thmOverlay"
+ enable_cmds "AudioSetting" "AdvancedMusicHack"
+  [ -f "$(cat "$thm_chk" 2> /dev/null)/needs_overlay" ] && disable_cmds "AudioSetting" "AdvancedMusicHack"
 
   if [ "$sftype" = "nes" ]; then
     src="hvc"
@@ -243,19 +253,25 @@ themeLoader() {
   removeRegionalTheme
   cd "$theme_path" && find . -mindepth 1 -maxdepth 1 -type d | sed 's#^\./##' | sort -u | while IFS= read -r thm; do
     full_path="$theme_path/$thm"
-    xtras="$full_path/xtras"
     resource_path="$full_path/resources"
     sprite_path="$resource_path/sprites"
     script_path="$resource_path/scripts"
     cmd_list="$omModCommands/c0001_$thm"
     thm_script="$omModScripts/$thm"
-    had_thumb="$theme_path/thumb"
     tmp_thm_script="$omThemeScript"
 
     if [ ! -f "$full_path/info" ]; then
       thm_title="$(echo "$thm" | sed -e 's/_/ /g' | awk '{for(i=1;i<=NF;i++){$i=toupper(substr($i,1,1))substr($i,2)}}1')"
       size="$(du -sh "$full_path" | cut -f1)"
       echo "NAME=$thm_title [${size}b]" > "$full_path/info"
+    fi
+
+    if [ ! -f "$full_path/needs_overlay" ] && [ ! -f "$full_path/bind_ok" ]; then
+      if themeIsBindable "$full_path"; then
+        touch "$full_path/bind_ok"
+      else
+        touch "$full_path/needs_overlay"
+      fi
     fi
 
     if [ ! -f "$full_path.png" ]; then
@@ -284,20 +300,8 @@ themeLoader() {
     fi
 
     copy "$omModLicense" "$thm_script.sh"
-    if [ -f "$xtras/thumb.png" ]; then
-      echo "find \"$gStorage\" -path \"*_small.png*\" | while read -r file; do
-copier \"\$file\" \"\$file\"_backup 
-copier \"$xtras/thumb.png\" \"\$file\"
-touch \"$had_thumb\"
-done" >> "$thm_script.sh"
-    else
-      echo "if [ -f \"$had_thumb\" ]; then
-  sh $omModScripts/om_restorethumb
-  rm \"$had_thumb\" 
-fi" >> "$thm_script.sh"
-    fi
 
-    if grep -q -w "$thm" "$thmOverlay" || [ ! -d "$has_folders" ]; then
+    if [ ! -d "$has_folders" ]; then
       tmp_thm_script="$omOverlayThemeScript"
     fi
 
