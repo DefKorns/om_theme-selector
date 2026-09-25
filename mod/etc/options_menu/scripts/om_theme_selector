@@ -24,6 +24,8 @@ hasThemesToInstall
 enableMenuOptions
 remove "$omDummy"
 
+[ -f "$om_firstrun" ] && remove "$om_themerandomizer" "$om_themeperfolder" "$om_themeperfolderchild" "$om_audiorandomizer" "$om_advmusichack"
+
 if [ "$1" = "reload" ] || [ -f "$om_firstrun" ] ; then
   loadThemeList -r
   remove "$om_firstrun"

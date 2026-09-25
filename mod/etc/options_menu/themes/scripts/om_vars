@@ -81,7 +81,7 @@ om_themeperfolder="$state_path/om_themeperfolder"
 om_themeperfolderchild="$state_path/om_themeperfolderchild"
 om_audiorandomizer="$state_path/om_audiorandomizer"
 om_advmusichack="$state_path/om_advmusichack"
-om_firstrun="$state_path/om_firstrun"
+om_firstrun="$omMod/om_firstrun"
 om_theme_count="$state_path/om_theme_count"
 
 #### SEPARATORS

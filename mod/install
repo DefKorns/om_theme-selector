@@ -53,18 +53,9 @@ find "$hmod_dir" -type f -name "*advanced_music_hack" -print0 -exec rm -f {} \;
 unset cfg_theme_randomizR_enabled
 
 transfer_default
-om_state_path="$mountpoint/$profilepath/$modname"
-om_firstrun="$om_state_path/om_firstrun"
-om_themerandomizer="$om_state_path/om_themerandomizer"
-om_themeperfolder="$om_state_path/om_themeperfolder"
-om_themeperfolderchild="$om_state_path/om_themeperfolderchild"
-om_audiorandomizer="$om_state_path/om_audiorandomizer"
-om_advmusichack="$om_state_path/om_advmusichack"
-remove_settings="$om_themerandomizer $om_themeperfolder $om_themeperfolderchild $om_audiorandomizer $om_advmusichack"
+# saves aren't mounted yet during install - om_theme_selector resets settings on first run
+om_firstrun="$rootfs/etc/options_menu/themes/om_firstrun"
 [ ! -f "$om_firstrun" ] && touch "$om_firstrun"
-for option in $remove_settings; do
-  del "$option"
-done
 copy "$om_themes_scripts/om_fontfix" "$pre_initd/b8025_fontfix"
 copy "$om_themes_scripts/om_chmenu" "$rootfs/bin/chmenu"
 chmod +x "$rootfs/bin/chmenu"
