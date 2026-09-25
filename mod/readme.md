@@ -65,7 +65,7 @@ The Theme Manager's own UI (not your game themes) reads its color palette from `
 
 ## Credits
 
-- [DefKorns](https://gitlab.com/DefKorns)
+- [DefKorns](https://github.com/DefKorns)
 - [DanTheMan827](https://github.com/DanTheMan827) (packed.png extractor)
 
 ## Thanks
