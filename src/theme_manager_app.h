@@ -28,7 +28,7 @@ public:
     int Run() { return options_.gridLayout ? RunGridLayout() : RunListLayout(); }
 
 private:
-    struct Badge { Texture letter; Texture label; UiTheme::BadgeColor rim; UiTheme::BadgeColor fill; };
+    struct Badge { Texture letter; Texture label; Color rim; Color fill; };
     enum class FrameEvent { Continue, Quit, PowerButtonPressed };
 
     std::string optionsLocation_;
@@ -43,7 +43,7 @@ private:
     SDL_Renderer * renderer_ = nullptr;
     std::unique_ptr<Controller> controller_;
     int currentCommandId_ = 0;
-    Uint8 bgR_ = 0, bgG_ = 0, bgB_ = 0;
+    Color bg_{};
 
     Texture gearIcon_, switchOn_, switchOff_;
     Texture appTitleText_, appVersionText_, titleText_, creditText_;

@@ -25,7 +25,7 @@
 
 namespace
 {
-    Uint8 ActiveThemeBorderR = 0x4C, ActiveThemeBorderG = 0xAF, ActiveThemeBorderB = 0x6E; // green
+    Color ActiveThemeBorder{ 0x4C, 0xAF, 0x6E }; // green
 
     void LoadActiveThemeBorderColor(const std::string & optionsLocation)
     {
@@ -40,11 +40,7 @@ namespace
                 continue;
             int r, g, b;
             if(std::sscanf(line.c_str() + eq + 1, "%d,%d,%d", &r, &g, &b) == 3)
-            {
-                ActiveThemeBorderR = static_cast<Uint8>(r);
-                ActiveThemeBorderG = static_cast<Uint8>(g);
-                ActiveThemeBorderB = static_cast<Uint8>(b);
-            }
+                ActiveThemeBorder = { static_cast<Uint8>(r), static_cast<Uint8>(g), static_cast<Uint8>(b) };
         }
     }
 }
@@ -65,28 +61,26 @@ ThemeManagerApp::ThemeManagerApp(std::string optionsLocation, AppOptions options
     controller_.reset(new Controller(1));
     fprintf(stderr, "CHECKPOINT 3: controller created\n"); fflush(stderr);
 
-    bgR_ = UiTheme::BgR;
-    bgG_ = UiTheme::BgG;
-    bgB_ = UiTheme::BgB;
-    SDL_SetRenderDrawColor(renderer_, bgR_, bgG_, bgB_, 0xFF);
+    bg_ = UiTheme::Bg;
+    SetDrawColor(renderer_, bg_);
 
     gearIcon_ = Texture(optionsLocation_ + UiTheme::AssetGear, renderer_, UiTheme::GearX, UiTheme::GearY);
     switchOn_ = Texture(optionsLocation_ + UiTheme::AssetSwitchOn, renderer_);
     switchOff_ = Texture(optionsLocation_ + UiTheme::AssetSwitchOff, renderer_);
 
-    appTitleText_ = Texture("Theme Manager", UiTheme::TitleFontSize, renderer_, UiTheme::TitleX, UiTheme::TitleY, false, UiTheme::TextColor, true);
+    appTitleText_ = Texture("Theme Manager", UiTheme::TitleFontSize, renderer_, UiTheme::TitleX, UiTheme::TitleY, false, ToAbgr(UiTheme::Text), true);
     appTitleText_.rect.y -= appTitleText_.rect.h / 2;
-    appVersionText_ = Texture(MOD_VERSION, UiTheme::VersionFontSize, renderer_, appTitleText_.rect.x + appTitleText_.rect.w + UiTheme::VersionGap, UiTheme::TitleY, false, UiTheme::TextColor, true);
+    appVersionText_ = Texture(MOD_VERSION, UiTheme::VersionFontSize, renderer_, appTitleText_.rect.x + appTitleText_.rect.w + UiTheme::VersionGap, UiTheme::TitleY, false, ToAbgr(UiTheme::Text), true);
     appVersionText_.rect.y -= appVersionText_.rect.h / 2;
-    titleText_ = Texture(Translate(options_.titleKey), UiTheme::SectionTitleFontSize, renderer_, UiTheme::SectionTitleX, UiTheme::SectionTitleY, false, UiTheme::TextColor, true);
-    creditText_ = Texture("Theme Manager - by DefKorns", 16, renderer_, UiTheme::CreditX, UiTheme::CreditY, false, UiTheme::TextColor, true);
+    titleText_ = Texture(Translate(options_.titleKey), UiTheme::SectionTitleFontSize, renderer_, UiTheme::SectionTitleX, UiTheme::SectionTitleY, false, ToAbgr(UiTheme::Text), true);
+    creditText_ = Texture("Theme Manager - by DefKorns", 16, renderer_, UiTheme::CreditX, UiTheme::CreditY, false, ToAbgr(UiTheme::Text), true);
     fprintf(stderr, "CHECKPOINT 4: basic textures created\n"); fflush(stderr);
 
-    badgeA_ = Badge{ Texture("A", 16, renderer_, 0, 0, false, UiTheme::BadgeLetterColor, true), Texture(Translate("HINT_SELECT"), 16, renderer_, 0, 0, false, UiTheme::TextColor, true), UiTheme::BadgeADark, UiTheme::BadgeA };
+    badgeA_ = Badge{ Texture("A", 16, renderer_, 0, 0, false, ToAbgr(UiTheme::BadgeLetter), true), Texture(Translate("HINT_SELECT"), 16, renderer_, 0, 0, false, ToAbgr(UiTheme::Text), true), UiTheme::BadgeADark, UiTheme::BadgeA };
     badgeRowRightEdge_ = UiTheme::BadgeClusterRightX - UiTheme::BadgeOuterSize - UiTheme::BadgeLabelGap - badgeA_.label.rect.w - UiTheme::BadgeGroupGap;
     badgeOuter_ = Texture(optionsLocation_ + UiTheme::AssetBadgeOuter, renderer_);
     badgeInner_ = Texture(optionsLocation_ + UiTheme::AssetBadgeInner, renderer_);
-    badgeHold_ = Badge{ Texture("B", 16, renderer_, 0, 0, false, UiTheme::BadgeLetterColor, true), Texture(Translate("HINT_DELETE"), 16, renderer_, 0, 0, false, UiTheme::TextColor, true), UiTheme::BadgeXDark, UiTheme::BadgeX };
+    badgeHold_ = Badge{ Texture("B", 16, renderer_, 0, 0, false, ToAbgr(UiTheme::BadgeLetter), true), Texture(Translate("HINT_DELETE"), 16, renderer_, 0, 0, false, ToAbgr(UiTheme::Text), true), UiTheme::BadgeXDark, UiTheme::BadgeX };
 
     ComputePinnedAndThemeRanges();
 }
@@ -108,11 +102,11 @@ int ThemeManagerApp::DrawBadge(Badge & badge, int rightEdgeX)
     int x = rightEdgeX - groupW;
     int y = UiTheme::BadgeBandY;
     badgeOuter_.rect = { x, y, UiTheme::BadgeOuterSize, UiTheme::BadgeOuterSize };
-    SDL_SetTextureColorMod(badgeOuter_.texture.get(), badge.rim.r, badge.rim.g, badge.rim.b);
+    SetColorMod(badgeOuter_.texture.get(), badge.rim);
     badgeOuter_.Draw(renderer_);
     int innerOffset = (UiTheme::BadgeOuterSize - UiTheme::BadgeInnerSize) / 2;
     badgeInner_.rect = { x+innerOffset, y+innerOffset, UiTheme::BadgeInnerSize, UiTheme::BadgeInnerSize };
-    SDL_SetTextureColorMod(badgeInner_.texture.get(), badge.fill.r, badge.fill.g, badge.fill.b);
+    SetColorMod(badgeInner_.texture.get(), badge.fill);
     badgeInner_.Draw(renderer_);
     // glyph bearing makes the pure-math center look 1px down/left - nudged
     badge.letter.rect.x = x + (UiTheme::BadgeOuterSize - badge.letter.rect.w)/2 + 1;
@@ -129,8 +123,8 @@ bool ThemeManagerApp::ConfirmDelete()
 {
     const int DialogCenterX = 640, DialogTitleY = 320, DialogHintY = 360; // screen center (1280x720)
     const std::string & confirmKey = commands_[currentCommandId_].deleteConfirmKey;
-    Texture confirmTitle(Translate(confirmKey.empty() ? "DELETE_CONFIRM_GENERIC" : confirmKey), 24, renderer_, DialogCenterX, DialogTitleY, true, UiTheme::TextColor, true);
-    Texture confirmHint(Translate("DELETE_CONFIRM_HINT"), 16, renderer_, DialogCenterX, DialogHintY, true, UiTheme::TextColor, true);
+    Texture confirmTitle(Translate(confirmKey.empty() ? "DELETE_CONFIRM_GENERIC" : confirmKey), 24, renderer_, DialogCenterX, DialogTitleY, true, ToAbgr(UiTheme::Text), true);
+    Texture confirmHint(Translate("DELETE_CONFIRM_HINT"), 16, renderer_, DialogCenterX, DialogHintY, true, ToAbgr(UiTheme::Text), true);
     controller_->GetButtonStatus(B); // consume the still-held B from the triggering long-press
     bool confirmed = false;
     for(;;)
@@ -144,11 +138,11 @@ bool ThemeManagerApp::ConfirmDelete()
             break;
         }
         sdlContext_->StartFrame();
-        DrawFillRect(renderer_, UiTheme::FrameRect, UiTheme::BgR, UiTheme::BgG, UiTheme::BgB);
-        DrawStrokeRect(renderer_, UiTheme::FrameRect, UiTheme::BorderR, UiTheme::BorderG, UiTheme::BorderB, UiTheme::BorderWidth, UiTheme::BorderRadius);
+        DrawFillRect(renderer_, UiTheme::FrameRect, UiTheme::Bg);
+        DrawStrokeRect(renderer_, UiTheme::FrameRect, UiTheme::Border, UiTheme::BorderWidth, UiTheme::BorderRadius);
         confirmTitle.Draw(renderer_);
         confirmHint.Draw(renderer_);
-        SDL_SetRenderDrawColor(renderer_, bgR_, bgG_, bgB_, 0xFF); // flat helpers leave the draw color dirty
+        SetDrawColor(renderer_, bg_); // flat helpers leave the draw color dirty
         sdlContext_->EndFrame();
     }
     if(!confirmed)
@@ -159,12 +153,12 @@ bool ThemeManagerApp::ConfirmDelete()
 
 void ThemeManagerApp::DrawChromeCommon()
 {
-    DrawStrokeRect(renderer_, UiTheme::OuterRect, UiTheme::BorderR, UiTheme::BorderG, UiTheme::BorderB, UiTheme::BorderWidth, UiTheme::BorderRadius);
+    DrawStrokeRect(renderer_, UiTheme::OuterRect, UiTheme::Border, UiTheme::BorderWidth, UiTheme::BorderRadius);
     gearIcon_.Draw(renderer_);
     appTitleText_.Draw(renderer_);
     appVersionText_.Draw(renderer_);
-    DrawHLine(renderer_, UiTheme::HeaderDividerX, UiTheme::HeaderDividerX + UiTheme::HeaderDividerW, UiTheme::HeaderDividerY, UiTheme::BorderR, UiTheme::BorderG, UiTheme::BorderB, UiTheme::BorderWidth);
-    DrawHLine(renderer_, UiTheme::OuterRect.x, UiTheme::OuterRect.x + UiTheme::OuterRect.w, UiTheme::FooterDividerY, UiTheme::BorderR, UiTheme::BorderG, UiTheme::BorderB, UiTheme::BorderWidth);
+    DrawHLine(renderer_, UiTheme::HeaderDividerX, UiTheme::HeaderDividerX + UiTheme::HeaderDividerW, UiTheme::HeaderDividerY, UiTheme::Border, UiTheme::BorderWidth);
+    DrawHLine(renderer_, UiTheme::OuterRect.x, UiTheme::OuterRect.x + UiTheme::OuterRect.w, UiTheme::FooterDividerY, UiTheme::Border, UiTheme::BorderWidth);
     DrawBadge(badgeA_, UiTheme::BadgeClusterRightX);
     creditText_.Draw(renderer_);
 }
@@ -172,13 +166,13 @@ void ThemeManagerApp::DrawChromeCommon()
 void ThemeManagerApp::DrawSectionTitle()
 {
     int accentBarY = titleText_.rect.y + (titleText_.rect.h - UiTheme::SectionAccentBarH) / 2;
-    DrawFillRect(renderer_, { UiTheme::SectionTitleX - UiTheme::SectionAccentBarW - 14, accentBarY, UiTheme::SectionAccentBarW, UiTheme::SectionAccentBarH }, UiTheme::AccentR, UiTheme::AccentG, UiTheme::AccentB);
+    DrawFillRect(renderer_, { UiTheme::SectionTitleX - UiTheme::SectionAccentBarW - 14, accentBarY, UiTheme::SectionAccentBarW, UiTheme::SectionAccentBarH }, UiTheme::Accent);
     titleText_.Draw(renderer_);
 }
 
 Texture ThemeManagerApp::MakeScrollArrow(int x, int y) const
 {
-    Texture arrow("^", 16, renderer_, x, y, false, UiTheme::TextColor, true);
+    Texture arrow("^", 16, renderer_, x, y, false, ToAbgr(UiTheme::Text), true);
     arrow.rect.x -= arrow.rect.w / 2;
     return arrow;
 }
@@ -233,7 +227,7 @@ bool ThemeManagerApp::ActivateCommand(Command & cmd)
 {
     if(cmd.runInternal)
     {
-        cmd.RunCommand(*sdlContext_, controller_.get(), { gearIcon_, appTitleText_, appVersionText_, creditText_ }, bgR_, bgG_, bgB_);
+        cmd.RunCommand(*sdlContext_, controller_.get(), { gearIcon_, appTitleText_, appVersionText_, creditText_ }, bg_);
         if(cmd.isToggle)
             cmd.UpdateState();
         return false;
@@ -302,7 +296,7 @@ int ThemeManagerApp::RunGridLayout()
     // capped so a strip with few slots doesn't stretch its chips wide
     const int MaxChipW = 200;
     const int chipW = hasStrip ? std::min(MaxChipW, (GridRight - GridLeft - (stripSlotCount-1)*chipGap) / stripSlotCount) : 0;
-    titleText_ = Texture(Translate(options_.titleKey), UiTheme::SectionTitleFontSize - 6, renderer_, UiTheme::SectionTitleX, 0, false, UiTheme::TextColor, true);
+    titleText_ = Texture(Translate(options_.titleKey), UiTheme::SectionTitleFontSize - 6, renderer_, UiTheme::SectionTitleX, 0, false, ToAbgr(UiTheme::Text), true);
     titleText_.rect.y = hasStrip ? (StripTop + StripH + 22) : (UiTheme::HeaderDividerY + 22);
     const int GridTop = titleText_.rect.y + titleText_.rect.h + 20;
     const int GridBottom = UiTheme::FooterDividerY - 14;
@@ -327,8 +321,8 @@ int ThemeManagerApp::RunGridLayout()
     gridScrollDown.rect.y = GridBottom - 24 - gridScrollDown.rect.h;
 
     // B runs Back/Exit directly - it's a footer badge, not a chip
-    Badge badgeB{ Texture("B", 16, renderer_, 0, 0, false, UiTheme::BadgeLetterColor, true),
-                  Texture(pinnedStartIndex_ < (int)commands_.size() ? Translate(commands_[pinnedStartIndex_].name) : "", 16, renderer_, 0, 0, false, UiTheme::TextColor, true),
+    Badge badgeB{ Texture("B", 16, renderer_, 0, 0, false, ToAbgr(UiTheme::BadgeLetter), true),
+                  Texture(pinnedStartIndex_ < (int)commands_.size() ? Translate(commands_[pinnedStartIndex_].name) : "", 16, renderer_, 0, 0, false, ToAbgr(UiTheme::Text), true),
                   UiTheme::BadgeBDark, UiTheme::BadgeB };
 
     std::vector<Texture> chipIcons(commands_.size());
@@ -353,17 +347,17 @@ int ThemeManagerApp::RunGridLayout()
                 Texture icon(c.previewImage, renderer_, 0, 0);
                 SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "0");
                 FitCentered(icon, 0, 0, chipIconSize, chipIconSize, 0);
-                SDL_SetTextureColorMod(icon.texture.get(), UiTheme::AccentR, UiTheme::AccentG, UiTheme::AccentB);
+                SetColorMod(icon.texture.get(), UiTheme::Accent);
                 chipIcons[i] = icon;
                 labelAvail = chipW - chipIconSize - 32;
             }
             label = TruncateToWidth(label, 14, labelAvail);
-            chipLabels[i] = Texture(label, 14, renderer_, 0, 0, false, UiTheme::TextColor, true);
+            chipLabels[i] = Texture(label, 14, renderer_, 0, 0, false, ToAbgr(UiTheme::Text), true);
         }
         else
         {
             label = TruncateToWidth(label, 15, TileW - 28);
-            tileLabels[i] = Texture(label, 15, renderer_, 0, 0, false, UiTheme::TextColor, true);
+            tileLabels[i] = Texture(label, 15, renderer_, 0, 0, false, ToAbgr(UiTheme::Text), true);
         }
     }
     std::vector<bool> tileImageLoaded(commands_.size(), false);
@@ -547,11 +541,11 @@ int ThemeManagerApp::RunGridLayout()
                 SDL_Rect chipRect{ x, StripTop, chipW, StripH };
                 if(selected)
                 {
-                    DrawRoundedFillRect(renderer_, chipRect, UiTheme::SelectedRowBgR, UiTheme::SelectedRowBgG, UiTheme::SelectedRowBgB, UiTheme::BoxRadius);
-                    DrawStrokeRect(renderer_, chipRect, UiTheme::AccentR, UiTheme::AccentG, UiTheme::AccentB, 2, UiTheme::BoxRadius);
+                    DrawRoundedFillRect(renderer_, chipRect, UiTheme::SelectedRowBg, UiTheme::BoxRadius);
+                    DrawStrokeRect(renderer_, chipRect, UiTheme::Accent, 2, UiTheme::BoxRadius);
                 }
                 else
-                    DrawStrokeRect(renderer_, chipRect, UiTheme::BorderR, UiTheme::BorderG, UiTheme::BorderB, UiTheme::BorderWidth, UiTheme::BoxRadius);
+                    DrawStrokeRect(renderer_, chipRect, UiTheme::Border, UiTheme::BorderWidth, UiTheme::BoxRadius);
 
                 // icon+label centered as one group, not each alone
                 Texture & icon = chipIcons[idx];
@@ -591,7 +585,7 @@ int ThemeManagerApp::RunGridLayout()
                     int x = GridLeft + col*(TileW+GridGap);
                     bool selected = idx == currentCommandId_;
                     SDL_Rect tileRect{ x, y, TileW, TileH };
-                    DrawRoundedFillRect(renderer_, tileRect, UiTheme::SelectedRowBgR, UiTheme::SelectedRowBgG, UiTheme::SelectedRowBgB, UiTheme::BoxRadius);
+                    DrawRoundedFillRect(renderer_, tileRect, UiTheme::SelectedRowBg, UiTheme::BoxRadius);
                     EnsureTileImage(idx);
                     std::vector<Texture> & runFrames = tileRunFrames[idx];
                     Texture & tileArt = runFrames.size() > 1
@@ -608,21 +602,21 @@ int ThemeManagerApp::RunGridLayout()
                             FitCover(tileArt, x, y, TileW, TileH, 0);
                         tileArt.Draw(renderer_);
                         SDL_RenderSetClipRect(renderer_, nullptr);
-                        DrawRoundedCornerMask(renderer_, tileRect, UiTheme::SelectedRowBgR, UiTheme::SelectedRowBgG, UiTheme::SelectedRowBgB, UiTheme::BoxRadius);
+                        DrawRoundedCornerMask(renderer_, tileRect, UiTheme::SelectedRowBg, UiTheme::BoxRadius);
                     }
-                    Uint8 strokeR = UiTheme::BorderR, strokeG = UiTheme::BorderG, strokeB = UiTheme::BorderB;
+                    Color stroke = UiTheme::Border;
                     int strokeW = UiTheme::BorderWidth;
                     if(selected)
                     {
-                        strokeR = UiTheme::AccentR; strokeG = UiTheme::AccentG; strokeB = UiTheme::AccentB;
+                        stroke = UiTheme::Accent;
                         strokeW = 3;
                     }
                     else if(isActiveTheme[idx])
                     {
-                        strokeR = ActiveThemeBorderR; strokeG = ActiveThemeBorderG; strokeB = ActiveThemeBorderB;
+                        stroke = ActiveThemeBorder;
                         strokeW = 3;
                     }
-                    DrawStrokeRect(renderer_, tileRect, strokeR, strokeG, strokeB, strokeW, UiTheme::BoxRadius);
+                    DrawStrokeRect(renderer_, tileRect, stroke, strokeW, UiTheme::BoxRadius);
                     if(!tileHideLabel[idx])
                     {
                         tileLabels[idx].rect.x = x + (TileW - tileLabels[idx].rect.w) / 2;
@@ -638,7 +632,7 @@ int ThemeManagerApp::RunGridLayout()
                 gridScrollDown.Draw(renderer_, SDL_FLIP_VERTICAL);
         }
 
-        SDL_SetRenderDrawColor(renderer_, bgR_, bgG_, bgB_, 0xFF);
+        SetDrawColor(renderer_, bg_);
         sdlContext_->EndFrame();
     }
 
@@ -653,8 +647,8 @@ int ThemeManagerApp::RunListLayout()
     SDL_Rect selectedRowRect{ UiTheme::ListX, UiTheme::RowFirstY - 2, UiTheme::ListContentRightX - UiTheme::ListX, 0 };
 
     // B runs Back/Exit directly - same footer badge and behavior as the grid layout
-    Badge badgeB{ Texture("B", 16, renderer_, 0, 0, false, UiTheme::BadgeLetterColor, true),
-                  Texture(pinnedStartIndex_ < (int)commands_.size() ? Translate(commands_[pinnedStartIndex_].name) : "", 16, renderer_, 0, 0, false, UiTheme::TextColor, true),
+    Badge badgeB{ Texture("B", 16, renderer_, 0, 0, false, ToAbgr(UiTheme::BadgeLetter), true),
+                  Texture(pinnedStartIndex_ < (int)commands_.size() ? Translate(commands_[pinnedStartIndex_].name) : "", 16, renderer_, 0, 0, false, ToAbgr(UiTheme::Text), true),
                   UiTheme::BadgeBDark, UiTheme::BadgeB };
 
     const int RowGlyphSize = 16;
@@ -664,12 +658,12 @@ int ThemeManagerApp::RunListLayout()
     {
         int textX = UiTheme::RowTextX + (c.child ? ChildIndent : 0);
         std::string label = TruncateToWidth(Translate(c.name), RowGlyphSize, UiTheme::RowControlRightX - RowTextGapPx - textX);
-        c.texture = Texture(label, RowGlyphSize, renderer_, textX, 0, false, UiTheme::TextColor, true);
+        c.texture = Texture(label, RowGlyphSize, renderer_, textX, 0, false, ToAbgr(UiTheme::Text), true);
     }
 
     const int modernRowPitch = std::max(UiTheme::RowPitch, GetTTFLineHeight(RowGlyphSize));
     // Back/Exit no longer takes a row of its own here - B runs it directly via the footer badge above
-    const int DisplayItemCount = std::max(1, (UiTheme::FooterDividerY - UiTheme::PinnedBottomMargin - UiTheme::RowFirstY) / modernRowPitch);
+    const int DisplayItemCount = std::max(1, (UiTheme::FooterDividerY - UiTheme::ListBottomMargin - UiTheme::RowFirstY) / modernRowPitch);
 
     int topListItemNumber = pinnedStartIndex_ + 1; // forces the first SetCurrentCommand to lay out row positions
     std::shared_ptr<Texture> PreviewImage;
@@ -743,7 +737,7 @@ int ThemeManagerApp::RunListLayout()
         }
         // skip for separators and the last row - nothing to separate there
         if(!selected && !rowCommand.command.empty() && !isLastOverall)
-            DrawHLine(renderer_, UiTheme::ListX, UiTheme::ListContentRightX, rowCommand.texture.rect.y + rowCommand.texture.rect.h + 3, UiTheme::BorderR, UiTheme::BorderG, UiTheme::BorderB);
+            DrawHLine(renderer_, UiTheme::ListX, UiTheme::ListContentRightX, rowCommand.texture.rect.y + rowCommand.texture.rect.h + 3, UiTheme::Border);
     };
 
     auto DrawChrome = [&]()
@@ -758,13 +752,13 @@ int ThemeManagerApp::RunListLayout()
                 DrawBadge(badgeHold_, rightEdge);
         }
 
-        DrawRoundedFillRect(renderer_, selectedRowRect, UiTheme::SelectedRowBgR, UiTheme::SelectedRowBgG, UiTheme::SelectedRowBgB, UiTheme::BoxRadius);
-        DrawStrokeRect(renderer_, selectedRowRect, UiTheme::AccentR, UiTheme::AccentG, UiTheme::AccentB, 2, UiTheme::BoxRadius);
+        DrawRoundedFillRect(renderer_, selectedRowRect, UiTheme::SelectedRowBg, UiTheme::BoxRadius);
+        DrawStrokeRect(renderer_, selectedRowRect, UiTheme::Accent, 2, UiTheme::BoxRadius);
 
         if(PreviewImage.get())
         {
             SDL_Rect previewBox{ UiTheme::DetailX, UiTheme::PreviewBoxY, UiTheme::DetailW, UiTheme::PreviewBoxH };
-            DrawStrokeRect(renderer_, previewBox, UiTheme::BorderR, UiTheme::BorderG, UiTheme::BorderB, UiTheme::BorderWidth, UiTheme::BoxRadius);
+            DrawStrokeRect(renderer_, previewBox, UiTheme::Border, UiTheme::BorderWidth, UiTheme::BoxRadius);
             PreviewImage->Draw(renderer_);
         }
     };
@@ -829,7 +823,7 @@ int ThemeManagerApp::RunListLayout()
         if((topListItemNumber + DisplayItemCount) < pinnedStartIndex_)
             scrollDown.Draw(renderer_, SDL_FLIP_VERTICAL);
 
-        SDL_SetRenderDrawColor(renderer_, bgR_, bgG_, bgB_, 0xFF);
+        SetDrawColor(renderer_, bg_);
 
         sdlContext_->EndFrame();
     }
