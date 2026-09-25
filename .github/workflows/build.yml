@@ -1,0 +1,65 @@
+name: Build
+
+on:
+  push:
+    branches: ['**']
+    tags: ['v*']
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: true
+
+      # The toolchain image needs the console's own SDL2 headers + libs in
+      # toolchain/vendor. They're proprietary, so they live in a private repo
+      # cloned with a read-only fine-grained PAT (secrets VENDOR_REPO and
+      # VENDOR_REPO_PAT, same as OptionsMenu).
+      - name: Restore vendor/ from private repo
+        run: |
+          git clone --depth 1 "https://x-access-token:${{ secrets.VENDOR_REPO_PAT }}@github.com/${{ secrets.VENDOR_REPO }}.git" toolchain/vendor
+
+      - name: Build cross-compile toolchain image
+        run: docker build -f toolchain/Dockerfile.jessie-armhf -t classicmini-cross-toolchain:jessie-armhf toolchain
+
+      # Tag builds take their version from the tag (v3.0.0-alpha -> 3.0.0-alpha)
+      # instead of the VERSION file. safe.directory: the container runs as root
+      # over a checkout owned by the runner user, and git refuses it otherwise -
+      # which leaves the Makefile's git-derived hmod name empty.
+      - name: Compile and package
+        run: |
+          MOD_VER_ARG=""
+          if [ "${{ github.ref_type }}" = "tag" ]; then
+            MOD_VER_ARG="MOD_VER=${GITHUB_REF_NAME#v}"
+          fi
+          docker run --rm -v "${{ github.workspace }}:/src" classicmini-cross-toolchain:jessie-armhf \
+            sh -c "git config --global --add safe.directory '*' && make -f Makefile.docker CROSS_PREFIX=arm-linux-gnueabihf- $MOD_VER_ARG"
+
+      - name: Upload .hmod build artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: theme-selector-hmod
+          path: out/*.hmod
+
+  release:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download build artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: theme-selector-hmod
+          path: out
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v3
+        with:
+          name: Theme Selector ${{ github.ref_name }}
+          files: out/*.hmod
+          generate_release_notes: true
+          # -alpha/-beta/-rc tags must not take over "Latest"
+          prerelease: ${{ contains(github.ref_name, '-') }}
