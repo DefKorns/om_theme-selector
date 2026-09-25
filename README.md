@@ -1,6 +1,6 @@
 # Options Menu - Theme Selector
 
-**Requires [my Options Menu fork](https://github.com/DefKorns/OptionsMenu/releases/latest) as a base — not compatible with any other UI.**
+**Requires [my Options Menu fork](https://github.com/DefKorns/OptionsMenu/releases) as a base — not compatible with any other UI.**
 
 `Click the image below to view it on YouTube.`
 [![Theme Selector - Demo](https://i.imgur.com/7JgP6JI.png)](https://youtu.be/yRUbGssu8ko "Theme Selector - Demo")
@@ -45,7 +45,7 @@ Yes — it supports all Nintendo Classic consoles, all regions.
 ## Requirements
 
 - [Hakchi CE](https://github.com/TeamShinkansen/hakchi2/releases/latest)
-- [My Options Menu fork](https://github.com/DefKorns/OptionsMenu/releases/latest) — the base UI this mod plugs into
+- [My Options Menu fork](https://github.com/DefKorns/OptionsMenu/releases) — the base UI this mod plugs into
 - [Hakchi Wi-Fi mod (WPA Supplicant)](https://hakchi.net/hakchi/hmods/wpa-supplicant.hmod) — only needed to download themes from the internet
 
 ## How do I use it

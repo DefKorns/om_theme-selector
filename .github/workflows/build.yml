@@ -12,7 +12,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          submodules: true
+          submodules: recursive # pngpack pulls in lodepng
 
       # The toolchain image needs the console's own SDL2 headers + libs in
       # toolchain/vendor. They're proprietary, so they live in a private repo

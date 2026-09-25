@@ -57,9 +57,10 @@ OUT := $(DEV_DIR)/out
 # Avoid "build": GNU Make's .sh rule conflicts with build.sh.
 all: compile hmod
 
-compile: mod/etc/options_menu/lib/theme_manager mod/bin/theme_downloader
+compile: mod/etc/options_menu/lib/theme_manager mod/bin/theme_downloader mod/bin/sprite_crop
 
 mod/etc/options_menu/lib/theme_manager: $(OBJECTS)
+	mkdir -p $(@D)
 	$(CROSS_PREFIX)$(CXX) $(OBJECTS) $(LDLIBS) $(LDFLAGS) -Wl,-rpath,/etc/options_menu/lib -o mod/etc/options_menu/lib/theme_manager
 	$(CROSS_PREFIX)$(STRIP) mod/etc/options_menu/lib/theme_manager
 
@@ -78,9 +79,17 @@ src/ca_bundle.o: src/cacert.pem
 	cd src && $(CROSS_PREFIX)ld -r -b binary -o ca_bundle.o cacert.pem
 
 mod/bin/theme_downloader: src/theme_downloader.o src/ca_bundle.o
+	mkdir -p $(@D)
 	$(CROSS_PREFIX)$(CC) src/theme_downloader.o src/ca_bundle.o $(CURL_LDLIBS) -o mod/bin/theme_downloader
 	$(CROSS_PREFIX)$(STRIP) mod/bin/theme_downloader
 	upx --best mod/bin/theme_downloader
+
+# DIY sprite previews (om_vars). Built by pngpack's own Makefile; its default
+# LDFLAGS (-dead_strip) is macOS-only.
+mod/bin/sprite_crop: pngpack/pngpacker/sprite_crop.cpp pngpack/pngpacker/pixeltools.cpp
+	mkdir -p $(@D)
+	$(MAKE) -C pngpack build/sprite_crop CROSS=$(CROSS_PREFIX) LDFLAGS=-Wl,--gc-sections
+	cp pngpack/build/sprite_crop $@
 
 # Package mod/ without recompiling; run `all` first for fresh binaries.
 hmod:
