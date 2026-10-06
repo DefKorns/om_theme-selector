@@ -28,6 +28,7 @@ script_init
 echo "$state_path" > /tmp/om_state_path
 
 hasItemsToCleanUp "SystemCleanUp"
+folderThemesRow
 
 if [ -f "$b_file" ] && [ -f "$p_file" ]; then
   enable_cmds "Uninstaller"

@@ -78,7 +78,8 @@ omOverlayThemeScript="$omModScripts/om_overlaythmcript"
 
 om_themerandomizer="$state_path/om_themerandomizer"
 om_themeperfolder="$state_path/om_themeperfolder"
-om_themeperfolderchild="$state_path/om_themeperfolderchild"
+om_folderthemes="$state_path/folder_themes"
+folderThemesTmp="/tmp/om_folderthemes"
 om_audiorandomizer="$state_path/om_audiorandomizer"
 om_advmusichack="$state_path/om_advmusichack"
 om_firstrun="$omMod/om_firstrun"
@@ -100,6 +101,8 @@ enableAudioSetting="$omModSettingsCmds/c0001_audiorandomizer"
 disableAudioSetting="$omModSettingsCmds/_audiorandomizer"
 enableAdvancedMusicHack="$omModSettingsCmds/c0001_audiorandomizerall"
 disableAdvancedMusicHack="$omModSettingsCmds/_audiorandomizerall"
+enableFolderThemes="$omModSettingsCmds/c0000_themeperfolder_assign"
+disableFolderThemes="$omModSettingsCmds/_themeperfolder_assign"
 enableThemeSetting="$omModSettingsCmds/c0000_themerandomizer"
 disableThemeSetting="$omModSettingsCmds/_themerandomizer"
 enableSystemCleanUp="$omModSettingsCmds/c0001_systemcleanup"
@@ -681,10 +684,12 @@ modCleanUp() {
 }
 
 themeSettings() {
-  if [ "$1" = "child" ]; then
-    toggleOptions "$om_themeperfolderchild" "$om_themeperfolder"
-  elif [ "$1" = "tpf" ]; then
-    toggleOptions "$om_themeperfolder" "$om_themeperfolderchild" "no-cascade"
+  if [ "$1" = "tpf" ]; then
+    if [ ! -f "$om_themeperfolder" ]; then
+      settingsOptionChecker "on" "$om_themeperfolder"
+    else
+      settingsOptionChecker "off" "$om_themeperfolder"
+    fi
   else
     if [ ! -f "$om_themerandomizer" ]; then
       settingsOptionChecker "on" "$om_themerandomizer"
@@ -739,4 +744,75 @@ hasItemsToCleanUp() {
     disable_cmds "$1"
     [ ! -f "$enableUninstaller" ] && remove "$omModSettingsSpacer"
   fi
+}
+
+folderThemesRow() {
+  if [ -f "$om_themeperfolder" ] && [ -d "$has_folders" ]; then
+    enable_cmds "FolderThemes"
+  else
+    disable_cmds "FolderThemes"
+  fi
+}
+
+# folder key (same snake_case om_themescript derives from the folder Name=) <TAB> folder name <TAB> depth,
+# in tree order: a folder entry living in games/<P>/CLV-S-00<C>/ is folder <C> inside folder <P>
+listFolders() {
+  tab="$(printf '\t')"
+  find "$gStorage" -maxdepth 3 -type f -name 'CLV-S-00*.desktop' -exec awk '
+    /^Name=/ {
+      name = substr($0, 6)
+      if (name == "Back" || name == "Home") next
+      n = split(FILENAME, path, "/")
+      print path[n - 2] "\t" substr(path[n - 1], 9) "\t" name
+    }' {} + | sort -f -t "$tab" -k3,3 | awk -F "$tab" '
+    { kids[$1, ++count[$1]] = $2; names[$2] = $3 }
+    function walk(parent, depth,    i, child, key) {
+      for (i = 1; i <= count[parent]; i++) {
+        child = kids[parent, i]
+        if (child in seen) continue
+        seen[child] = 1
+        key = names[child]
+        gsub(/ /, "_", key)
+        print tolower(key) "\t" names[child] "\t" depth
+        walk(child, depth + 1)
+      }
+    }
+    END { walk("000", 0) }'
+}
+
+themeTitle() {
+  title="$(sed -n 's/^NAME=//p' "$theme_path/$1/info" 2>/dev/null | sed 's/ \[[^]]*\]$//')"
+  echo "${title:-$1}"
+}
+
+themePreview() {
+  preview="$thmPreview/$1.png"
+  [ ! -f "$preview" ] && preview="$theme_path/$1.png"
+  [ ! -f "$preview" ] && preview="$optionsMenu/images/default_preview.png"
+  echo "$preview"
+}
+
+# the theme every folder without one of its own falls back to
+globalTheme() {
+  if [ -f "$om_themerandomizer" ]; then
+    echo "@random"
+  elif [ -f "$b_file" ]; then
+    sed -n 's/^ *local SELECTED_THEME="\(.*\)"$/\1/p' "$b_file" | head -n1 | grep -v '^CHANGEME$'
+  fi
+}
+
+folderThemesMenu() {
+  data_dir="$folderThemesTmp"
+  rm -rf "$data_dir" && mkdir -p "$data_dir"
+  {
+    printf 'home\t%s\t0\n' "$(translate HOME_FOLDER)"
+    listFolders
+  } >"$data_dir/folders.list"
+  find "$theme_path" -mindepth 1 -maxdepth 1 -type d | sed 's#^.*/##' | sort | while IFS= read -r thm; do
+    printf '%s\t%s\t%s\n' "$thm" "$(themeTitle "$thm")" "$(themePreview "$thm")"
+  done >"$data_dir/themes.list"
+  globalTheme >"$data_dir/global"
+  echo "sh $omModScripts/om_settings" >"$data_dir/om_return"
+
+  $optionsMenu/lib/theme_manager --commandPath "$data_dir/" --scriptPath "$data_dir" --title FOLDER_THEMES --folderThemes "$data_dir" --mapping "$om_folderthemes" &
 }

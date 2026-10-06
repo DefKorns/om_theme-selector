@@ -22,7 +22,11 @@ struct AppOptions
     std::string titleKey = "THEME_SELECTOR";
     bool isRootScreen = true; // no --commandPath override - top of the theme-selector's own tree
     bool gridLayout = true;
+    std::string folderThemesDir; // --folderThemes: the folder theme screen, fed by om_folderthemes
+    std::string folderThemesMapping;
 };
+
+std::string ReadSftype(); // cached in OM_SFTYPE for child screens
 
 AppOptions ParseArgs(int argc, char * argv[], const std::string & optionsLocation);
 

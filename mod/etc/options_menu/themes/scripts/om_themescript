@@ -55,16 +55,56 @@ fontBindFix() {
   done
 }
 
+# folder_themes lines: <folder key>=<theme dir>
+assignedFolderTheme() {
+  local LINE
+  [ -n "$1" ] && [ -f "$STATE_PATH/folder_themes" ] || return 1
+  while IFS= read -r LINE; do
+    if [ "${LINE%=*}" = "$1" ] && [ -d "$THEMES_PATH/${LINE##*=}" ]; then
+      echo "${LINE##*=}"
+      return 0
+    fi
+  done <"$STATE_PATH/folder_themes"
+  return 1
+}
+
+# the entry for folder $1 inside its parent folder (not a Back/Home shortcut to it)
+folderEntry() {
+  local DESKTOP
+  for DESKTOP in "$GAME_STORAGE"/*/CLV-S-00"$1"/CLV-S-00"$1".desktop; do
+    [ -f "$DESKTOP" ] || continue
+    grep -q -e '^Name=Back$' -e '^Name=Home$' "$DESKTOP" && continue
+    echo "$DESKTOP"
+    return 0
+  done
+  return 1
+}
+
+# own assignment, else a theme named after the folder, else whatever its parent folder gets
+folderTheme() {
+  local CODE="$1"
+  local DESKTOP
+  local KEY
+  local DEPTH=0
+  if [ "$CODE" == "000" ]; then
+    assignedFolderTheme "home"
+    return
+  fi
+  while [ "$CODE" != "000" ] && [ "$DEPTH" -lt 16 ]; do
+    DEPTH=$((DEPTH + 1))
+    DESKTOP="$(folderEntry "$CODE")" || return 1
+    KEY="$(sed -n 's/^Name=//p' "$DESKTOP" | head -n1 | sed 's/ /_/g' | awk '{print tolower($0)}')"
+    assignedFolderTheme "$KEY" && return 0
+    [ -n "$KEY" ] && [ -d "$THEMES_PATH/$KEY" ] && echo "$KEY" && return 0
+    CODE="$(basename "$(dirname "$(dirname "$DESKTOP")")")"
+  done
+  return 1
+}
+
 themeSelector() {
   local FOLDER_ID
   local GAME_STORAGE
-  local GET_THEME_NAME
-  local IS_CHILD
-  local PARENT_ID
-  local PARENT_THEME_TITLE
   local PREVIOUS_THEME
-  local THEME_MATCH
-  local PARENT_DESKTOP_FILE
   local UI0="ui/$sftype-$sfregion"
   local UI1=""
   local SYSTEM_TYPE="$sftype"
@@ -114,22 +154,7 @@ themeSelector() {
   BGM_HOME=""
   GAME_STORAGE="$(findGameStorage)"
 
-  find "$GAME_STORAGE" -maxdepth 3 -type f -name "$ACTIVE_FOLDER.desktop" | sort -u | while IFS= read -r CONFIG_FILE; do
-    cd "$GAME_STORAGE" || exit
-    for i in $(find . -maxdepth 3 -type d -name "$ACTIVE_FOLDER" | sed "s|^\./||"); do
-
-      if [ "$(grep -L -e "Name=Back" -e "Name=Home" "$i/$(basename "$i").desktop")" ]; then
-        PARENT_ID="$(dirname "$i")"
-        local FULL_PARENT_ID="CLV-S-00${PARENT_ID}"
-        break
-      fi
-    done
-    PARENT_DESKTOP_FILE="$(find "." -maxdepth 3 -type f -name "$FULL_PARENT_ID.desktop" -exec grep -L -e "Name=Back" -e "Name=Home" {} \; | tail -n1)"
-    [ -n "$PARENT_DESKTOP_FILE" ] && PARENT_THEME_TITLE="$(grep -F 'Name=' "$PARENT_DESKTOP_FILE" | sed -r 's/Name=//g;s/ /_/g' | awk '{print tolower($0)}')"
-    IS_CHILD="$(printf '%s\n' "$THEME_DIR_LIST" | grep -w "$PARENT_THEME_TITLE")"
-    GET_THEME_NAME="$(grep -F 'Name=' "$CONFIG_FILE" | sed -r '/[Bb]ack/d;s/Name=//g;s/ /_/g' | awk '{print tolower($0)}')"
-
-    THEME_MATCH="$(printf '%s\n' "$THEME_DIR_LIST" | grep -w "$GET_THEME_NAME")"
+  find "$GAME_STORAGE" -maxdepth 3 -type f -name "$ACTIVE_FOLDER.desktop" | sort -u | while IFS= read -r _; do
     if [ -f "$STATE_PATH/om_themerandomizer" ]; then
       SELECTED_THEME="$PREVIOUS_THEME"
       local n="0"
@@ -141,10 +166,9 @@ themeSelector() {
 
     [ "$FOLDER_ID" == "000" ] && [ -d "$THEMES_PATH/default" ] && SELECTED_THEME="default"
     if [ -f "$STATE_PATH/om_themeperfolder" ]; then
-      [ -n "$THEME_MATCH" ] && SELECTED_THEME="$GET_THEME_NAME"
-      if [ ! -f "$STATE_PATH/om_themeperfolderchild" ]; then
-        [ -n "$IS_CHILD" ] && SELECTED_THEME="$PARENT_THEME_TITLE"
-      fi
+      local FOLDER_THEME
+      FOLDER_THEME="$(folderTheme "$FOLDER_ID")"
+      [ -n "$FOLDER_THEME" ] && SELECTED_THEME="$FOLDER_THEME"
     fi
 
     FULL_THEME_PATH="$THEMES_PATH/$SELECTED_THEME"

@@ -21,5 +21,6 @@ source $mountpoint/etc/options_menu/themes/scripts/om_vars
 script_init
 
 themeSettings "$1"
+folderThemesRow
 
 $optionsMenu/lib/theme_manager --commandPath $omModSettingsCmds/ --scriptPath $omModSettingsScripts --title THEME_SETTINGS --layout list &

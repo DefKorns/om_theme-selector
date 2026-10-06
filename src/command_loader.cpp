@@ -33,28 +33,6 @@ using DirHandle = std::unique_ptr<DIR, DirCloser>;
 struct PipeCloser { void operator()(FILE * pipe) const { if(pipe) pclose(pipe); } };
 using PipeHandle = std::unique_ptr<FILE, PipeCloser>;
 
-// child screens inherit this via fork+exec, same as OM_BACK_STACK - so only the first screen
-// that needs sftype pays for the shell fork
-std::string ReadSftype()
-{
-    if(const char * env = std::getenv("OM_SFTYPE"))
-        return env;
-
-    std::string result;
-    PipeHandle pipe(popen("source /etc/preinit; script_init; echo $sftype", "r"));
-    if(pipe)
-    {
-        char buffer[32] = {0};
-        if(fgets(buffer, sizeof(buffer), pipe.get()))
-            result = buffer;
-    }
-    while(!result.empty() && (result.back() == '\n' || result.back() == '\r'))
-        result.pop_back();
-
-    setenv("OM_SFTYPE", result.c_str(), 1);
-    return result;
-}
-
 // my own convention, not OptionsMenu's Command format
 struct ConsoleOnlyFlags { bool nesOnly = false; bool snesOnly = false; };
 
@@ -77,6 +55,28 @@ ConsoleOnlyFlags ReadConsoleOnlyFlags(const std::string & path)
 
 }
 
+// child screens inherit this via fork+exec, same as OM_BACK_STACK - so only the first screen
+// that needs sftype pays for the shell fork
+std::string ReadSftype()
+{
+    if(const char * env = std::getenv("OM_SFTYPE"))
+        return env;
+
+    std::string result;
+    PipeHandle pipe(popen("source /etc/preinit; script_init; echo $sftype", "r"));
+    if(pipe)
+    {
+        char buffer[32] = {0};
+        if(fgets(buffer, sizeof(buffer), pipe.get()))
+            result = buffer;
+    }
+    while(!result.empty() && (result.back() == '\n' || result.back() == '\r'))
+        result.pop_back();
+
+    setenv("OM_SFTYPE", result.c_str(), 1);
+    return result;
+}
+
 AppOptions ParseArgs(int argc, char * argv[], const std::string & optionsLocation)
 {
     AppOptions options;
@@ -96,6 +96,10 @@ AppOptions ParseArgs(int argc, char * argv[], const std::string & optionsLocatio
             options.titleKey = argv[++i];
         else if(std::strcmp(argv[i], "--layout") == 0 && i+1 < argc)
             options.gridLayout = (std::string(argv[++i]) == "grid");
+        else if(std::strcmp(argv[i], "--folderThemes") == 0 && i+1 < argc)
+            options.folderThemesDir = argv[++i];
+        else if(std::strcmp(argv[i], "--mapping") == 0 && i+1 < argc)
+            options.folderThemesMapping = argv[++i];
     }
     if(!options.commandLocation.empty() && options.commandLocation.back() != '/')
         options.commandLocation += '/';

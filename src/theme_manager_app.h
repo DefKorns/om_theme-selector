@@ -25,7 +25,12 @@ class ThemeManagerApp
 public:
     ThemeManagerApp(std::string optionsLocation, AppOptions options, std::vector<Command> commands, std::vector<bool> isThemeItem);
 
-    int Run() { return options_.gridLayout ? RunGridLayout() : RunListLayout(); }
+    int Run()
+    {
+        if(!options_.folderThemesDir.empty())
+            return RunFolderThemesLayout();
+        return options_.gridLayout ? RunGridLayout() : RunListLayout();
+    }
 
 private:
     struct Badge { Texture letter; Texture label; Color rim; Color fill; };
@@ -76,6 +81,7 @@ private:
 
     int RunGridLayout();
     int RunListLayout();
+    int RunFolderThemesLayout(); // folder_themes_layout.cpp
 };
 
 #endif

@@ -17,7 +17,7 @@ The UI is my own standalone C++/SDL app (`theme_manager`), not a set of Lua scri
 - Build your own DIY theme from pieces of the themes you already have (background, sprites, colors, packed art, fonts...)
 - Theme randomizer — a different theme each time you go Home (off by default)
 - Audio randomizer on the Home folder, optionally extended to every folder (off by default)
-- Theme per folder: give a folder its own theme by naming a theme after it; a folder with its own theme keeps its own icon instead of inheriting the parent theme's
+- Theme per folder: give any folder (and Home) its own theme from one screen; subfolders without one inherit their parent folder's
 - Custom fonts per theme
 - Custom color palette for the Theme Manager UI itself (`theme.cfg`)
 - System clean-up to remove files your console type doesn't need
@@ -25,13 +25,15 @@ The UI is my own standalone C++/SDL app (`theme_manager`), not a set of Lua scri
 
 ## Set a theme per folder, what is that?
 
-If you have your games organized into system folders, you can give each one its own theme instead of one theme for the whole console. Turn on **Theme Per Folder** in Settings, then name a theme folder after the game folder it should apply to (lower snake_case). Eg: game folder `Nintendo - Nintendo Entertainment System` → theme folder `nintendo_-_nintendo_entertainment_system`.
+If you have your games organized into system folders, you can give each one its own theme instead of one theme for the whole console. Turn on **Theme Per Folder** in Settings, then open **Assign Theme To Folder**. Your folders are listed as a tree: press Left/Right on a folder to cycle through the themes, or A to pick one from a list. The preview shows where each folder's theme comes from. The same theme can be assigned to as many folders as you like, no copies or renaming needed. **Automatic**, the first entry when cycling and in the list, clears a folder's assignment.
 
-By default, a subfolder inherits its parent's theme. Turn on **Allow Different Theme To Subfolder** if you want a subfolder to use its own matching theme instead — and if it does, that subfolder keeps its own real icon rather than being overwritten by the parent theme's.
+Naming a theme folder after the game folder (lower snake_case) still works for folders without an assignment. Eg: game folder `Nintendo - Nintendo Entertainment System` → theme folder `nintendo_-_nintendo_entertainment_system`.
+
+A folder on Automatic uses its parent folder's theme, all the way up; a top-level folder on Automatic uses the theme you applied for the whole console. A folder's own theme always wins over its parent's.
 
 ## What if I want a specific theme on my main menu?
 
-Name a theme `default` and it becomes your Home menu theme.
+With **Theme Per Folder** on, open **Assign Theme To Folder** and set a theme on **Home**, the first entry in the list. Naming a theme `default` also still works.
 
 ## What do you mean by "build your own DIY theme"?
 
