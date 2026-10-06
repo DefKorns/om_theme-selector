@@ -20,4 +20,4 @@
 source $mountpoint/etc/options_menu/themes/scripts/om_vars
 script_init
 
-folderThemesMenu
+folderThemesMenu "${1:-theme}"

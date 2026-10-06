@@ -81,7 +81,7 @@ private:
 
     int RunGridLayout();
     int RunListLayout();
-    int RunFolderThemesLayout(); // folder_themes_layout.cpp
+    int RunFolderThemesLayout();
 };
 
 #endif

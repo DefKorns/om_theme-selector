@@ -40,7 +40,7 @@ mkdir -p "$ts_backup/state"
 for ts_dir in themes music_menu; do
   [ -d "$usr_share/$ts_dir" ] && mv "$usr_share/$ts_dir" "$ts_backup/"
 done
-for ts_file in lastTheme prevTheme active_theme folder_themes; do
+for ts_file in lastTheme prevTheme active_theme folder_themes folder_music; do
   [ -f "$ts_state/$ts_file" ] && cp -p "$ts_state/$ts_file" "$ts_backup/state/"
 done
 for ts_unfile in "$hmod_dir/uninstall-"*andomiz* \

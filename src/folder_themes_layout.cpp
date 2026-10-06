@@ -59,13 +59,13 @@ namespace
 int ThemeManagerApp::RunFolderThemesLayout()
 {
     FolderThemeModel model;
-    if(!model.Load(options_.folderThemesDir, options_.folderThemesMapping))
+    if(!model.Load(options_.folderThemesDir, options_.folderThemesMapping, options_.folderMusicMapping))
         return 1;
     const std::vector<FolderEntry> & folders = model.Folders();
-    const std::vector<ThemeEntry> & themes = model.Themes();
     const int folderCount = static_cast<int>(folders.size());
-    const int optionCount = static_cast<int>(themes.size()) + 1; // 0 = Automatic, n = themes[n-1]
     const bool hasY = PadHasY();
+    const Channel channel = options_.folderMusicScreen ? Channel::Music : Channel::Theme;
+    auto OptionCount = [&]() { return static_cast<int>(model.Options(channel).size()) + 1; }; // 0 = Automatic
 
     const int rowPitch = std::max(UiTheme::RowPitch, GetTTFLineHeight(RowGlyphSize));
     const int displayRows = std::max(1, (UiTheme::FooterDividerY - UiTheme::ListBottomMargin - UiTheme::RowFirstY) / rowPitch);
@@ -89,14 +89,21 @@ int ThemeManagerApp::RunFolderThemesLayout()
     Badge autoBadge = MakeBadge("Y", "AUTOMATIC", UiTheme::BadgeYDark, UiTheme::BadgeY);
     Texture changeLabel = MakeText(Translate("FOLDER_THEME_CHANGE"), 16, UiTheme::Text);
 
-    auto ThemeName = [&](int theme)
+    auto OptionName = [&](Channel ch, const ResolvedOption & resolved)
     {
-        if(theme >= 0)
-            return themes[theme].title;
-        return Translate(model.GlobalIsRandom() ? "FOLDER_THEME_RANDOM" : "FOLDER_THEME_STOCK");
+        if(resolved.option >= 0)
+            return model.Options(ch)[resolved.option].title;
+        switch(resolved.source)
+        {
+        case OptionSource::ThemeMusic: return Translate("FOLDER_MUSIC_THEME");
+        case OptionSource::RandomMusic: return Translate("FOLDER_MUSIC_RANDOM");
+        case OptionSource::OriginalMusic: return Translate("FOLDER_MUSIC_ORIGINAL");
+        default: return Translate(model.GlobalThemeIsRandom() ? "FOLDER_THEME_RANDOM" : "FOLDER_THEME_STOCK");
+        }
     };
-    auto AutomaticLabel = [&](int folder) { return Translate("AUTOMATIC") + " · " + ThemeName(model.ResolveAutomatic(folder).theme); };
+    auto AutomaticLabel = [&](int folder) { return Translate("AUTOMATIC") + " · " + OptionName(channel, model.ResolveAutomatic(channel, folder)); };
 
+    const std::vector<FolderOption> & themes = model.Options(Channel::Theme);
     std::vector<Texture> previews(themes.size());
     std::vector<char> previewLoaded(themes.size(), 0); // not vector<bool>: Preview() needs a real reference
     Texture fallbackPreview;
@@ -110,7 +117,7 @@ int ThemeManagerApp::RunFolderThemesLayout()
             loaded = 1;
             std::string path = theme >= 0 ? themes[theme].preview : "";
             if(path.empty() || !std::ifstream(path).good())
-                path = optionsLocation_ + (theme < 0 && model.GlobalIsRandom() ? "images/randtheme.png" : "images/default_preview.png");
+                path = optionsLocation_ + (theme < 0 && model.GlobalThemeIsRandom() ? "images/randtheme.png" : "images/default_preview.png");
             SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "1");
             slot = Texture(path, renderer_, 0, 0);
             SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "0");
@@ -134,9 +141,9 @@ int ThemeManagerApp::RunFolderThemesLayout()
     {
         for(int i = 0; i < folderCount; ++i)
         {
-            bool own = model.Assigned(i) >= 0;
-            std::string value = own ? themes[model.Assigned(i)].title : AutomaticLabel(i);
-            valueTex[i] = MakeText(TruncateToWidth(value, RowGlyphSize, ValueMaxW), RowGlyphSize, own ? UiTheme::Text : UiTheme::TextDim);
+            int own = model.Assigned(channel, i);
+            std::string value = own >= 0 ? model.Options(channel)[own].title : AutomaticLabel(i);
+            valueTex[i] = MakeText(TruncateToWidth(value, RowGlyphSize, ValueMaxW), RowGlyphSize, own >= 0 ? UiTheme::Text : UiTheme::TextDim);
             int textX = UiTheme::RowTextX + folders[i].depth * TreeIndent + (folders[i].depth > 0 ? 14 : 0);
             int nameAvail = ListRight - 16 - valueTex[i].rect.w - 2 * (chevron.rect.w + ChevronGap) - 16 - textX;
             nameTex[i] = MakeText(TruncateToWidth(folders[i].name, RowGlyphSize, nameAvail), RowGlyphSize, UiTheme::Text);
@@ -150,40 +157,54 @@ int ThemeManagerApp::RunFolderThemesLayout()
     int detailTheme = -1;
     auto RebuildDetail = [&]()
     {
-        ResolvedTheme resolved = model.Resolve(selected);
-        detailTheme = resolved.theme;
-        detailName = MakeText(TruncateToWidth(ThemeName(resolved.theme), 22, DetailW), 22, UiTheme::Text);
+        detailTheme = model.Resolve(Channel::Theme, selected).option;
+        ResolvedOption resolved = model.Resolve(channel, selected);
+        detailName = MakeText(TruncateToWidth(OptionName(channel, resolved), 22, DetailW), 22, UiTheme::Text);
 
         std::string tagKey = "FOLDER_THEME_TAG_GLOBAL", sourceText = Translate("FOLDER_THEME_SOURCE_GLOBAL");
         Color tagText = UiTheme::Text;
         detailTagFill = UiTheme::Border;
         switch(resolved.source)
         {
-        case ThemeSource::Assigned:
+        case OptionSource::Assigned:
             tagKey = "FOLDER_THEME_TAG_ASSIGNED";
             sourceText = Translate("FOLDER_THEME_SOURCE_ASSIGNED");
             detailTagFill = UiTheme::Accent;
             tagText = UiTheme::Bg;
             break;
-        case ThemeSource::NameMatch:
+        case OptionSource::NameMatch:
             tagKey = "FOLDER_THEME_TAG_NAME";
             sourceText = Translate("FOLDER_THEME_SOURCE_NAME");
             break;
-        case ThemeSource::Inherited:
+        case OptionSource::Inherited:
             tagKey = "FOLDER_THEME_TAG_INHERITED";
             sourceText = Format("FOLDER_THEME_SOURCE_INHERITED", folders[resolved.fromFolder].name);
             detailTagFill = UiTheme::BadgeXDark;
             break;
-        case ThemeSource::Global:
+        case OptionSource::ThemeMusic:
+            tagKey = "FOLDER_MUSIC_TAG_THEME";
+            sourceText = Translate("FOLDER_MUSIC_SOURCE_THEME");
+            break;
+        case OptionSource::RandomMusic:
+            tagKey = "FOLDER_MUSIC_TAG_RANDOM";
+            sourceText = Translate("FOLDER_MUSIC_SOURCE_RANDOM");
+            break;
+        case OptionSource::OriginalMusic:
+            tagKey = "FOLDER_MUSIC_TAG_ORIGINAL";
+            sourceText = Translate("FOLDER_MUSIC_SOURCE_ORIGINAL");
+            break;
+        case OptionSource::Global:
             break;
         }
         detailTag = MakeText(Translate(tagKey), 13, tagText);
         int tagW = detailTag.rect.w + 16;
         detailSource = MakeText(TruncateToWidth(sourceText, 16, DetailW - tagW - 10), 16, UiTheme::Text);
 
-        int usage = resolved.theme >= 0 ? model.UsageCount(resolved.theme) : 0;
-        std::string usageText = usage > 1 ? Format("FOLDER_THEME_USED_IN", std::to_string(usage))
-                              : Translate(usage == 1 ? "FOLDER_THEME_USED_ONCE" : "FOLDER_THEME_UNUSED");
+        int usage = resolved.option >= 0 ? model.UsageCount(channel, resolved.option) : 0;
+        std::string usageText;
+        if(resolved.option >= 0)
+            usageText = usage > 1 ? Format("FOLDER_THEME_USED_IN", std::to_string(usage))
+                      : Translate(usage == 1 ? "FOLDER_THEME_USED_ONCE" : "FOLDER_THEME_UNUSED");
         detailUsage = MakeText(usageText, 14, UiTheme::TextDim);
     };
 
@@ -196,19 +217,19 @@ int ThemeManagerApp::RunFolderThemesLayout()
             topRow = selected - displayRows + 1;
         RebuildDetail();
     };
-    auto Assign = [&](int theme)
+    auto Assign = [&](int option)
     {
-        if(model.Assigned(selected) == theme)
+        if(model.Assigned(channel, selected) == option)
             return;
-        model.Assign(selected, theme);
-        model.Save();
+        model.Assign(channel, selected, option);
+        model.Save(channel);
         RebuildRows();
         RebuildDetail();
     };
     auto Cycle = [&](int step)
     {
-        int option = model.Assigned(selected) + 1;
-        Assign((option + step + optionCount) % optionCount - 1);
+        int option = model.Assigned(channel, selected) + 1;
+        Assign((option + step + OptionCount()) % OptionCount() - 1);
     };
 
     bool picking = false;
@@ -218,18 +239,18 @@ int ThemeManagerApp::RunFolderThemesLayout()
     auto OpenPicker = [&]()
     {
         picking = true;
-        pick = model.Assigned(selected) + 1;
-        pickTop = std::max(0, std::min(pick - pickerRows / 2, optionCount - pickerRows));
-        pickerTitle = MakeText(TruncateToWidth(Format("FOLDER_THEME_FOR", folders[selected].name), 16, PickerRect.w - 32), 16, UiTheme::Text);
+        pick = model.Assigned(channel, selected) + 1;
+        pickTop = std::max(0, std::min(pick - pickerRows / 2, OptionCount() - pickerRows));
+        pickerTitle = MakeText(TruncateToWidth(Format(channel == Channel::Theme ? "FOLDER_THEME_FOR" : "FOLDER_MUSIC_FOR", folders[selected].name), 16, PickerRect.w - 32), 16, UiTheme::Text);
         optionTex.clear();
-        int labelW = PickerRect.w - 24 - ThumbW - 12 - 24;
+        int labelW = PickerRect.w - 24 - (channel == Channel::Theme ? ThumbW + 12 : 8) - 24;
         optionTex.push_back(MakeText(TruncateToWidth(AutomaticLabel(selected), 16, labelW), 16, UiTheme::Text));
-        for(const ThemeEntry & theme : themes)
-            optionTex.push_back(MakeText(TruncateToWidth(theme.title, 16, labelW), 16, UiTheme::Text));
+        for(const FolderOption & option : model.Options(channel))
+            optionTex.push_back(MakeText(TruncateToWidth(option.title, 16, labelW), 16, UiTheme::Text));
     };
     auto MovePick = [&](int to)
     {
-        pick = std::max(0, std::min(optionCount - 1, to));
+        pick = std::max(0, std::min(OptionCount() - 1, to));
         if(pick < pickTop)
             pickTop = pick;
         else if(pick >= pickTop + pickerRows)
@@ -299,9 +320,9 @@ int ThemeManagerApp::RunFolderThemesLayout()
                     rightEdge = DrawBadge(backBadge, rightEdge);
                 if(hasY)
                     rightEdge = DrawBadge(autoBadge, rightEdge);
+                int midY = UiTheme::BadgeBandY + UiTheme::BadgeOuterSize / 2;
                 int groupW = 2 * chevron.rect.w + 4 + UiTheme::BadgeLabelGap + changeLabel.rect.w;
                 int x = rightEdge - groupW;
-                int midY = UiTheme::BadgeBandY + UiTheme::BadgeOuterSize / 2;
                 chevron.rect.x = x;
                 chevron.rect.y = midY - chevron.rect.h / 2;
                 chevron.Draw(renderer_, SDL_FLIP_HORIZONTAL);
@@ -389,8 +410,9 @@ int ThemeManagerApp::RunFolderThemesLayout()
             pickerTitle.rect.y = PickerRect.y + (PickerHeaderH - pickerTitle.rect.h) / 2;
             pickerTitle.Draw(renderer_);
 
-            int current = model.Assigned(selected) + 1;
-            for(int row = 0; row < pickerRows && pickTop + row < optionCount; ++row)
+            const bool thumbs = channel == Channel::Theme;
+            int current = model.Assigned(channel, selected) + 1;
+            for(int row = 0; row < pickerRows && pickTop + row < OptionCount(); ++row)
             {
                 int option = pickTop + row;
                 SDL_Rect rowRect{ PickerRect.x + 8, PickerRect.y + PickerHeaderH + row * PickerRowH, PickerRect.w - 16, PickerRowH - 4 };
@@ -399,13 +421,18 @@ int ThemeManagerApp::RunFolderThemesLayout()
                     DrawRoundedFillRect(renderer_, rowRect, UiTheme::SelectedRowBg, UiTheme::BoxRadius);
                     DrawStrokeRect(renderer_, rowRect, UiTheme::Accent, 2, UiTheme::BoxRadius);
                 }
-                SDL_Rect thumb{ rowRect.x + 8, rowRect.y + (rowRect.h - ThumbH) / 2, ThumbW, ThumbH };
-                if(option == 0)
-                    DrawStrokeRect(renderer_, thumb, UiTheme::Border, 2, 4);
-                else
-                    DrawCover(Preview(option - 1), thumb, 4, option == pick ? UiTheme::SelectedRowBg : UiTheme::Bg);
+                int labelX = rowRect.x + 16;
+                if(thumbs)
+                {
+                    SDL_Rect thumb{ rowRect.x + 8, rowRect.y + (rowRect.h - ThumbH) / 2, ThumbW, ThumbH };
+                    if(option == 0)
+                        DrawStrokeRect(renderer_, thumb, UiTheme::Border, 2, 4);
+                    else
+                        DrawCover(Preview(option - 1), thumb, 4, option == pick ? UiTheme::SelectedRowBg : UiTheme::Bg);
+                    labelX = thumb.x + ThumbW + 12;
+                }
                 Texture & label = optionTex[option];
-                label.rect.x = thumb.x + ThumbW + 12;
+                label.rect.x = labelX;
                 label.rect.y = rowRect.y + (rowRect.h - label.rect.h) / 2;
                 label.Draw(renderer_);
                 if(option == current)

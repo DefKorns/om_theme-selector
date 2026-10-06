@@ -22,11 +22,16 @@ struct AppOptions
     std::string titleKey = "THEME_SELECTOR";
     bool isRootScreen = true; // no --commandPath override - top of the theme-selector's own tree
     bool gridLayout = true;
-    std::string folderThemesDir; // --folderThemes: the folder theme screen, fed by om_folderthemes
+    std::string folderThemesDir;
     std::string folderThemesMapping;
+    std::string folderMusicMapping;
+    bool folderMusicScreen = false;
 };
 
-std::string ReadSftype(); // cached in OM_SFTYPE for child screens
+// each screen remembers its last focused row here; cleared on leaving the theme manager
+constexpr const char * FocusStatePrefix = "/tmp/om_focus";
+
+std::string ReadSftype();
 
 AppOptions ParseArgs(int argc, char * argv[], const std::string & optionsLocation);
 

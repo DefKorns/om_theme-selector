@@ -31,6 +31,7 @@ fi
 
 case "$1" in
   theme_per_folder) flag="$state_path/om_themeperfolder" ;;
+  music_per_folder) flag="$state_path/om_musicperfolder" ;;
   theme_randomizer) flag="$state_path/om_themerandomizer" ;;
   audio_randomizer) flag="$state_path/om_audiorandomizer" ;;
   audio_randomizer_all) flag="$state_path/om_advmusichack" ;;

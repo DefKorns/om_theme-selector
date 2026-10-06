@@ -182,7 +182,7 @@ std::string ThemeManagerApp::FocusStatePath() const
     std::string sanitized = options_.commandLocation;
     for(char & c : sanitized)
         if(c == '/') c = '_';
-    return "/tmp/om_focus" + sanitized;
+    return FocusStatePrefix + sanitized;
 }
 
 void ThemeManagerApp::SaveFocusState() const
@@ -220,7 +220,7 @@ ThemeManagerApp::FrameEvent ThemeManagerApp::PollFrameEvents()
 
 void ThemeManagerApp::ResumeUnderlyingUi() const
 {
-    system(("/bin/sh " + optionsLocation_ + "scripts/ResumeUI.sh").c_str());
+    system(("rm -f " + std::string(FocusStatePrefix) + "*; /bin/sh " + optionsLocation_ + "scripts/ResumeUI.sh").c_str());
 }
 
 bool ThemeManagerApp::ActivateCommand(Command & cmd)

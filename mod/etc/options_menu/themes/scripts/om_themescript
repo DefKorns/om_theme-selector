@@ -36,7 +36,12 @@ musicHackUnbind() {
 
   for WAVE in $AUDIO_FILES_ARR; do
     case "$CURRENT_MOUNTS" in
-    *" ${ORIGINAL_THEME_AUDIO}/${WAVE}.wav "*) umount "${ORIGINAL_THEME_AUDIO}/${WAVE}.wav" ;;
+    *" ${ORIGINAL_THEME_AUDIO}/${WAVE}.wav "*)
+      # a folder's music can sit on top of the theme's own bind
+      while grep -q " ${ORIGINAL_THEME_AUDIO}/${WAVE}.wav " /proc/mounts; do
+        umount "${ORIGINAL_THEME_AUDIO}/${WAVE}.wav" || break
+      done
+      ;;
     esac
   done
 }
@@ -55,7 +60,6 @@ fontBindFix() {
   done
 }
 
-# folder_themes lines: <folder key>=<theme dir>
 assignedFolderTheme() {
   local LINE
   [ -n "$1" ] && [ -f "$STATE_PATH/folder_themes" ] || return 1
@@ -65,6 +69,18 @@ assignedFolderTheme() {
       return 0
     fi
   done <"$STATE_PATH/folder_themes"
+  return 1
+}
+
+assignedFolderMusic() {
+  local LINE
+  [ -n "$1" ] && [ -f "$STATE_PATH/folder_music" ] || return 1
+  while IFS= read -r LINE; do
+    if [ "${LINE%=*}" = "$1" ] && [ -f "$MUSIC_PATH/${LINE##*=}" ]; then
+      echo "${LINE##*=}"
+      return 0
+    fi
+  done <"$STATE_PATH/folder_music"
   return 1
 }
 
@@ -96,6 +112,25 @@ folderTheme() {
     KEY="$(sed -n 's/^Name=//p' "$DESKTOP" | head -n1 | sed 's/ /_/g' | awk '{print tolower($0)}')"
     assignedFolderTheme "$KEY" && return 0
     [ -n "$KEY" ] && [ -d "$THEMES_PATH/$KEY" ] && echo "$KEY" && return 0
+    CODE="$(basename "$(dirname "$(dirname "$DESKTOP")")")"
+  done
+  return 1
+}
+
+folderMusic() {
+  local CODE="$1"
+  local DESKTOP
+  local KEY
+  local DEPTH=0
+  if [ "$CODE" == "000" ]; then
+    assignedFolderMusic "home"
+    return
+  fi
+  while [ "$CODE" != "000" ] && [ "$DEPTH" -lt 16 ]; do
+    DEPTH=$((DEPTH + 1))
+    DESKTOP="$(folderEntry "$CODE")" || return 1
+    KEY="$(sed -n 's/^Name=//p' "$DESKTOP" | head -n1 | sed 's/ /_/g' | awk '{print tolower($0)}')"
+    assignedFolderMusic "$KEY" && return 0
     CODE="$(basename "$(dirname "$(dirname "$DESKTOP")")")"
   done
   return 1
@@ -150,7 +185,7 @@ themeSelector() {
 
   SILENT_WAV="$rootfs/usr/share/themes/bgm_boot.wav"
   MUSIC_PATH="$mountpoint/media/$modname/music_menu"
-  [ ! -d "$MUSIC_PATH" ] && MUSIC_PATH="$rootfs/usr/share/music_menu"
+  find "$MUSIC_PATH" -maxdepth 1 -type f -iname "*.wav" 2>/dev/null | read -r _ || MUSIC_PATH="$rootfs/usr/share/music_menu"
   BGM_HOME=""
   GAME_STORAGE="$(findGameStorage)"
 
@@ -170,6 +205,8 @@ themeSelector() {
       FOLDER_THEME="$(folderTheme "$FOLDER_ID")"
       [ -n "$FOLDER_THEME" ] && SELECTED_THEME="$FOLDER_THEME"
     fi
+    local FOLDER_MUSIC=""
+    [ -f "$STATE_PATH/om_musicperfolder" ] && FOLDER_MUSIC="$(folderMusic "$FOLDER_ID")"
 
     FULL_THEME_PATH="$THEMES_PATH/$SELECTED_THEME"
 
@@ -201,7 +238,7 @@ themeSelector() {
     if [ "$FULL_THEME_PATH" != "$DIY_THEME" ] && [ -f "$FULL_THEME_PATH/needs_overlay" ]; then
       [ -d "$FULL_THEME_PATH" ] && mount -t overlayfs -o lowerdir="$ORIGINAL_THEME",upperdir="$FULL_THEME_PATH" overlayfs "$ORIGINAL_THEME"
     else
-      if [ -f "$STATE_PATH/om_audiorandomizer" ] && [ -n "$(ls -A "$MUSIC_PATH")" ]; then
+      if [ -z "$FOLDER_MUSIC" ] && [ -f "$STATE_PATH/om_audiorandomizer" ] && [ -n "$(ls -A "$MUSIC_PATH")" ]; then
         [ -z "$BGM_HOME" ] && BGM_HOME="$(find "$MUSIC_PATH" -maxdepth 1 -type f -iname "*.wav" | shuf | head -n1)"
         if [ "$FOLDER_ID" = "000" ]; then
           musicHackBind "$BGM_HOME" "$BGM_HOME" "$ORIGINAL_THEME_AUDIO"
@@ -210,10 +247,13 @@ themeSelector() {
         fi
       fi
 
-      cd "$FULL_THEME_PATH" && find . -type f ! -path "./fonts/*" | while IFS= read -r THEME_FILE; do
+      local SKIP_BGM="none"
+      [ -n "$FOLDER_MUSIC" ] && SKIP_BGM="bgm_*.wav"
+      cd "$FULL_THEME_PATH" && find . -type f ! -path "./fonts/*" ! -name "$SKIP_BGM" | while IFS= read -r THEME_FILE; do
         mount_bind "$FULL_THEME_PATH/$THEME_FILE" "$ORIGINAL_THEME/$THEME_FILE"
       done
     fi
+    [ -n "$FOLDER_MUSIC" ] && musicHackBind "$MUSIC_PATH/$FOLDER_MUSIC" "$MUSIC_PATH/$FOLDER_MUSIC" "$ORIGINAL_THEME_AUDIO"
 
     cd - >/dev/null || exit
     break

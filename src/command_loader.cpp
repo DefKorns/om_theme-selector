@@ -100,6 +100,10 @@ AppOptions ParseArgs(int argc, char * argv[], const std::string & optionsLocatio
             options.folderThemesDir = argv[++i];
         else if(std::strcmp(argv[i], "--mapping") == 0 && i+1 < argc)
             options.folderThemesMapping = argv[++i];
+        else if(std::strcmp(argv[i], "--musicMapping") == 0 && i+1 < argc)
+            options.folderMusicMapping = argv[++i];
+        else if(std::strcmp(argv[i], "--folderChannel") == 0 && i+1 < argc)
+            options.folderMusicScreen = std::strcmp(argv[++i], "music") == 0;
     }
     if(!options.commandLocation.empty() && options.commandLocation.back() != '/')
         options.commandLocation += '/';
@@ -201,7 +205,7 @@ void AppendBackNavigation(const std::string & optionsLocation, const AppOptions 
         std::string backScriptPath = lastEntry.substr(c1+1, c2-c1-1);
         std::string backTitleKey = lastEntry.substr(c2+1);
 
-        backCommand = "usleep 50000 && OM_BACK_STACK=\"" + remainingStack + "\" " + optionsLocation + "options --commandPath " + backPath
+        backCommand = "rm -f " + std::string(FocusStatePrefix) + "*; usleep 50000 && OM_BACK_STACK=\"" + remainingStack + "\" " + optionsLocation + "options --commandPath " + backPath
             + (backScriptPath.empty() ? "" : " --scriptPath " + backScriptPath)
             + " --title \"" + backTitleKey + "\" &";
     }

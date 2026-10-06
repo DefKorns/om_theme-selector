@@ -15,56 +15,73 @@
 
 struct FolderEntry
 {
-    std::string key; // snake_case of the folder's Name=, as om_themescript derives it
+    std::string key;
     std::string name;
     int depth;
     int parent;
 };
 
-struct ThemeEntry
+struct FolderOption
 {
     std::string id;
     std::string title;
     std::string preview;
+    bool hasMusic;
+    bool needsOverlay;
 };
 
-enum class ThemeSource { Assigned, NameMatch, Inherited, Global };
+enum class Channel { Theme = 0, Music = 1 };
 
-struct ResolvedTheme
+enum class OptionSource { Assigned, NameMatch, Inherited, Global, ThemeMusic, RandomMusic, OriginalMusic };
+
+struct ResolvedOption
 {
-    int theme; // -1: stock UI, or a random theme when the randomizer is on
-    ThemeSource source;
+    int option; // -1: nothing specific (stock UI, a random theme, the theme's own or random music)
+    OptionSource source;
     int fromFolder;
 };
 
-// Folder -> theme assignments, resolved the same way om_themescript applies them on chmenu
+// Folder -> theme and folder -> music assignments, resolved the same way om_themescript applies them on chmenu
 class FolderThemeModel
 {
 public:
-    bool Load(const std::string & dataDir, const std::string & mappingPath);
-    bool Save() const;
+    bool Load(const std::string & dataDir, const std::string & themeMapping, const std::string & musicMapping);
+    bool Save(Channel channel) const;
 
     const std::vector<FolderEntry> & Folders() const { return folders_; }
-    const std::vector<ThemeEntry> & Themes() const { return themes_; }
-    bool GlobalIsRandom() const { return globalRandom_; }
+    const std::vector<FolderOption> & Options(Channel channel) const { return slot(channel).options; }
+    bool GlobalThemeIsRandom() const { return globalThemeRandom_; }
 
-    int Assigned(int folder) const { return assigned_[folder]; }
-    void Assign(int folder, int theme); // -1 clears
-    ResolvedTheme Resolve(int folder) const;
-    ResolvedTheme ResolveAutomatic(int folder) const; // what the folder gets without its own assignment
-    int UsageCount(int theme) const;
+    int Assigned(Channel channel, int folder) const { return slot(channel).assigned[folder]; }
+    void Assign(Channel channel, int folder, int option); // -1 clears
+    ResolvedOption Resolve(Channel channel, int folder) const;
+    ResolvedOption ResolveAutomatic(Channel channel, int folder) const;
+    int UsageCount(Channel channel, int option) const;
 
 private:
-    int ThemeIndex(const std::string & id) const;
+    struct Slot
+    {
+        std::vector<FolderOption> options;
+        std::vector<int> assigned;
+        std::vector<std::string> unknownLines; // folders or options not on this console right now, kept on save
+        std::string mappingPath;
+    };
+
+    Slot & slot(Channel channel) { return slots_[static_cast<int>(channel)]; }
+    const Slot & slot(Channel channel) const { return slots_[static_cast<int>(channel)]; }
+    void LoadMapping(Slot & s, const std::string & mappingPath);
+    int OptionIndex(const Slot & s, const std::string & id) const;
     int FolderIndex(const std::string & key) const;
+    bool IsHome(int folder) const;
+    ResolvedOption AutomaticMusic(int folder) const;
 
     std::vector<FolderEntry> folders_;
-    std::vector<ThemeEntry> themes_;
-    std::vector<int> assigned_;
-    std::vector<std::string> unknownLines_; // folders or themes not on this console right now, kept on save
-    std::string mappingPath_;
+    Slot slots_[2];
     int globalTheme_ = -1;
-    bool globalRandom_ = false;
+    bool globalThemeRandom_ = false;
+    bool musicRandomHome_ = false;
+    bool musicRandomFolders_ = false;
+    bool themesPerFolder_ = false; // off: om_themescript ignores assignments and name matches alike
 };
 
 #endif

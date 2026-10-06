@@ -37,12 +37,25 @@ namespace
             line.pop_back();
         return true;
     }
+
+    std::vector<FolderOption> ReadOptions(const std::string & path)
+    {
+        std::vector<FolderOption> options;
+        std::ifstream in(path);
+        for(std::string line; ReadLine(in, line);)
+        {
+            std::vector<std::string> f = SplitTabs(line);
+            if(f[0].empty())
+                continue;
+            f.resize(5);
+            options.push_back({ f[0], f[1].empty() ? f[0] : f[1], f[2], f[3] == "1", f[4] == "1" });
+        }
+        return options;
+    }
 }
 
-bool FolderThemeModel::Load(const std::string & dataDir, const std::string & mappingPath)
+bool FolderThemeModel::Load(const std::string & dataDir, const std::string & themeMapping, const std::string & musicMapping)
 {
-    mappingPath_ = mappingPath;
-
     std::ifstream folders(dataDir + "/folders.list");
     std::vector<int> lastAtDepth;
     for(std::string line; ReadLine(folders, line);)
@@ -60,55 +73,68 @@ bool FolderThemeModel::Load(const std::string & dataDir, const std::string & map
         folders_.push_back(entry);
     }
 
-    std::ifstream themes(dataDir + "/themes.list");
-    for(std::string line; ReadLine(themes, line);)
-    {
-        std::vector<std::string> f = SplitTabs(line);
-        if(f.size() < 3 || f[0].empty())
-            continue;
-        themes_.push_back({ f[0], f[1].empty() ? f[0] : f[1], f[2] });
-    }
+    slot(Channel::Theme).options = ReadOptions(dataDir + "/themes.list");
+    slot(Channel::Music).options = ReadOptions(dataDir + "/music.list");
 
     std::ifstream global(dataDir + "/global");
     std::string globalId;
     ReadLine(global, globalId);
-    globalRandom_ = globalId == RandomGlobal;
-    globalTheme_ = ThemeIndex(globalId);
+    globalThemeRandom_ = globalId == RandomGlobal;
+    globalTheme_ = OptionIndex(slot(Channel::Theme), globalId);
 
-    assigned_.assign(folders_.size(), -1);
-    std::ifstream mapping(mappingPath_);
+    std::ifstream audio(dataDir + "/audio");
+    for(std::string line; ReadLine(audio, line);)
+    {
+        musicRandomHome_ = musicRandomHome_ || line == "random_home";
+        musicRandomFolders_ = musicRandomFolders_ || line == "random_folders";
+    }
+
+    themesPerFolder_ = !themeMapping.empty();
+    LoadMapping(slot(Channel::Theme), themeMapping);
+    LoadMapping(slot(Channel::Music), musicMapping);
+    return !folders_.empty();
+}
+
+void FolderThemeModel::LoadMapping(Slot & s, const std::string & mappingPath)
+{
+    s.mappingPath = mappingPath;
+    s.assigned.assign(folders_.size(), -1);
+    if(mappingPath.empty())
+        return;
+    std::ifstream mapping(mappingPath);
     for(std::string line; ReadLine(mapping, line);)
     {
         size_t eq = line.rfind('=');
-        int theme = eq == std::string::npos ? -1 : ThemeIndex(line.substr(eq + 1));
+        int option = eq == std::string::npos ? -1 : OptionIndex(s, line.substr(eq + 1));
         int folder = eq == std::string::npos ? -1 : FolderIndex(line.substr(0, eq));
-        if(theme < 0 || folder < 0)
+        if(option < 0 || folder < 0)
         {
             if(!line.empty())
-                unknownLines_.push_back(line);
+                s.unknownLines.push_back(line);
             continue;
         }
         for(size_t i = 0; i < folders_.size(); ++i)
             if(folders_[i].key == folders_[folder].key)
-                assigned_[i] = theme;
+                s.assigned[i] = option;
     }
-
-    return !folders_.empty();
 }
 
-bool FolderThemeModel::Save() const
+bool FolderThemeModel::Save(Channel channel) const
 {
-    const std::string tmpPath = mappingPath_ + ".tmp";
+    const Slot & s = slot(channel);
+    if(s.mappingPath.empty())
+        return false;
+    const std::string tmpPath = s.mappingPath + ".tmp";
     {
         std::ofstream out(tmpPath, std::ios::trunc);
         if(!out)
             return false;
-        for(const std::string & line : unknownLines_)
+        for(const std::string & line : s.unknownLines)
             out << line << '\n';
         std::vector<std::string> written;
         for(size_t i = 0; i < folders_.size(); ++i)
         {
-            if(assigned_[i] < 0)
+            if(s.assigned[i] < 0)
                 continue;
             bool seen = false;
             for(const std::string & key : written)
@@ -116,58 +142,83 @@ bool FolderThemeModel::Save() const
             if(seen)
                 continue;
             written.push_back(folders_[i].key);
-            out << folders_[i].key << '=' << themes_[assigned_[i]].id << '\n';
+            out << folders_[i].key << '=' << s.options[s.assigned[i]].id << '\n';
         }
         if(!out)
             return false;
     }
-    return std::rename(tmpPath.c_str(), mappingPath_.c_str()) == 0;
+    return std::rename(tmpPath.c_str(), s.mappingPath.c_str()) == 0;
 }
 
-void FolderThemeModel::Assign(int folder, int theme)
+void FolderThemeModel::Assign(Channel channel, int folder, int option)
 {
     // the mapping is keyed by folder name, so same-named folders share it
+    Slot & s = slot(channel);
     for(size_t i = 0; i < folders_.size(); ++i)
         if(folders_[i].key == folders_[folder].key)
-            assigned_[i] = theme;
+            s.assigned[i] = option;
 }
 
-ResolvedTheme FolderThemeModel::Resolve(int folder) const
+ResolvedOption FolderThemeModel::Resolve(Channel channel, int folder) const
 {
-    if(assigned_[folder] >= 0)
-        return { assigned_[folder], ThemeSource::Assigned, folder };
-    return ResolveAutomatic(folder);
+    int own = slot(channel).assigned[folder];
+    if(own >= 0)
+        return { own, OptionSource::Assigned, folder };
+    return ResolveAutomatic(channel, folder);
 }
 
-ResolvedTheme FolderThemeModel::ResolveAutomatic(int folder) const
+ResolvedOption FolderThemeModel::ResolveAutomatic(Channel channel, int folder) const
 {
     const FolderEntry & entry = folders_[folder];
-    int nameMatch = ThemeIndex(entry.key == HomeKey && entry.depth == 0 ? HomeNameMatch : entry.key);
-    if(nameMatch >= 0)
-        return { nameMatch, ThemeSource::NameMatch, folder };
+    if(channel == Channel::Theme && (themesPerFolder_ || IsHome(folder)))
+    {
+        int nameMatch = OptionIndex(slot(channel), IsHome(folder) ? HomeNameMatch : entry.key);
+        if(nameMatch >= 0)
+            return { nameMatch, OptionSource::NameMatch, folder };
+    }
+    if(channel == Channel::Theme && !themesPerFolder_)
+        return { globalTheme_, OptionSource::Global, -1 };
 
     if(entry.parent >= 0)
     {
-        ResolvedTheme up = Resolve(entry.parent);
-        if(up.source != ThemeSource::Global)
-            up.source = ThemeSource::Inherited;
-        return up;
+        ResolvedOption up = Resolve(channel, entry.parent);
+        if(up.source == OptionSource::Assigned || up.source == OptionSource::NameMatch || up.source == OptionSource::Inherited)
+        {
+            up.source = OptionSource::Inherited;
+            return up;
+        }
     }
-    return { globalTheme_, ThemeSource::Global, -1 };
+
+    if(channel == Channel::Music)
+        return AutomaticMusic(folder);
+    return { globalTheme_, OptionSource::Global, -1 };
 }
 
-int FolderThemeModel::UsageCount(int theme) const
+// mirrors om_themescript: the theme's own .wav wins, else the randomizer where it applies, else stock
+ResolvedOption FolderThemeModel::AutomaticMusic(int folder) const
+{
+    int theme = Resolve(Channel::Theme, folder).option;
+    const std::vector<FolderOption> & themes = slot(Channel::Theme).options;
+    if(theme >= 0 && themes[theme].hasMusic)
+        return { -1, OptionSource::ThemeMusic, -1 };
+    bool randomApplies = IsHome(folder) ? musicRandomHome_ : musicRandomHome_ && musicRandomFolders_;
+    if(randomApplies && !(theme >= 0 && themes[theme].needsOverlay))
+        return { -1, OptionSource::RandomMusic, -1 };
+    return { -1, OptionSource::OriginalMusic, -1 };
+}
+
+int FolderThemeModel::UsageCount(Channel channel, int option) const
 {
     int count = 0;
-    for(int assigned : assigned_)
-        count += assigned == theme ? 1 : 0;
+    for(int assigned : slot(channel).assigned)
+        count += assigned == option ? 1 : 0;
     return count;
 }
 
-int FolderThemeModel::ThemeIndex(const std::string & id) const
+int FolderThemeModel::OptionIndex(const Slot & s, const std::string & id) const
 {
-    for(size_t i = 0; i < themes_.size(); ++i)
-        if(themes_[i].id == id)
+    for(size_t i = 0; i < s.options.size(); ++i)
+        if(s.options[i].id == id)
             return static_cast<int>(i);
     return -1;
 }
@@ -178,4 +229,9 @@ int FolderThemeModel::FolderIndex(const std::string & key) const
         if(folders_[i].key == key)
             return static_cast<int>(i);
     return -1;
+}
+
+bool FolderThemeModel::IsHome(int folder) const
+{
+    return folders_[folder].key == HomeKey && folders_[folder].depth == 0;
 }
