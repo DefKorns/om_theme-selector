@@ -32,6 +32,33 @@ hmod_dir="$mountpoint/var/lib/hakchi/hmod"
 b_file="$pre_initd/b8024_themeselector"
 p_file="$pre_initd/p8024_themeselector"
 
+# Uninstall any previous or legacy install (Theme Randomizer, Advanced Music Hack) 
+ts_state="$mountpoint/$profilepath/$modname"
+ts_backup="$installpath/om_ts_backup"
+rm -rf "$ts_backup"
+mkdir -p "$ts_backup/state"
+for ts_dir in themes music_menu; do
+  [ -d "$usr_share/$ts_dir" ] && mv "$usr_share/$ts_dir" "$ts_backup/"
+done
+for ts_file in lastTheme prevTheme active_theme; do
+  [ -f "$ts_state/$ts_file" ] && cp -p "$ts_state/$ts_file" "$ts_backup/state/"
+done
+for ts_unfile in "$hmod_dir/uninstall-"*andomiz* \
+                 "$hmod_dir/uninstall-advanced_music_hack" \
+                 "$hmod_dir/uninstall-om_theme-selector"* \
+                 "$hmod_dir/uninstall-om_theme_selector"*; do
+  [ -f "$ts_unfile" ] && pack_uninstall "${ts_unfile##*/uninstall-}"
+done
+cd "$transferpath" || return 1
+for ts_dir in themes music_menu; do
+  [ -d "$ts_backup/$ts_dir" ] && rm -rf "${usr_share:?}/$ts_dir" && mv "$ts_backup/$ts_dir" "$usr_share/"
+done
+mkdir -p "$ts_state"
+for ts_file in "$ts_backup/state/"*; do
+  [ -f "$ts_file" ] && cp -p "$ts_file" "$ts_state/"
+done
+rm -rf "$ts_backup"
+
 mkdir -p "$usr_share/music_menu"
 move "$usr_share/menu_music"/* "$usr_share/music_menu"
 move "$usr_share/advanced_music_hack/bgm_boot.wav" "$usr_share/themes/bgm_boot.wav"
@@ -47,8 +74,6 @@ del "$rootfs/chmenu"
 del "$rootfs/chmenu_backup"
 del "$rootfs/b8025_fontfix_backup"
 
-find "$hmod_dir" -type f -name "*andomiz*" -print0 -exec rm -f {} \;
-find "$hmod_dir" -type f -name "*advanced_music_hack" -print0 -exec rm -f {} \;
 # Marks this mod as uninstalled
 unset cfg_theme_randomizR_enabled
 
