@@ -164,7 +164,10 @@ themeSelector() {
       fontBindFix "restore"
     fi
 
-    mountpoint -q "$ORIGINAL_THEME" && umount "$ORIGINAL_THEME"
+    # lazy, since fontFix binds title.font on top of the overlay after every chmenu
+    while grep -q " $ORIGINAL_THEME overlayfs " /proc/mounts; do
+      umount -l "$ORIGINAL_THEME" || break
+    done
     musicHackUnbind
 
     cd "$THEMES_PATH/$PREVIOUS_THEME" && find ./* -type f ! -name "*.wav" ! -path "./fonts/*" | cut -c3- | while IFS= read -r UMOUNT_FILE; do
