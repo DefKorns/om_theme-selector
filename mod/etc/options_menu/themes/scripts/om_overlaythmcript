@@ -16,82 +16,82 @@
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 fontBindFix() {
-  [ ! -f "${FONT_PATH}/title.fnt.backup" ] && cp "${FONT_PATH}/title.fnt" "${FONT_PATH}/title.fnt.backup"
-  for FONT in title s m l small medium large; do
-    if [ "$1" == "backup" ] && [ -f "$FULL_THEME_PATH/fonts/${FONT}.fnt" ]; then
-      cp "$FULL_THEME_PATH/fonts/${FONT}.fnt" "${FONT_PATH}/${FONT}.fnt"
-    elif [ "$FONT" == "title" ]; then
-      cp "${FONT_PATH}/title.fnt.backup" "${FONT_PATH}/title.fnt"
+  [ ! -f "${font_path}/title.fnt.backup" ] && cp "${font_path}/title.fnt" "${font_path}/title.fnt.backup"
+  for font_name in title s m l small medium large; do
+    if [ "$1" == "backup" ] && [ -f "$full_theme_path/fonts/${font_name}.fnt" ]; then
+      cp "$full_theme_path/fonts/${font_name}.fnt" "${font_path}/${font_name}.fnt"
+    elif [ "$font_name" == "title" ]; then
+      cp "${font_path}/title.fnt.backup" "${font_path}/title.fnt"
     else
-      umount "${ORIGINAL_THEME}/resources/fonts/${UI1}/${FONT}.fnt" 2>/dev/null
-      rm -f "${FONT_PATH}/${FONT}.fnt"
+      umount "${original_theme}/resources/fonts/${ui_subdir}/${font_name}.fnt" 2>/dev/null
+      rm -f "${font_path}/${font_name}.fnt"
     fi
   done
 }
 
 themeSelector() {
-  local UI0="ui/$sftype-$sfregion"
-  local UI1=""
-  local SYSTEM_TYPE="$sftype"
+  local ui_dir="ui/$sftype-$sfregion"
+  local ui_subdir=""
+  local system_type="$sftype"
 
   case "$sftype" in
   hvcj)
-    UI0="ui/hvc"
-    SYSTEM_TYPE="shonen"
+    ui_dir="ui/hvc"
+    system_type="shonen"
     ;;
   nes)
-    UI0="clover-ui"
-    UI1="nes/"
+    ui_dir="clover-ui"
+    ui_subdir="nes/"
     if [ "$sfregion" = "jpn" ]; then
-      UI0="clover-ui"
-      UI1="hvc"
-      SYSTEM_TYPE="$UI1"
+      ui_dir="clover-ui"
+      ui_subdir="hvc"
+      system_type="$ui_subdir"
     fi
     ;;
   snes)
-    [ "$sfregion" = "jpn" ] && UI0="ui/shvc"
+    [ "$sfregion" = "jpn" ] && ui_dir="ui/shvc"
     ;;
   esac
-  local ORIGINAL_THEME="$mountpoint/usr/share/$UI0"
+  local original_theme="$mountpoint/usr/share/$ui_dir"
 
-  local THEMES_PATH="$mountpoint/media/$modname/themes/$SYSTEM_TYPE"
-  [ ! -d "$THEMES_PATH" ] && THEMES_PATH="$rootfs/usr/share/themes/$SYSTEM_TYPE"
+  local themes_path="$mountpoint/media/$modname/themes/$system_type"
+  [ ! -d "$themes_path" ] && themes_path="$rootfs/usr/share/themes/$system_type"
 
-  local STATE_PATH="$mountpoint$profilepath/$modname"
-  local LAST_THEME="$STATE_PATH/lastTheme"
-  local ACTIVE_THEME="$STATE_PATH/active_theme"
-  local SELECTED_THEME="CHANGEME"
+  local theme_state_path="$mountpoint$profilepath/$modname"
+  local last_theme="$theme_state_path/lastTheme"
+  local active_theme_file="$theme_state_path/active_theme"
+  local selected_theme="CHANGEME"
 
-  if [ -f "$STATE_PATH/om_themerandomizer" ]; then
-    SELECTED_THEME="$PREVIOUS_THEME"
+  if [ -f "$theme_state_path/om_themerandomizer" ]; then
+    selected_theme="$previous_theme"
     local n="0"
-    while [ "$SELECTED_THEME" == "$PREVIOUS_THEME" ] && [ "$n" -lt 3 ]; do
+    while [ "$selected_theme" == "$previous_theme" ] && [ "$n" -lt 3 ]; do
       n=$((n + 1))
-      SELECTED_THEME="$(find "$THEMES_PATH" -maxdepth 1 -type d | shuf | head -n1 | xargs -n 1 basename)"
+      selected_theme="$(find "$themes_path" -maxdepth 1 -type d | shuf | head -n1 | xargs -n 1 basename)"
     done
   fi
 
-  local FULL_THEME_PATH="$THEMES_PATH/$SELECTED_THEME"
+  local full_theme_path="$themes_path/$selected_theme"
 
-  local FONT_PATH="$mountpoint/media/$modname/fonts"
-  [ ! -d "$FONT_PATH" ] && FONT_PATH="$rootfs/usr/share/fonts"
-  local TITLE_FONT="$FONT_PATH/title.fnt"
-  local TITLE_THEME_FONT="$FULL_THEME_PATH/fonts/title.fnt"
+  local font_path="$mountpoint/media/$modname/fonts"
+  [ ! -d "$font_path" ] && font_path="$rootfs/usr/share/fonts"
+  local title_font="$font_path/title.fnt"
+  local title_theme_font="$full_theme_path/fonts/title.fnt"
 
-  if [ "$SELECTED_THEME" != "$PREVIOUS_THEME" ] || [ ! -f "$LAST_THEME" ] || [ ! -f "$ACTIVE_THEME" ]; then
-    echo "$SELECTED_THEME" >"$LAST_THEME"
-    echo "$FULL_THEME_PATH" >"$ACTIVE_THEME"
+  if [ "$selected_theme" != "$previous_theme" ] || [ ! -f "$last_theme" ] || [ ! -f "$active_theme_file" ]; then
+    echo "$selected_theme" >"$last_theme"
+    echo "$full_theme_path" >"$active_theme_file"
   fi
 
-  if [ -d "$FULL_THEME_PATH/fonts" ]; then
-    if [ "$(cksum "$TITLE_FONT" | awk '{ print $1; }')" != "$(cksum "$TITLE_THEME_FONT" | awk '{ print $1; }')" ]; then
+  if [ -d "$full_theme_path/fonts" ]; then
+    if [ "$(cksum "$title_font" | awk '{ print $1; }')" != "$(cksum "$title_theme_font" | awk '{ print $1; }')" ]; then
       fontBindFix "backup"
     fi
   else
     fontBindFix "restore"
   fi
 
-  mountpoint -q "$ORIGINAL_THEME" && umount "$ORIGINAL_THEME"
-  [ -d "$FULL_THEME_PATH" ] && mount -t overlayfs -o lowerdir="$ORIGINAL_THEME",upperdir="$FULL_THEME_PATH" overlayfs "$ORIGINAL_THEME"
+  mountpoint -q "$original_theme" && umount "$original_theme"
+  [ -d "$full_theme_path" ] && mount -t overlayfs -o lowerdir="$original_theme",upperdir="$full_theme_path" overlayfs "$original_theme"
 
 }

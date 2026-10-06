@@ -21,135 +21,135 @@ source $mountpoint/etc/options_menu/scripts/om_functions
 script_init
 
 modtitle="themes"
-omTitle="THEME_SELECTOR"
+om_title="THEME_SELECTOR"
 b_file="$mountpoint/etc/preinit.d/b8024_themeselector"
 p_file="$mountpoint/etc/preinit.d/p8024_themeselector"
 fontfix_file="$mountpoint/etc/preinit.d/b8025_fontfix"
 chmenu_file="$root_bin/chmenu"
-has_folders="${gStorage}/001"
+has_folders="${game_storage}/001"
 
 # Options Menu
-omMod="$optionsMenu/$modtitle"
-omModImgs="$optionsMenu/images"
-omModCommands="$omMod/commands"
-omModScripts="$omMod/scripts"
-omModFnts="$omMod/fonts" # verify
-omModSub="$omMod/downloads"
-omModSubCmds="$omModSub/commands"
-omModSubScripts="$omModSub/scripts"
-omModGen="$omMod/creator"
-omModGenCmds="$omModGen/commands"
-omModGenScripts="$omModGen/scripts"
-omModSprites="$omModGen/sprites"
-omModSpritesAssets="$omModSprites/assets"
-omModMario="$omModSprites/mario"
-omModLuigi="$omModSprites/luigi"
-omModWall="$omModSprites/wall"
-omModWallN="$omModSprites/wall_near"
-omModWallF="$omModSprites/wall_far"
-omModPacked="$omModSprites/packed"
-omModColors="$omModSprites/colors"
-omModColorsNes="$omModSprites/colors_nes"
-omModPole="$omModSprites/pole"
-omModPackedNes="$omModSprites/packed_nes"
-omModSbm="$omModSprites/sbm"
-omModMarioAssets="$omModSpritesAssets/mario"
-omModLuigiAssets="$omModSpritesAssets/luigi"
-omModWallAssets="$omModSpritesAssets/wall"
-omModWallNAssets="$omModSpritesAssets/wall_near"
-omModWallFAssets="$omModSpritesAssets/wall_far"
-omModPackedAssets="$omModSpritesAssets/packed"
-omModColorsAssets="$omModSpritesAssets/colors"
-omModColorsNesAssets="$omModSpritesAssets/colors_nes"
-omModPoleAssets="$omModSpritesAssets/pole"
-omModPackedNesAssets="$omModSpritesAssets/packed_nes"
-omModSbmAssets="$omModSpritesAssets/smb"
-omModSettings="$omMod/settings"
-omModSettingsCmds="$omModSettings/commands"
-omModSettingsScripts="$omModSettings/scripts"
-omModLicense="$omModScripts/om_license"
-diyThemePath="$mountpoint/tmp/diy_theme"
-diyResources="$diyThemePath/resources"
-diyLayout="$diyResources/layout/asset/sprite"
-omModLicense="$omModScripts/om_license"
-thmPreview="$omModSub/images"
-omThemeScript="$omModScripts/om_themescript"
-omOverlayThemeScript="$omModScripts/om_overlaythmcript"
+om_mod="$options_menu/$modtitle"
+om_mod_imgs="$options_menu/images"
+om_mod_commands="$om_mod/commands"
+om_mod_scripts="$om_mod/scripts"
+om_mod_fnts="$om_mod/fonts" # verify
+om_mod_sub="$om_mod/downloads"
+om_mod_sub_cmds="$om_mod_sub/commands"
+om_mod_sub_scripts="$om_mod_sub/scripts"
+om_mod_gen="$om_mod/creator"
+om_mod_gen_cmds="$om_mod_gen/commands"
+om_mod_gen_scripts="$om_mod_gen/scripts"
+om_mod_sprites="$om_mod_gen/sprites"
+om_mod_sprites_assets="$om_mod_sprites/assets"
+om_mod_mario="$om_mod_sprites/mario"
+om_mod_luigi="$om_mod_sprites/luigi"
+om_mod_wall="$om_mod_sprites/wall"
+om_mod_wall_n="$om_mod_sprites/wall_near"
+om_mod_wall_f="$om_mod_sprites/wall_far"
+om_mod_packed="$om_mod_sprites/packed"
+om_mod_colors="$om_mod_sprites/colors"
+om_mod_colors_nes="$om_mod_sprites/colors_nes"
+om_mod_pole="$om_mod_sprites/pole"
+om_mod_packed_nes="$om_mod_sprites/packed_nes"
+om_mod_sbm="$om_mod_sprites/sbm"
+om_mod_mario_assets="$om_mod_sprites_assets/mario"
+om_mod_luigi_assets="$om_mod_sprites_assets/luigi"
+om_mod_wall_assets="$om_mod_sprites_assets/wall"
+om_mod_wall_n_assets="$om_mod_sprites_assets/wall_near"
+om_mod_wall_f_assets="$om_mod_sprites_assets/wall_far"
+om_mod_packed_assets="$om_mod_sprites_assets/packed"
+om_mod_colors_assets="$om_mod_sprites_assets/colors"
+om_mod_colors_nes_assets="$om_mod_sprites_assets/colors_nes"
+om_mod_pole_assets="$om_mod_sprites_assets/pole"
+om_mod_packed_nes_assets="$om_mod_sprites_assets/packed_nes"
+om_mod_sbm_assets="$om_mod_sprites_assets/smb"
+om_mod_settings="$om_mod/settings"
+om_mod_settings_cmds="$om_mod_settings/commands"
+om_mod_settings_scripts="$om_mod_settings/scripts"
+om_mod_license="$om_mod_scripts/om_license"
+diy_theme_path="$mountpoint/tmp/diy_theme"
+diy_resources="$diy_theme_path/resources"
+diy_layout="$diy_resources/layout/asset/sprite"
+om_mod_license="$om_mod_scripts/om_license"
+thm_preview="$om_mod_sub/images"
+om_theme_script="$om_mod_scripts/om_themescript"
+om_overlay_theme_script="$om_mod_scripts/om_overlaythmcript"
 
-om_themerandomizer="$state_path/om_themerandomizer"
-om_themeperfolder="$state_path/om_themeperfolder"
-om_musicperfolder="$state_path/om_musicperfolder"
-om_folderthemes="$state_path/folder_themes"
-om_foldermusic="$state_path/folder_music"
-folderThemesTmp="/tmp/om_folderthemes"
-om_audiorandomizer="$state_path/om_audiorandomizer"
-om_advmusichack="$state_path/om_advmusichack"
-om_firstrun="$omMod/om_firstrun"
-om_theme_count="$state_path/om_theme_count"
+om_themerandomizer="$mod_state_path/om_themerandomizer"
+om_themeperfolder="$mod_state_path/om_themeperfolder"
+om_musicperfolder="$mod_state_path/om_musicperfolder"
+om_folderthemes="$mod_state_path/folder_themes"
+om_foldermusic="$mod_state_path/folder_music"
+folder_themes_tmp="/tmp/om_folderthemes"
+om_audiorandomizer="$mod_state_path/om_audiorandomizer"
+om_advmusichack="$mod_state_path/om_advmusichack"
+om_firstrun="$om_mod/om_firstrun"
+om_theme_count="$mod_state_path/om_theme_count"
 
 #### SEPARATORS
-omDummy="$omModCommands/c0000_0000"
-subDummy="$omModSubCmds/c0000_0000"
-omModSpacer="$omModCommands/c0000_separator"
-omModSettingsSpacer="$omModSettings/c0001_separator"
+om_dummy="$om_mod_commands/c0000_0000"
+sub_dummy="$om_mod_sub_cmds/c0000_0000"
+om_mod_spacer="$om_mod_commands/c0000_separator"
+om_mod_settings_spacer="$om_mod_settings/c0001_separator"
 #### ENABLE/DISABLE
-enableDownloads="$omModCommands/c0000_2_download"
-disableDownloads="$omModCommands/_2_download"
-enableClear="$omModCommands/c0000_5_remove"
-disableClear="$omModCommands/_5_remove"
-enableSettings="$omModCommands/c0000_4_options"
-disableSettings="$omModCommands/_4_options"
-enableAudioSetting="$omModSettingsCmds/c0001_audiorandomizer"
-disableAudioSetting="$omModSettingsCmds/_audiorandomizer"
-enableAdvancedMusicHack="$omModSettingsCmds/c0001_audiorandomizerall"
-disableAdvancedMusicHack="$omModSettingsCmds/_audiorandomizerall"
-enableFolderThemes="$omModSettingsCmds/c0000_themeperfolder_1assign"
-disableFolderThemes="$omModSettingsCmds/_themeperfolder_1assign"
-enableMusicPerFolder="$omModSettingsCmds/c0001_musicperfolder"
-disableMusicPerFolder="$omModSettingsCmds/_musicperfolder"
-enableFolderMusic="$omModSettingsCmds/c0001_musicperfolder_assign"
-disableFolderMusic="$omModSettingsCmds/_musicperfolder_assign"
-enableThemeSetting="$omModSettingsCmds/c0000_themerandomizer"
-disableThemeSetting="$omModSettingsCmds/_themerandomizer"
-enableSystemCleanUp="$omModSettingsCmds/c0001_systemcleanup"
-disableSystemCleanUp="$omModSettingsCmds/_systemcleanup"
-enableThemeGenerator="$omModCommands/c0000_3_generatetheme"
-disableThemeGenerator="$omModCommands/_3_generatetheme"
-enableUninstaller="$omModSettingsCmds/c0001_uninstaller"
-disableUninstaller="$omModSettingsCmds/_uninstaller"
-enableDiY="$omModGenCmds/c0000_3_apply"
-disableDiY="$omModGenCmds/_3_apply"
-enableDelDiY="$omModGenCmds/c0000_5_remove"
-disableDelDiY="$omModGenCmds/_5_remove"
-enablePreview="$omModGenCmds/c0000_4_preview"
-disablePreview="$omModGenCmds/_4_preview"
-enablePole="$omModGenCmds/c0006_pole"
-disablePole="$omModGenCmds/_pole"
-enableColor="$omModGenCmds/c0006_colors"
-disableColor="$omModGenCmds/_colors"
-enableMario="$omModGenCmds/c0002_mario"
-disableMario="$omModGenCmds/_mario"
-enableLuigi="$omModGenCmds/c0003_luigi"
-disableLuigi="$omModGenCmds/_luigi"
-enableSmb="$omModGenCmds/c0002_sbm"
-disableSmb="$omModGenCmds/_sbm"
-enablePackedNes="$omModGenCmds/c0001_packed_nes"
-disablePackedNes="$omModGenCmds/_packed_nes"
-enableColorsNes="$omModGenCmds/c0006_colors_nes"
-disableColorsNes="$omModGenCmds/_colors_nes"
-enablePacked="$omModGenCmds/c0001_packed"
-disablePacked="$omModGenCmds/_packed"
-enableWall="$omModGenCmds/c0001_wall"
-disableWall="$omModGenCmds/_wall"
-enableWallFar="$omModGenCmds/c0005_wall_far"
-disableWallFar="$omModGenCmds/_wall_far"
-enableWallNear="$omModGenCmds/c0004_wall_near"
-disableWallNear="$omModGenCmds/_wall_near"
-listName="-list-v2.tar.gz"
+enable_downloads="$om_mod_commands/c0000_2_download"
+disable_downloads="$om_mod_commands/_2_download"
+enable_clear="$om_mod_commands/c0000_5_remove"
+disable_clear="$om_mod_commands/_5_remove"
+enable_settings="$om_mod_commands/c0000_4_options"
+disable_settings="$om_mod_commands/_4_options"
+enable_audio_setting="$om_mod_settings_cmds/c0001_audiorandomizer"
+disable_audio_setting="$om_mod_settings_cmds/_audiorandomizer"
+enable_advanced_music_hack="$om_mod_settings_cmds/c0001_audiorandomizerall"
+disable_advanced_music_hack="$om_mod_settings_cmds/_audiorandomizerall"
+enable_folder_themes="$om_mod_settings_cmds/c0000_themeperfolder_1assign"
+disable_folder_themes="$om_mod_settings_cmds/_themeperfolder_1assign"
+enable_music_per_folder="$om_mod_settings_cmds/c0001_musicperfolder"
+disable_music_per_folder="$om_mod_settings_cmds/_musicperfolder"
+enable_folder_music="$om_mod_settings_cmds/c0001_musicperfolder_assign"
+disable_folder_music="$om_mod_settings_cmds/_musicperfolder_assign"
+enable_theme_setting="$om_mod_settings_cmds/c0000_themerandomizer"
+disable_theme_setting="$om_mod_settings_cmds/_themerandomizer"
+enable_system_clean_up="$om_mod_settings_cmds/c0001_systemcleanup"
+disable_system_clean_up="$om_mod_settings_cmds/_systemcleanup"
+enable_theme_generator="$om_mod_commands/c0000_3_generatetheme"
+disable_theme_generator="$om_mod_commands/_3_generatetheme"
+enable_uninstaller="$om_mod_settings_cmds/c0001_uninstaller"
+disable_uninstaller="$om_mod_settings_cmds/_uninstaller"
+enable_diy="$om_mod_gen_cmds/c0000_3_apply"
+disable_diy="$om_mod_gen_cmds/_3_apply"
+enable_del_diy="$om_mod_gen_cmds/c0000_5_remove"
+disable_del_diy="$om_mod_gen_cmds/_5_remove"
+enable_preview="$om_mod_gen_cmds/c0000_4_preview"
+disable_preview="$om_mod_gen_cmds/_4_preview"
+enable_pole="$om_mod_gen_cmds/c0006_pole"
+disable_pole="$om_mod_gen_cmds/_pole"
+enable_color="$om_mod_gen_cmds/c0006_colors"
+disable_color="$om_mod_gen_cmds/_colors"
+enable_mario="$om_mod_gen_cmds/c0002_mario"
+disable_mario="$om_mod_gen_cmds/_mario"
+enable_luigi="$om_mod_gen_cmds/c0003_luigi"
+disable_luigi="$om_mod_gen_cmds/_luigi"
+enable_smb="$om_mod_gen_cmds/c0002_sbm"
+disable_smb="$om_mod_gen_cmds/_sbm"
+enable_packed_nes="$om_mod_gen_cmds/c0001_packed_nes"
+disable_packed_nes="$om_mod_gen_cmds/_packed_nes"
+enable_colors_nes="$om_mod_gen_cmds/c0006_colors_nes"
+disable_colors_nes="$om_mod_gen_cmds/_colors_nes"
+enable_packed="$om_mod_gen_cmds/c0001_packed"
+disable_packed="$om_mod_gen_cmds/_packed"
+enable_wall="$om_mod_gen_cmds/c0001_wall"
+disable_wall="$om_mod_gen_cmds/_wall"
+enable_wall_far="$om_mod_gen_cmds/c0005_wall_far"
+disable_wall_far="$om_mod_gen_cmds/_wall_far"
+enable_wall_near="$om_mod_gen_cmds/c0004_wall_near"
+disable_wall_near="$om_mod_gen_cmds/_wall_near"
+list_name="-list-v2.tar.gz"
 
 # SHARED
 thm_chk="$mountpoint$profilepath/$modname/active_theme"
-system="$(echo "$s_type" | awk '{print toupper($0)}')"
+system_name="$(echo "$s_type" | awk '{print toupper($0)}')"
 om_mod_path="$nand_path/$modtitle"
 theme_path="$usb_path/$modtitle/$s_type"
 [ ! -d "$theme_path" ] && theme_path="$nand_path/$modtitle/$s_type"
@@ -164,15 +164,15 @@ snes_theme_path="${om_mod_path}/snes"
 
 #### ARRAYS
 diy_asset_array="diy_packed diy_wall diy_wall_far diy_wall_near diy_mario diy_luigi diy_colors diy_pole" # verify
-del_shared="$nes_theme_path $disableSmb $disablePackedNes $disableColorsNes $omModPackedNes $omModSbm $omModColorsNes ${omModImgs}/smb.png ${omModImgs}/packed_nes.png $disableColor $omModColors"
+del_shared="$nes_theme_path $disable_smb $disable_packed_nes $disable_colors_nes $om_mod_packed_nes $om_mod_sbm $om_mod_colors_nes ${om_mod_imgs}/smb.png ${om_mod_imgs}/packed_nes.png $disable_color $om_mod_colors"
 
-del_on_nes="$snes_theme_path $shonen_theme_path $disableColor $disablePole $disableMario $disableLuigi $disablePacked $disableWall $disableWallFar $disableWallNear $omModPole $omModMario $omModLuigi $omModWall $omModWallN $omModWallF $omModPacked $omModColors ${omModImgs}/luigi.png ${omModImgs}/mario.png ${omModImgs}/packed.png ${omModImgs}/pole.png ${omModImgs}/wall*.png"
+del_on_nes="$snes_theme_path $shonen_theme_path $disable_color $disable_pole $disable_mario $disable_luigi $disable_packed $disable_wall $disable_wall_far $disable_wall_near $om_mod_pole $om_mod_mario $om_mod_luigi $om_mod_wall $om_mod_wall_n $om_mod_wall_f $om_mod_packed $om_mod_colors ${om_mod_imgs}/luigi.png ${om_mod_imgs}/mario.png ${om_mod_imgs}/packed.png ${om_mod_imgs}/pole.png ${om_mod_imgs}/wall*.png"
 del_on_snes="$shonen_theme_path $del_shared"
 del_on_shonen="$snes_theme_path $del_shared"
 items_to_delete="$del_on_snes"
 
 # shellcheck disable=SC2012
-has_theme="$(ls -1 "$theme_path/$system".*.tar.gz 2> /dev/null | wc -l)"
+has_theme="$(ls -1 "$theme_path/$system_name".*.tar.gz 2> /dev/null | wc -l)"
 
 ################
 original_theme_ui0="ui/$sftype-$sfregion"
@@ -201,58 +201,58 @@ themeIsBindable() {
 
 hasThemesToInstall() {
   [ "$has_theme" = 0 ] && return
-  for f in "$theme_path/$system".*.tar.gz; do
+  for f in "$theme_path/$system_name".*.tar.gz; do
     [ -f "$f" ] || continue
     tar -xzvf "$f" -C "$theme_path" && rm -f "$f"
   done
 }
 
 clearList() {
-  find "$omModCommands" "$omModScripts" -type f \
+  find "$om_mod_commands" "$om_mod_scripts" -type f \
     -not -name 'om_*' -not -name 'c0000_*' \
     -not -name 'c999[0-9]_*' -not -name '_*' -exec rm {} +
-  remove "$omModSpacer"
+  remove "$om_mod_spacer"
 }
 
 clearDownloads() {
-  find "$omModSubCmds" "$omModSubScripts" "$omModSub" -type f \
+  find "$om_mod_sub_cmds" "$om_mod_sub_scripts" "$om_mod_sub" -type f \
     -not -name 'c000[0-8]_*' -not -name 'c999[0-9]_*' \
     -not -name 'om_*' -not -name '_*' -exec rm {} +
 }
 
 enableMenuOptions() {
-  enable_cmds "ThemeGenerator" "Clear"
-  disable_cmds "Settings" "Color"
+  enableCmds "theme_generator" "clear"
+  disableCmds "settings" "color"
 
-  if [ ! -f "$omDummy" ]; then
-    disable_cmds "Clear"
+  if [ ! -f "$om_dummy" ]; then
+    disableCmds "clear"
   fi
 
   toggleDownloads
 
-  [ -z "$(ls -A "$theme_path")" ] && disable_cmds "ThemeGenerator"
+  [ -z "$(ls -A "$theme_path")" ] && disableCmds "theme_generator"
 
   if [ -f "$b_file" ] || [ -f "$p_file" ]; then
-    enable_cmds "Settings"
+    enableCmds "settings"
   fi
 
- enable_cmds "AudioSetting" "AdvancedMusicHack"
-  [ -f "$(cat "$thm_chk" 2> /dev/null)/needs_overlay" ] && disable_cmds "AudioSetting" "AdvancedMusicHack"
+ enableCmds "audio_setting" "advanced_music_hack"
+  [ -f "$(cat "$thm_chk" 2> /dev/null)/needs_overlay" ] && disableCmds "audio_setting" "advanced_music_hack"
 
   if [ "$sftype" = "nes" ]; then
-    src="hvc"
-    dest="nes"
+    sprite_src="hvc"
+    sprite_dest="nes"
 
     if [ "$sfregion" = "jpn" ]; then
-      src="nes"
-      dest="hvc"
+      sprite_src="nes"
+      sprite_dest="hvc"
     fi
 
-    for subdir in "${omModPackedNes}/assets"/*; do
-      rename "${subdir}/${src}.png" "${subdir}/${dest}.png"
+    for subdir in "${om_mod_packed_nes}/assets"/*; do
+      rename "${subdir}/${sprite_src}.png" "${subdir}/${sprite_dest}.png"
     done
   fi
-  [ ! -d "$has_folders" ] && disable_cmds "ThemeGenerator"
+  [ ! -d "$has_folders" ] && disableCmds "theme_generator"
 }
 
 # avoids re-running the full themeLoader scan (~1.7s) when nothing changed
@@ -270,9 +270,9 @@ themeLoader() {
     resource_path="$full_path/resources"
     sprite_path="$resource_path/sprites"
     script_path="$resource_path/scripts"
-    cmd_list="$omModCommands/c0001_$thm"
-    thm_script="$omModScripts/$thm"
-    tmp_thm_script="$omThemeScript"
+    cmd_list="$om_mod_commands/c0001_$thm"
+    thm_script="$om_mod_scripts/$thm"
+    tmp_thm_script="$om_theme_script"
 
     if [ ! -f "$full_path/info" ]; then
       thm_title="$(echo "$thm" | sed -e 's/_/ /g' | awk '{for(i=1;i<=NF;i++){$i=toupper(substr($i,1,1))substr($i,2)}}1')"
@@ -290,48 +290,48 @@ themeLoader() {
 
     if [ ! -f "$full_path.png" ]; then
       if [ -d "$usb_path" ]; then
-        copier "$thmPreview/$thm.png" "$full_path.png"
+        copier "$thm_preview/$thm.png" "$full_path.png"
       else
-        link "$thmPreview/$thm.png" "$full_path.png"
+        link "$thm_preview/$thm.png" "$full_path.png"
       fi
     fi
 
-    create "$omModSpacer"
+    create "$om_mod_spacer"
 
     if [ "$sftype" = "nes" ]; then
-      src="hvc"
-      dest="nes"
+      sprite_src="hvc"
+      sprite_dest="nes"
 
       if [ "$sfregion" = "jpn" ]; then
-        src="nes"
-        dest="hvc"
+        sprite_src="nes"
+        sprite_dest="hvc"
       fi
 
       for ext in "png" "json"; do
-        rename "${sprite_path}/${src}.${ext}" "${sprite_path}/${dest}.${ext}"
+        rename "${sprite_path}/${sprite_src}.${ext}" "${sprite_path}/${sprite_dest}.${ext}"
       done
-      rename "${script_path}/colors_${src}.lua" "${script_path}/colors_${dest}.lua"
+      rename "${script_path}/colors_${sprite_src}.lua" "${script_path}/colors_${sprite_dest}.lua"
     fi
 
-    copy "$omModLicense" "$thm_script.sh"
+    copy "$om_mod_license" "$thm_script.sh"
 
     if [ ! -d "$has_folders" ]; then
-      tmp_thm_script="$omOverlayThemeScript"
+      tmp_thm_script="$om_overlay_theme_script"
     fi
 
     echo "sed '1,2d' \"$tmp_thm_script\" >\"$b_file\"
   [ ! -f \"$p_file\" ] && echo themeSelector >\"$p_file\"
-sed -i \"s/SELECTED_THEME=\\\"CHANGEME\\\"/SELECTED_THEME=\\\"${thm}\\\"/g;\" \"$b_file\"
+sed -i \"s/selected_theme=\\\"CHANGEME\\\"/selected_theme=\\\"${thm}\\\"/g;\" \"$b_file\"
 " >> "$thm_script.sh"
 
-    echo "\"\$omScripts/gen_splash\" /tmp/om_splash.png THEME_APPLYING_LINE1 THEME_APPLYING_LINE2 && decodepng /tmp/om_splash.png > /dev/fb0
+    echo "\"\$om_scripts/gen_splash\" /tmp/om_splash.png THEME_APPLYING_LINE1 THEME_APPLYING_LINE2 && decodepng /tmp/om_splash.png > /dev/fb0
 sleep 1
     hakchi reboot" >> "$thm_script.sh"
 
-    preview_image="$thmPreview/$thm.png"
+    preview_image="$thm_preview/$thm.png"
     [ ! -f "$preview_image" ] && preview_image="$theme_path/$thm.png"
-    [ ! -f "$preview_image" ] && [ -z "${thm##diy_theme*}" ] && preview_image="$optionsMenu/images/diy_preview.png"
-    [ ! -f "$preview_image" ] && preview_image="$optionsMenu/images/default_preview.png"
+    [ ! -f "$preview_image" ] && [ -z "${thm##diy_theme*}" ] && preview_image="$options_menu/images/diy_preview.png"
+    [ ! -f "$preview_image" ] && preview_image="$options_menu/images/default_preview.png"
 
     cmd_name="$(sed -r 's/NAME=//g' < "$full_path/info")"
     echo "COMMAND_NAME=$cmd_name
@@ -343,7 +343,7 @@ DELETE_STR=rm -rf \"$full_path\" \"$full_path.png\" \"$cmd_list\" \"$thm_script.
 }
 
 removeRegionalTheme() {
-  region_files="$omModSubCmds/c0010_snesce-$sfregion $omModSubScripts/getSnes$sfregion $omModSub/$sfregion.png $omModSub/snesce-$sfregion.png"
+  region_files="$om_mod_sub_cmds/c0010_snesce-$sfregion $om_mod_sub_scripts/getSnes$sfregion $om_mod_sub/$sfregion.png $om_mod_sub/snesce-$sfregion.png"
   for item in $region_files; do
     remove "$item"
   done
@@ -351,17 +351,17 @@ removeRegionalTheme() {
 }
 
 getThemeList() {
-  "$omScripts/gen_splash" /tmp/om_splash.png THEME_LIST_DOWNLOADING_LINE1 THEME_LIST_DOWNLOADING_LINE2 && decodepng /tmp/om_splash.png > /dev/fb0
-  cd "$omModSub" || exit
+  "$om_scripts/gen_splash" /tmp/om_splash.png THEME_LIST_DOWNLOADING_LINE1 THEME_LIST_DOWNLOADING_LINE2 && decodepng /tmp/om_splash.png > /dev/fb0
+  cd "$om_mod_sub" || exit
 
-  if [ ! -e "${s_type}${listName}" ]; then
+  if [ ! -e "${s_type}${list_name}" ]; then
     clearDownloads
-    theme_downloader catalog "$s_type" "${s_type}${listName}" || netChecker
+    theme_downloader catalog "$s_type" "${s_type}${list_name}" || netChecker
   fi
   # shellcheck disable=SC2035
-  tar -xzf "${s_type}${listName}" && rm -f *.tar.gz
+  tar -xzf "${s_type}${list_name}" && rm -f *.tar.gz
   removeRegionalTheme
-  touch "$subDummy"
+  touch "$sub_dummy"
   usleep 1000
 }
 
@@ -399,12 +399,12 @@ fontFix' "/var/lib/hakchi/rootfs/bin/chmenu"
 
 loadThemeList() {
   if [ -n "$(ls -A "$theme_path")" ]; then
-    create "$omDummy"
+    create "$om_dummy"
     if [ "$1" = "-r" ]; then
       themeLoader
     fi
   else
-    remove "$omModSpacer"
+    remove "$om_mod_spacer"
     clearList
   fi
 }
@@ -416,7 +416,7 @@ themeGenerator() {
   translate CHECKING_THEME_FILES
   echo ""
   theme_name="${1}"
-  full_title="$(grep -F 'NAME=' "${omModSubCmds}/c0010_${theme_name}" | sed -e 's/.*=\(.*\)\[.*/\1/')"
+  full_title="$(grep -F 'NAME=' "${om_mod_sub_cmds}/c0010_${theme_name}" | sed -e 's/.*=\(.*\)\[.*/\1/')"
   full_path="${theme_path}/${theme_name}"
   cd "${theme_path}" || exit
 
@@ -428,20 +428,20 @@ themeGenerator() {
       while IFS= read -r t; do
         echo "$t"
         echo ""
-        theme_downloader theme "$sftype" "$t" "${system}.${t}.tar.gz" \
-          && tar -xzvf "${system}.${t}.tar.gz" && remove "${system}.${t}.tar.gz"
+        theme_downloader theme "$sftype" "$t" "${system_name}.${t}.tar.gz" \
+          && tar -xzvf "${system_name}.${t}.tar.gz" && remove "${system_name}.${t}.tar.gz"
       done < "${sftype}-all"
     fi
   else
     ok=0
-    if theme_downloader theme "$sftype" "$theme_name" "${system}.${theme_name}.tar.gz"; then
+    if theme_downloader theme "$sftype" "$theme_name" "${system_name}.${theme_name}.tar.gz"; then
       ok=1
       translate DOWNLOADING
     fi
   fi
 
   if [ "$ok" = 1 ]; then
-    [ -f "${system}.${theme_name}.tar.gz" ] && tar -xzvf "${system}.${theme_name}.tar.gz" && rm -f ./*.tar.gz
+    [ -f "${system_name}.${theme_name}.tar.gz" ] && tar -xzvf "${system_name}.${theme_name}.tar.gz" && rm -f ./*.tar.gz
     remove "${sftype}-all"
     removeRegionalTheme
     echo ""
@@ -454,10 +454,10 @@ themeGenerator() {
 }
 
 findDiyAsset() {
-  "$omScripts/gen_splash" /tmp/om_splash.png THEME_LOADING && decodepng /tmp/om_splash.png > /dev/fb0
+  "$om_scripts/gen_splash" /tmp/om_splash.png THEME_LOADING && decodepng /tmp/om_splash.png > /dev/fb0
 
   diy_file="${1}.png"
-  diy_sprite="$omModSprites/${1}"
+  diy_sprite="$om_mod_sprites/${1}"
   asset_path="layout/asset/sprite/wallpaper"
   asset="$diy_file"
   chars="0"
@@ -523,7 +523,7 @@ findDiyAsset() {
   esac
 
   diy_crop_x=""
-  diy_sprites_json="$omModScripts/om_${1}.sprites.json"
+  diy_sprites_json="$om_mod_scripts/om_${1}.sprites.json"
   if [ "$colors" = "0" ] && [ -f "$diy_sprites_json" ]; then
     diy_frame="$(grep -o '"textureFrame":\[[0-9]*,[0-9]*,[0-9]*,[0-9]*\]' "$diy_sprites_json" | grep -o '[0-9]*,[0-9]*,[0-9]*,[0-9]*')"
     diy_crop_x="${diy_frame%%,*}"
@@ -533,7 +533,7 @@ findDiyAsset() {
     diy_crop_w="${diy_rest%%,*}"
     diy_crop_h="${diy_rest#*,}"
   fi
-  paths_to_search="$omModSprites/assets/$1 $theme_path"
+  paths_to_search="$om_mod_sprites/assets/$1 $theme_path"
 
   find "$diy_sprite/commands" "$diy_sprite/scripts" -type f \
     -not -name 'om_*' -not -name 'c999[0-9]_*' -not -name 'c0000_*' \
@@ -554,7 +554,7 @@ findDiyAsset() {
 
         has_sprite="0"
         full_asset_path="$p/$asset_name"
-        json="${omModSprites}/${1}_${asset_name}.json"
+        json="${om_mod_sprites}/${1}_${asset_name}.json"
         resource_path="$full_asset_path/resources"
 
         [ -f "$full_asset_path/$diy_file" ] && has_sprite="1"
@@ -580,7 +580,7 @@ findDiyAsset() {
 $sprite_hash"
           fi
 
-          temp_preview="${omModSprites}/assets/${1}/${1}_${asset_name}.png"
+          temp_preview="${om_mod_sprites}/assets/${1}/${1}_${asset_name}.png"
 
           if [ "$colors" = "1" ]; then
             preview_image="$temp_preview"
@@ -624,7 +624,7 @@ COMMAND_TYPE=INTERNAL
 COMMAND_STR=sh $sprite_script.sh
 PREVIEW_IMAGE=$preview_image${preview_nearest}${preview_square_str}${preview_cols_str}${preview_fit_str}" > "$cmd_file"
 
-            copy "$omModLicense" "$sprite_script.sh"
+            copy "$om_mod_license" "$sprite_script.sh"
             echo "diySpriteSelector \"$full_asset_path\" \"$asset_path\" \"$asset\"" >> "$sprite_script.sh"
           fi
         fi
@@ -636,14 +636,14 @@ PREVIEW_IMAGE=$preview_image${preview_nearest}${preview_square_str}${preview_col
 }
 
 diySpriteSelector() {
-  diySelectedAsset="$1"
-  diyLayout="$diyResources/$2"
-  diyAsset="$diyLayout"
+  diy_selected_asset="$1"
+  diy_layout="$diy_resources/$2"
+  diy_asset="$diy_layout"
 
-  [ ! -d "$diyAsset" ] && mkdir -p "$diyAsset"
-  find "$diySelectedAsset" -name "$3" -exec cp {} "$diyLayout" \;
+  [ ! -d "$diy_asset" ] && mkdir -p "$diy_asset"
+  find "$diy_selected_asset" -name "$3" -exec cp {} "$diy_layout" \;
   if [ ! -f "$b_file" ]; then
-    sed '1,2d' "$omThemeScript" > "$b_file"
+    sed '1,2d' "$om_theme_script" > "$b_file"
     echo themeSelector > "$p_file"
   fi
   echo ""
@@ -667,23 +667,23 @@ diySpriteSelector() {
 }
 
 diyThemeChecker() {
-  [ "$1" = "loader" ] && { "$omScripts/gen_splash" /tmp/om_splash.png THEME_LOADING_ASSETS && decodepng /tmp/om_splash.png > /dev/fb0; }
+  [ "$1" = "loader" ] && { "$om_scripts/gen_splash" /tmp/om_splash.png THEME_LOADING_ASSETS && decodepng /tmp/om_splash.png > /dev/fb0; }
 
-  [ ! -d "$diyThemePath" ] && mkdir -p "$diyThemePath"
+  [ ! -d "$diy_theme_path" ] && mkdir -p "$diy_theme_path"
 
-  if find "$diyThemePath" -type f | read -r _; then
-    enable_cmds "DiY" "DelDiY" "Preview"
+  if find "$diy_theme_path" -type f | read -r _; then
+    enableCmds "diy" "del_diy" "preview"
   else
-    disable_cmds "DiY" "DelDiY" "Preview"
+    disableCmds "diy" "del_diy" "preview"
   fi
 
   [ "$1" = "loader" ] && usleep 1000
 }
 
 diyThemeRemover() {
-  disable_cmds "DiY" "DelDiY" "Preview"
+  disableCmds "diy" "del_diy" "preview"
 
-  [ -d "$diyThemePath" ] && find "$diyThemePath" -type f -not -name 'assets_here' -exec rm {} +
+  [ -d "$diy_theme_path" ] && find "$diy_theme_path" -type f -not -name 'assets_here' -exec rm {} +
 
 }
 
@@ -691,7 +691,7 @@ modCleanUp() {
   for item in $items_to_delete; do
     remove "$item"
   done
-  hasItemsToCleanUp "SystemCleanUp"
+  hasItemsToCleanUp "system_clean_up"
 }
 
 themeSettings() {
@@ -751,11 +751,11 @@ hasItemsToCleanUp() {
     fi
   done
   if [ "$has_non_system_files" = "true" ]; then
-    enable_cmds "$1"
-    [ ! -f "$omModSettingsSpacer" ] && touch "$omModSettingsSpacer"
+    enableCmds "$1"
+    [ ! -f "$om_mod_settings_spacer" ] && touch "$om_mod_settings_spacer"
   else
-    disable_cmds "$1"
-    [ ! -f "$enableUninstaller" ] && remove "$omModSettingsSpacer"
+    disableCmds "$1"
+    [ ! -f "$enable_uninstaller" ] && remove "$om_mod_settings_spacer"
   fi
 }
 
@@ -765,26 +765,26 @@ musicPerFolder() {
 
 folderThemesRow() {
   if [ -f "$om_themeperfolder" ] && [ -d "$has_folders" ]; then
-    enable_cmds "FolderThemes"
+    enableCmds "folder_themes"
   else
-    disable_cmds "FolderThemes"
+    disableCmds "folder_themes"
   fi
   if hasMusicFiles "$music_path"; then
-    enable_cmds "MusicPerFolder"
+    enableCmds "music_per_folder"
   else
-    disable_cmds "MusicPerFolder"
+    disableCmds "music_per_folder"
   fi
   if musicPerFolder && [ -d "$has_folders" ]; then
-    enable_cmds "FolderMusic"
+    enableCmds "folder_music"
   else
-    disable_cmds "FolderMusic"
+    disableCmds "folder_music"
   fi
 }
 
 # a folder entry living in games/<P>/CLV-S-00<C>/ is folder <C> inside folder <P>
 listFolders() {
   tab="$(printf '\t')"
-  find "$gStorage" -maxdepth 3 -type f -name 'CLV-S-00*.desktop' -exec awk '
+  find "$game_storage" -maxdepth 3 -type f -name 'CLV-S-00*.desktop' -exec awk '
     /^Name=/ {
       name = substr($0, 6)
       if (name == "Back" || name == "Home") next
@@ -812,9 +812,9 @@ themeTitle() {
 }
 
 themePreview() {
-  preview="$thmPreview/$1.png"
+  preview="$thm_preview/$1.png"
   [ ! -f "$preview" ] && preview="$theme_path/$1.png"
-  [ ! -f "$preview" ] && preview="$optionsMenu/images/default_preview.png"
+  [ ! -f "$preview" ] && preview="$options_menu/images/default_preview.png"
   echo "$preview"
 }
 
@@ -822,12 +822,12 @@ globalTheme() {
   if [ -f "$om_themerandomizer" ]; then
     echo "@random"
   elif [ -f "$b_file" ]; then
-    sed -n 's/^ *local SELECTED_THEME="\(.*\)"$/\1/p' "$b_file" | head -n1 | grep -v '^CHANGEME$'
+    sed -n 's/^ *local selected_theme="\(.*\)"$/\1/p' "$b_file" | head -n1 | grep -v '^CHANGEME$'
   fi
 }
 
 folderThemesMenu() {
-  data_dir="$folderThemesTmp"
+  data_dir="$folder_themes_tmp"
   rm -rf "$data_dir" && mkdir -p "$data_dir"
   {
     printf 'home\t%s\t0\n' "$(translate HOME_FOLDER)"
@@ -848,12 +848,12 @@ folderThemesMenu() {
     [ -f "$om_audiorandomizer" ] && echo random_home
     [ -f "$om_advmusichack" ] && echo random_folders
   } >"$data_dir/audio"
-  echo "sh $omModScripts/om_settings" >"$data_dir/om_return"
+  echo "sh $om_mod_scripts/om_settings" >"$data_dir/om_return"
 
   title="FOLDER_THEMES"
   [ "$1" = "music" ] && title="FOLDER_MUSIC"
   set -- --commandPath "$data_dir/" --scriptPath "$data_dir" --title "$title" --folderThemes "$data_dir" --folderChannel "$1"
   [ -f "$om_themeperfolder" ] && set -- "$@" --mapping "$om_folderthemes"
   musicPerFolder && set -- "$@" --musicMapping "$om_foldermusic"
-  $optionsMenu/lib/theme_manager "$@" &
+  $options_menu/lib/theme_manager "$@" &
 }

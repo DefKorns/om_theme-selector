@@ -22,7 +22,7 @@ script_init
 injectFile "chmenu"
 hasThemesToInstall
 enableMenuOptions
-remove "$omDummy"
+remove "$om_dummy"
 
 [ -f "$om_firstrun" ] && remove "$om_themerandomizer" "$om_themeperfolder" "$om_musicperfolder" "$om_audiorandomizer" "$om_advmusichack"
 
@@ -34,4 +34,4 @@ else
   loadThemeList
 fi
 
-$optionsMenu/lib/theme_manager --title INSTALLED_THEMES &
+$options_menu/lib/theme_manager --title INSTALLED_THEMES &

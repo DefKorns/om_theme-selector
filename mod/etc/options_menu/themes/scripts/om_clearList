@@ -21,7 +21,7 @@ script_init
 
 
 clearList
-disable_cmds "Clear"
-enable_cmds "Refresh"
+disableCmds "clear"
+enableCmds "refresh"
 
-$optionsMenu/lib/theme_manager --title INSTALLED_THEMES &
+$options_menu/lib/theme_manager --title INSTALLED_THEMES &

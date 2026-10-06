@@ -19,10 +19,10 @@
 source $mountpoint/etc/options_menu/themes/scripts/om_vars
 script_init
 
-"$omScripts/gen_splash" /tmp/om_splash.png THEME_LOADING && decodepng /tmp/om_splash.png >/dev/fb0
+"$om_scripts/gen_splash" /tmp/om_splash.png THEME_LOADING && decodepng /tmp/om_splash.png >/dev/fb0
 
 modCleanUp
 
 usleep 1000
 
-$optionsMenu/lib/theme_manager --commandPath $omModSettingsCmds/ --scriptPath $omModSettingsScripts --title THEME_SETTINGS --layout list &
+$options_menu/lib/theme_manager --commandPath $om_mod_settings_cmds/ --scriptPath $om_mod_settings_scripts --title THEME_SETTINGS --layout list &

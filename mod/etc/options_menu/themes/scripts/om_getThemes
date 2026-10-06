@@ -20,6 +20,6 @@
 source $mountpoint/etc/options_menu/themes/scripts/om_vars
 script_init
 
-[ ! -f "$subDummy" ] && getThemeList
+[ ! -f "$sub_dummy" ] && getThemeList
 
-$optionsMenu/lib/theme_manager --commandPath $omModSubCmds/ --scriptPath $omModSubScripts --title AVAILABLE_THEMES &
+$options_menu/lib/theme_manager --commandPath $om_mod_sub_cmds/ --scriptPath $om_mod_sub_scripts --title AVAILABLE_THEMES &

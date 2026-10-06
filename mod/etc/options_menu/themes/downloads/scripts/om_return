@@ -19,14 +19,14 @@
 # shellcheck source=/dev/null
 source $mountpoint/etc/options_menu/themes/scripts/om_vars
 script_init
-remove "$omDummy"
+remove "$om_dummy"
 
 if [ -n "$(ls -A $theme_path)" ]; then
-  touch "$omDummy"
+  touch "$om_dummy"
   themeCountChanged && themeLoader
 else
-  remove "$omModSpacer"
+  remove "$om_mod_spacer"
   clearList
 fi
 
-usleep 50000 && $optionsMenu/lib/theme_manager --title INSTALLED_THEMES &
+usleep 50000 && $options_menu/lib/theme_manager --title INSTALLED_THEMES &

@@ -22,4 +22,4 @@ script_init
 
 diyThemeChecker
 
-$optionsMenu/lib/theme_manager --commandPath $omModGenCmds/ --scriptPath $omModGenScripts --title DIY_THEME &
+$options_menu/lib/theme_manager --commandPath $om_mod_gen_cmds/ --scriptPath $om_mod_gen_scripts --title DIY_THEME &

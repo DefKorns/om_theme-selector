@@ -21,6 +21,6 @@ source $mountpoint/etc/options_menu/themes/scripts/om_vars
 script_init
 
 clearDownloads
-remove "$subDummy"
+remove "$sub_dummy"
 
-$optionsMenu/lib/theme_manager --commandPath $omModSubCmds/ --scriptPath $omModSubScripts --title AVAILABLE_THEMES &
+$options_menu/lib/theme_manager --commandPath $om_mod_sub_cmds/ --scriptPath $om_mod_sub_scripts --title AVAILABLE_THEMES &

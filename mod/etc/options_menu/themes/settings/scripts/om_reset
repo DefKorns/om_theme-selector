@@ -20,14 +20,14 @@
 source $mountpoint/etc/options_menu/themes/scripts/om_vars
 script_init
 
-FONT_PATH="$mountpoint/media/$modname/fonts"
-[ ! -d "$FONT_PATH" ] && FONT_PATH="$rootfs/usr/share/fonts"
-[ -f "${FONT_PATH}/title.fnt.backup" ] && cp "${FONT_PATH}/title.fnt.backup" "${FONT_PATH}/title.fnt"
-for FONT in s m l small medium large; do
-  rm -f "${FONT_PATH}/${FONT}.fnt"
+font_path="$mountpoint/media/$modname/fonts"
+[ ! -d "$font_path" ] && font_path="$rootfs/usr/share/fonts"
+[ -f "${font_path}/title.fnt.backup" ] && cp "${font_path}/title.fnt.backup" "${font_path}/title.fnt"
+for font_name in s m l small medium large; do
+  rm -f "${font_path}/${font_name}.fnt"
 done
 
 remove "$b_file" "$p_file"
 hakchi reboot
 
-$optionsMenu/lib/theme_manager --commandPath $omModSettingsCmds/ --scriptPath $omModSettingsScripts --title THEME_SETTINGS --layout list &
+$options_menu/lib/theme_manager --commandPath $om_mod_settings_cmds/ --scriptPath $om_mod_settings_scripts --title THEME_SETTINGS --layout list &
