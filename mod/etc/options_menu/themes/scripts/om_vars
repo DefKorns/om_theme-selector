@@ -151,8 +151,13 @@ list_name="-list-v2.tar.gz"
 thm_chk="$mountpoint$profilepath/$modname/active_theme"
 system_name="$(echo "$s_type" | awk '{print toupper($0)}')"
 om_mod_path="$nand_path/$modtitle"
+nand_theme_path="$nand_path/$modtitle/$s_type"
 theme_path="$usb_path/$modtitle/$s_type"
-[ ! -d "$theme_path" ] && theme_path="$nand_path/$modtitle/$s_type"
+if [ -d "$usb_path" ]; then
+  mkdir -p "$theme_path"
+else
+  theme_path="$nand_theme_path"
+fi
 hasMusicFiles() {
   find "$1" -maxdepth 1 -type f -iname "*.wav" 2>/dev/null | read -r _
 }
@@ -199,6 +204,29 @@ themeIsBindable() {
 }
 
 
+migrateThemes() {
+  [ "$theme_path" = "$nand_theme_path" ] && return 1
+  [ -n "$(ls -A "$nand_theme_path" 2> /dev/null)" ] || return 1
+  for item in "$nand_theme_path"/*; do
+    name="${item##*/}"
+    if [ "$name" != "$sfregion" ] && [ ! -e "$theme_path/$name" ]; then
+      "$om_scripts/gen_splash" /tmp/om_splash.png THEME_MOVING_LINE1 THEME_MOVING_LINE2 && decodepng /tmp/om_splash.png > /dev/fb0
+      break
+    fi
+  done
+  for item in "$nand_theme_path"/*; do
+    dest="$theme_path/${item##*/}"
+    rm -rf "$dest"
+    if cp -a "$item" "$dest"; then
+      rm -rf "$item"
+    else
+      rm -rf "$dest"
+    fi
+  done
+  [ -f "$thm_chk" ] && sed -i "s#^$nand_theme_path/#$theme_path/#" "$thm_chk"
+  return 0
+}
+
 hasThemesToInstall() {
   [ "$has_theme" = 0 ] && return
   for f in "$theme_path/$system_name".*.tar.gz; do
@@ -217,7 +245,7 @@ clearList() {
 clearDownloads() {
   find "$om_mod_sub_cmds" "$om_mod_sub_scripts" "$om_mod_sub" -type f \
     -not -name 'c000[0-8]_*' -not -name 'c999[0-9]_*' \
-    -not -name 'om_*' -not -name '_*' -exec rm {} +
+    -not -name 'om_*' -not -name '_*' -not -path "$thm_preview/*" -exec rm {} +
 }
 
 enableMenuOptions() {
@@ -288,7 +316,7 @@ themeLoader() {
       fi
     fi
 
-    if [ ! -f "$full_path.png" ]; then
+    if [ ! -s "$full_path.png" ]; then
       if [ -d "$usb_path" ]; then
         copier "$thm_preview/$thm.png" "$full_path.png"
       else
@@ -343,11 +371,9 @@ DELETE_STR=rm -rf \"$full_path\" \"$full_path.png\" \"$cmd_list\" \"$thm_script.
 }
 
 removeRegionalTheme() {
-  region_files="$om_mod_sub_cmds/c0010_snesce-$sfregion $om_mod_sub_scripts/getSnes$sfregion $om_mod_sub/$sfregion.png $om_mod_sub/snesce-$sfregion.png"
-  for item in $region_files; do
-    remove "$item"
-  done
-  [ -d "$theme_path/snesce-$sfregion" ] && rm -rf "$theme_path/snesce-$sfregion"
+  [ "$(globalTheme)" = "$sfregion" ] && return
+  remove "$theme_path/$sfregion" "$theme_path/$sfregion.png" \
+    "$om_mod_commands/c0001_$sfregion" "$om_mod_scripts/$sfregion.sh"
 }
 
 getThemeList() {
@@ -356,7 +382,12 @@ getThemeList() {
 
   if [ ! -e "${s_type}${list_name}" ]; then
     clearDownloads
-    theme_downloader catalog "$s_type" "${s_type}${list_name}" || netChecker
+    theme_downloader catalog "$s_type" "${s_type}${list_name}"
+    case "$?" in
+      0) ;;
+      3) translate NOT_ENOUGH_SPACE ;;
+      *) netChecker ;;
+    esac
   fi
   # shellcheck disable=SC2035
   tar -xzf "${s_type}${list_name}" && rm -f *.tar.gz
@@ -419,38 +450,72 @@ themeGenerator() {
   full_title="$(grep -F 'NAME=' "${om_mod_sub_cmds}/c0010_${theme_name}" | sed -e 's/.*=\(.*\)\[.*/\1/')"
   full_path="${theme_path}/${theme_name}"
   cd "${theme_path}" || exit
+  translate DOWNLOADING
 
   if [ "${theme_name}" = "all" ]; then
-    ok=0
-    if theme_downloader all-manifest "$sftype" "${sftype}-all"; then
-      ok=1
-      translate DOWNLOADING
+    theme_downloader all-manifest "$sftype" "${sftype}-all"
+    rc=$?
+    failed=""
+    if [ "$rc" = 0 ]; then
       while IFS= read -r t; do
         echo "$t"
         echo ""
-        theme_downloader theme "$sftype" "$t" "${system_name}.${t}.tar.gz" \
-          && tar -xzvf "${system_name}.${t}.tar.gz" && remove "${system_name}.${t}.tar.gz"
+        downloadTheme "$t"
+        case "$?" in
+          0) ;;
+          3) rc=3 && break ;;
+          *) failed="$failed $t" ;;
+        esac
       done < "${sftype}-all"
     fi
+    remove "${sftype}-all"
   else
-    ok=0
-    if theme_downloader theme "$sftype" "$theme_name" "${system_name}.${theme_name}.tar.gz"; then
-      ok=1
-      translate DOWNLOADING
+    downloadTheme "$theme_name"
+    rc=$?
+    if [ "$rc" = 0 ]; then
+      size="$(du -sh "${full_path}" | cut -f1)"
+      echo "NAME=${full_title}[${size}b]" > "${full_path}/info"
     fi
   fi
 
-  if [ "$ok" = 1 ]; then
-    [ -f "${system_name}.${theme_name}.tar.gz" ] && tar -xzvf "${system_name}.${theme_name}.tar.gz" && rm -f ./*.tar.gz
-    remove "${sftype}-all"
-    removeRegionalTheme
+  removeRegionalTheme
+  echo ""
+  case "$rc" in
+    0) translate INSTALLATION_COMPLETE ;;
+    3) translate NOT_ENOUGH_SPACE ;;
+    *) netChecker ;;
+  esac
+  if [ -n "$failed" ]; then
     echo ""
-    size="$(du -sh "${full_path}" | cut -f1)"
-    echo "NAME=${full_title}[${size}b]" > "${full_path}/info"
-    translate INSTALLATION_COMPLETE
-  else
-    netChecker
+    translate THEMES_FAILED
+    echo "$failed"
   fi
+}
+
+freeSpaceKb() {
+  df -Pk "$1" | awk 'NR==2 {print $4}'
+}
+
+unpackedSizeKb() {
+  size_kb=$(( $(tail -c4 "$1" | od -An -tu4) / 1024 + 1 ))
+  echo $(( size_kb + size_kb / 10 ))
+}
+
+downloadTheme() {
+  tarball="${system_name}.$1.tar.gz"
+  theme_downloader theme "$sftype" "$1" "$tarball" || return
+  if [ "$(freeSpaceKb .)" -lt "$(unpackedSizeKb "$tarball")" ]; then
+    dl_rc=3
+    gzip -t "$tarball" 2> /dev/null || dl_rc=1
+  elif ! tar -xzvf "$tarball"; then
+    dl_rc=1
+    [ "$(freeSpaceKb .)" -lt 1024 ] && dl_rc=3
+  else
+    remove "$tarball"
+    return 0
+  fi
+  rm -rf "$tarball" "$1" "$1.png"
+  return "$dl_rc"
 }
 
 findDiyAsset() {

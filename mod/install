@@ -82,9 +82,6 @@ transfer_default
 # saves aren't mounted yet during install - om_theme_selector resets settings on first run
 om_firstrun="$rootfs/etc/options_menu/themes/om_firstrun"
 [ ! -f "$om_firstrun" ] && touch "$om_firstrun"
-copy "$om_themes_scripts/om_fontfix" "$pre_initd/b8025_fontfix"
-copy "$om_themes_scripts/om_chmenu" "$rootfs/bin/chmenu"
-chmod +x "$rootfs/bin/chmenu"
 chmod +x "$rootfs/bin/sprite_crop"
 chmod +x "$rootfs/bin/theme_downloader"
 chmod +x "$rootfs/etc/options_menu/lib/theme_manager"

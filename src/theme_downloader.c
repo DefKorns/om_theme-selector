@@ -82,30 +82,32 @@ static size_t write_to_file(void *ptr, size_t size, size_t nmemb, void *userdata
     return fwrite(ptr, size, nmemb, (FILE *)userdata);
 }
 
-static int download_to(const char *url, const char *out_path) {
+enum fetch_result { FETCH_FAILED, FETCH_OK, FETCH_WRITE_ERROR };
+
+static enum fetch_result download_to(const char *url, const char *out_path) {
     FILE *f = fopen(out_path, "wb");
-    if (!f) return 0;
+    if (!f) return FETCH_WRITE_ERROR;
     CURL *c = make_handle(url, 10L, 0L);
     if (!c) {
         fclose(f);
-        return 0;
+        remove(out_path);
+        return FETCH_FAILED;
     }
     curl_easy_setopt(c, CURLOPT_WRITEFUNCTION, write_to_file);
     curl_easy_setopt(c, CURLOPT_WRITEDATA, f);
     CURLcode res = curl_easy_perform(c);
     curl_easy_cleanup(c);
-    fclose(f);
-    if (res != CURLE_OK) {
-        remove(out_path);
-        return 0;
-    }
-    return 1;
+    int closed = fclose(f) == 0;
+    if (res == CURLE_OK && closed) return FETCH_OK;
+    remove(out_path);
+    return (res == CURLE_WRITE_ERROR || !closed) ? FETCH_WRITE_ERROR : FETCH_FAILED;
 }
 
-static int fetch_with_fallback(const char *gh_url, const char *fallback_url, const char *out_path) {
-    if (url_reachable(gh_url) && download_to(gh_url, out_path)) return 1;
-    if (url_reachable(fallback_url) && download_to(fallback_url, out_path)) return 1;
-    return 0;
+static enum fetch_result fetch_with_fallback(const char *gh_url, const char *fallback_url, const char *out_path) {
+    enum fetch_result r = FETCH_FAILED;
+    if (url_reachable(gh_url)) r = download_to(gh_url, out_path);
+    if (r == FETCH_FAILED && url_reachable(fallback_url)) r = download_to(fallback_url, out_path);
+    return r;
 }
 
 static void usage(const char *prog) {
@@ -128,14 +130,14 @@ int main(int argc, char **argv) {
 
     char gh_url[512];
     char fallback_url[512];
-    int ok = 0;
+    enum fetch_result result = FETCH_FAILED;
 
     if (strcmp(argv[1], "catalog") == 0 && argc == 4) {
         const char *sftype = argv[2];
         const char *out_path = argv[3];
         snprintf(gh_url, sizeof(gh_url), "%s/%s%s", GITHUB_BASE, sftype, LIST_SUFFIX);
         snprintf(fallback_url, sizeof(fallback_url), "%s%s%s", CLASSICMODS_SCRIPTS, sftype, LIST_SUFFIX);
-        ok = fetch_with_fallback(gh_url, fallback_url, out_path);
+        result = fetch_with_fallback(gh_url, fallback_url, out_path);
     } else if (strcmp(argv[1], "theme") == 0 && argc == 5) {
         const char *sftype = argv[2];
         const char *theme_name = argv[3];
@@ -144,13 +146,13 @@ int main(int argc, char **argv) {
         to_upper(system_name, sftype, sizeof(system_name));
         snprintf(gh_url, sizeof(gh_url), "%s/%s.%s.tar.gz", GITHUB_BASE, system_name, theme_name);
         snprintf(fallback_url, sizeof(fallback_url), "%s%s.%s.tar.gz", CLASSICMODS_THEMES, system_name, theme_name);
-        ok = fetch_with_fallback(gh_url, fallback_url, out_path);
+        result = fetch_with_fallback(gh_url, fallback_url, out_path);
     } else if (strcmp(argv[1], "all-manifest") == 0 && argc == 4) {
         const char *sftype = argv[2];
         const char *out_path = argv[3];
         snprintf(gh_url, sizeof(gh_url), "%s/%s-all", GITHUB_BASE, sftype);
         snprintf(fallback_url, sizeof(fallback_url), "%s%s-all", CLASSICMODS_SCRIPTS, sftype);
-        ok = fetch_with_fallback(gh_url, fallback_url, out_path);
+        result = fetch_with_fallback(gh_url, fallback_url, out_path);
     } else {
         usage(argv[0]);
         curl_global_cleanup();
@@ -158,5 +160,6 @@ int main(int argc, char **argv) {
     }
 
     curl_global_cleanup();
-    return ok ? 0 : 1;
+    if (result == FETCH_WRITE_ERROR) return 3;
+    return result == FETCH_OK ? 0 : 1;
 }

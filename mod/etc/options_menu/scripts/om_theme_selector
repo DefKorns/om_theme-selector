@@ -20,6 +20,7 @@ source $mountpoint/etc/options_menu/themes/scripts/om_vars
 script_init
 
 injectFile "chmenu"
+migrateThemes && set -- reload
 hasThemesToInstall
 enableMenuOptions
 remove "$om_dummy"
