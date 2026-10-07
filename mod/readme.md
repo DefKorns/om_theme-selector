@@ -16,7 +16,7 @@ Full guides: [github.com/DefKorns/om_theme-selector/wiki](https://github.com/Def
 
 - **Installed themes grid** — browse your themes by their preview and apply one; the active theme is outlined
 - **Download themes** from an online catalog of 90+ themes, each credited to its author (**Wi-Fi mod required**)
-- **DIY theme** — mix the UI, background, demo characters, pole and colors of the themes you already have, preview it live, then save it as a theme of your own
+- **DIY theme** — mix the UI, background and demo sprites (or background color, on a NES) of the themes you already have, preview it live, then save it as a theme of your own
 - **Theme and music per folder** — give any folder (and Home) its own theme and its own menu music from one screen; folders without one inherit their parent's
 - **Theme randomizer** — a different theme every time you change folder (off by default)
 - **Audio randomizer** on Home, optionally on every folder (off by default)
