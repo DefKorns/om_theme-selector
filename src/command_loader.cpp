@@ -137,6 +137,8 @@ bool LoadCommands(const std::string & commandLocation, const std::string & scrip
             fileList.push_back(entry->d_name);
     fileList.sort();
 
+    const bool usbReady = DirHandle(opendir("/media/hakchi/")) != nullptr;
+
     std::ifstream in;
     std::string sftype;
     bool sftypeLoaded = false;
@@ -149,6 +151,8 @@ bool LoadCommands(const std::string & commandLocation, const std::string & scrip
 
         // c0000_0000 leading sentinel only - a later empty COMMAND_STR is a reserved blank slot instead
         if(commands.empty() && c.command.empty())
+            continue;
+        if(c.usbOnly && !usbReady)
             continue;
         SelectorKeys keys = ReadSelectorKeys(commandLocation + file);
         if(keys.nesOnly || keys.snesOnly)

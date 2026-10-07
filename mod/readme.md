@@ -25,6 +25,12 @@ Full guides: [github.com/DefKorns/om_theme-selector/wiki](https://github.com/Def
 - **Clean Up** removes the theme files your console type doesn't use
 - **Reset Settings** puts the mod back to its defaults without uninstalling it or deleting your themes
 
+## Getting themes
+
+**From the console** (needs the Wi-Fi mod): go to **Themes → Download Themes**, select **Update Theme List**, then pick a theme and press **A**. Back in **Installed Themes**, select it and press **A** to apply it.
+
+**By hand:** copy a theme folder, or a catalog package such as `SNES.<name>.tar.gz` from [om-theme-downloads](https://github.com/DefKorns/om-theme-downloads/releases/tag/themes-v1), into your themes folder (see below), then select **Refresh** in **Themes**.
+
 ## Theme and music per folder
 
 Turn on **Theme Per Folder** in **Settings**, then open **Assign Theme to Folder** right below it. Your folders are listed as a tree: press Left/Right on a folder to cycle through the themes, or A to pick one from a list. **Automatic** clears a folder's assignment, so it uses its parent folder's theme (a top-level folder uses the console's theme). The same theme can go on as many folders as you like.

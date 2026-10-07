@@ -42,9 +42,23 @@ Full guides are on the **[wiki](https://github.com/DefKorns/om_theme-selector/wi
 
 **From my Mod Hub (recommended):** in hakchi open **Manage repositories**, add `https://defkorns.github.io/hakchi-repo/`, then install **Options Menu** and **Options Menu - Theme Selector** from it. Updates show up there automatically.
 
-**By hand:** download `om_theme-selector.hmod` from [Releases](https://github.com/DefKorns/om_theme-selector/releases) and install it with hakchi (**Modules → Install extra modules**).
+**By hand:** download `om_theme-selector.hmod` from [Releases](https://github.com/DefKorns/om_theme-selector/releases), put it in hakchi's `user_mods` folder (or drag and drop it onto the hakchi window), then install it from hakchi (**Modules → Install extra modules**).
 
 Then open the Options Menu (hold **L+R** on a SNES/Super Famicom, **B+Down** on a NES/Famicom) and go to **Themes**. Step by step, with screenshots: [Installation](https://github.com/DefKorns/om_theme-selector/wiki/Installation) and [Usage](https://github.com/DefKorns/om_theme-selector/wiki/Usage).
+
+## Getting themes
+
+**From the console** (needs the Wi-Fi mod):
+
+1. Go to **Themes → Download Themes** and select **Update Theme List**.
+2. Pick a theme from the grid — each one shows its preview, size and author — and press **A**. Press **B** when the download log finishes.
+3. Back in **Installed Themes**, select the new theme and press **A** to apply it. The console reboots with it.
+
+**All SNES Themes** / **All NES Themes** downloads the whole catalog at once. It's several hundred MB, so it only shows up when a USB/SD drive is connected.
+
+**By hand:** copy a theme folder, or a catalog package such as `SNES.<name>.tar.gz`, into the themes folder for your console (see [Where things live](#where-things-live)), then select **Refresh** in **Themes**. Packages are in the [om-theme-downloads release](https://github.com/DefKorns/om-theme-downloads/releases/tag/themes-v1); the prefix (`SNES.`, `NES.`, `SHONEN.`) must match your console.
+
+More: [Usage → Downloading themes](https://github.com/DefKorns/om_theme-selector/wiki/Usage#downloading-themes) and [Adding themes by hand](https://github.com/DefKorns/om_theme-selector/wiki/Usage#adding-themes-by-hand).
 
 ## Where things live
 
