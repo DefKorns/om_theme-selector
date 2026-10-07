@@ -2,75 +2,58 @@
 
 **Requires [my Options Menu fork](https://github.com/DefKorns/OptionsMenu/releases) as a base — not compatible with any other UI.**
 
-[![Theme Selector](https://i.imgur.com/7JgP6JI.png)](https://i.imgur.com/7JgP6JI.png)
+[![Theme Selector](https://i.imgur.com/7JgP6JI.png)](https://youtu.be/3UilWr1NvFA)
 
 ## What is it?
 
-A graphical theme manager for NES/SNES/Famicom/Super Famicom Classic consoles, built on top of [my fork](https://github.com/DefKorns/OptionsMenu) of [CompCom's OptionsMenu](https://github.com/CompCom/OptionsMenu). Pick a theme from a preview grid, download more from a catalog, build your own from pieces of the themes you already have, and tune per-folder/randomizer/audio behavior — all from the console itself, no PC required after install.
+A graphical theme manager for the NES, SNES, Famicom and Super Famicom Classic consoles. Pick a theme from a preview grid, download more from an online catalog, build your own from pieces of the themes you already have, and give each folder its own theme and music — all from the console itself.
 
-The UI is my own standalone C++/SDL app (`theme_manager`), not a set of Lua scripts layered on the stock menu.
+Open the Options Menu (hold **L+R** on a SNES/Super Famicom, **B+Down** on a NES/Famicom) and go to **Themes**.
+
+Full guides: [github.com/DefKorns/om_theme-selector/wiki](https://github.com/DefKorns/om_theme-selector/wiki)
 
 ## Features
 
-- Preview grid to browse and apply installed themes; the theme currently applied is outlined so you can spot it at a glance
-- Download themes directly from the internet (**Wi-Fi mod required**)
-- Build your own DIY theme from pieces of the themes you already have (background, sprites, colors, packed art, fonts...)
-- Theme randomizer — a different theme each time you go Home (off by default)
-- Audio randomizer on the Home folder, optionally extended to every folder (off by default)
-- Theme and music per folder: give any folder (and Home) its own theme and its own menu music from one screen; subfolders without one inherit their parent folder's
+- **Installed themes grid** — browse your themes by their preview and apply one; the active theme is outlined
+- **Download themes** from an online catalog of 90+ themes, each credited to its author (**Wi-Fi mod required**)
+- **DIY theme** — mix the UI, background, demo characters, pole and colors of the themes you already have, preview it live, then save it as a theme of your own
+- **Theme and music per folder** — give any folder (and Home) its own theme and its own menu music from one screen; folders without one inherit their parent's
+- **Theme randomizer** — a different theme every time you change folder (off by default)
+- **Audio randomizer** on Home, optionally on every folder (off by default)
 - Custom fonts per theme
-- Custom color palette for the Theme Manager UI itself (`theme.cfg`)
-- System clean-up to remove files your console type doesn't need
-- Reset just this mod's settings without a full uninstall
+- Delete a theme from the grid by holding **B**
+- **Clean Up** removes the theme files your console type doesn't use
+- **Reset Settings** puts the mod back to its defaults without uninstalling it or deleting your themes
 
-## Set a theme or music per folder, what is that?
+## Theme and music per folder
 
-If you have your games organized into system folders, you can give each one its own theme instead of one theme for the whole console. Turn on **Theme Per Folder** in Settings, then open **Assign Theme to Folder** right below it. Your folders are listed as a tree: press Left/Right on a folder to cycle through the themes, or A to pick one from a list. The preview shows where each folder's theme comes from. The same theme can be assigned to as many folders as you like, no copies or renaming needed. **Automatic**, the first entry when cycling and in the list, clears a folder's assignment.
+Turn on **Theme Per Folder** in **Settings**, then open **Assign Theme to Folder** right below it. Your folders are listed as a tree: press Left/Right on a folder to cycle through the themes, or A to pick one from a list. **Automatic** clears a folder's assignment, so it uses its parent folder's theme (a top-level folder uses the console's theme). The same theme can go on as many folders as you like.
 
-Naming a theme folder after the game folder (lower snake_case) still works for folders without an assignment. Eg: game folder `Nintendo - Nintendo Entertainment System` → theme folder `nintendo_-_nintendo_entertainment_system`.
+**Music Per Folder** works the same way with the `.wav` files in `music_menu`, with or without Theme Per Folder.
 
-A folder on Automatic uses its parent folder's theme, all the way up; a top-level folder on Automatic uses the theme you applied for the whole console. A folder's own theme always wins over its parent's.
-
-**Music Per Folder** works the same way: turn it on and open **Assign Music to Folder** to give folders their own menu music from `music_menu` (on USB, else the console's own). It only shows up when `music_menu` has `.wav` files, and works with or without Theme Per Folder. Music assigned to a folder plays instead of the theme's own music; a folder on Automatic keeps today's behaviour (the theme's music, the Audio Randomizer, or the original music).
-
-## What if I want a specific theme on my main menu?
-
-With **Theme Per Folder** on, open **Assign Theme to Folder** and set a theme on **Home**, the first entry in the list. Naming a theme `default` also still works.
-
-## What do you mean by "build your own DIY theme"?
-
-Exactly that — pick and mix backgrounds, sprites, colors and packed art from the themes already on your console/USB into a theme of your own, previewed live as you build it.
-
-## I own a Famicom/Shonen/Super Famicom, can I install this?
-
-Yes — it supports all Nintendo Classic consoles, all regions.
+A theme named after a folder (lower snake_case, e.g. `nintendo_-_nintendo_entertainment_system`) or named `default` (for Home) still works too.
 
 ## Requirements
 
-- [Hakchi CE](https://github.com/TeamShinkansen/hakchi2/releases/latest)
-- [My Options Menu fork](https://github.com/DefKorns/OptionsMenu/releases) — the base UI this mod plugs into
-- [Hakchi Wi-Fi mod (WPA Supplicant)](https://hakchi.net/hakchi/hmods/wpa-supplicant.hmod) — only needed to download themes from the internet
+- [Hakchi2 CE](https://github.com/TeamShinkansen/hakchi2/releases/latest)
+- [My Options Menu fork](https://github.com/DefKorns/OptionsMenu/releases)
+- [Hakchi Wi-Fi mod (WPA Supplicant)](https://hakchi.net/hakchi/hmods/wpa-supplicant.hmod) — only to download themes from the console
+- A USB/SD drive is recommended: themes are often 5–30 MB each
 
-## How do I use it
+## Where things live
 
-Works the same whether your games are on NAND or USB/SD:
+| | USB/SD | NAND |
+| --- | --- | --- |
+| Themes | `/media/hakchi/themes/<console>` | `/var/lib/hakchi/rootfs/usr/share/themes/<console>` |
+| Menu music | `/media/hakchi/music_menu` | `/var/lib/hakchi/rootfs/usr/share/music_menu` |
 
-- Install the hmod
-- Open Theme Options from the Options Menu, download or build a theme, and apply it
-
-On NAND, themes live at `/var/lib/hakchi/usr/share/themes/<consoletype>`.
-On USB/SD, themes live at `/media/hakchi/themes/<consoletype>`.
-
-*`consoletype` is `nes`, `snes` or `shonen`.*
-
-## Customizing the look
-
-The Theme Manager's own UI (not your game themes) reads its color palette from `/etc/options_menu/theme.cfg` at startup — edit `Key=R,G,B` lines there (background, borders, accent, badges, the active-theme border...) to restyle it, or delete a line to fall back to the default.
+`<console>` is `nes`, `snes` or `shonen`. With a USB/SD drive connected, themes always go there.
 
 ## Credits
 
 - [DefKorns](https://github.com/DefKorns)
-- [DanTheMan827](https://github.com/DanTheMan827) (packed.png extractor)
+- [DanTheMan827](https://github.com/DanTheMan827) — packed.png extractor
+- Theme authors — credited on each theme in the download catalog
 
 ## Thanks
 
