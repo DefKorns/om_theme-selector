@@ -23,7 +23,7 @@
 class ThemeManagerApp
 {
 public:
-    ThemeManagerApp(std::string optionsLocation, AppOptions options, std::vector<Command> commands, std::vector<bool> isThemeItem);
+    ThemeManagerApp(std::string optionsLocation, AppOptions options, std::vector<Command> commands, std::vector<ItemInfo> items);
 
     int Run()
     {
@@ -39,7 +39,7 @@ private:
     std::string optionsLocation_;
     AppOptions options_;
     std::vector<Command> commands_;
-    std::vector<bool> isThemeItem_;
+    std::vector<ItemInfo> items_;
     int pinnedStartIndex_ = 0; // BACK/EXIT sort last - pinned near the footer instead of scrolling
     int themeStart_ = 0; // grid layout only: first non-fixed-action row
 

@@ -34,11 +34,12 @@ struct PipeCloser { void operator()(FILE * pipe) const { if(pipe) pclose(pipe); 
 using PipeHandle = std::unique_ptr<FILE, PipeCloser>;
 
 // my own convention, not OptionsMenu's Command format
-struct ConsoleOnlyFlags { bool nesOnly = false; bool snesOnly = false; };
+struct SelectorKeys { bool nesOnly = false; bool snesOnly = false; std::string author; };
 
-ConsoleOnlyFlags ReadConsoleOnlyFlags(const std::string & path)
+SelectorKeys ReadSelectorKeys(const std::string & path)
 {
-    ConsoleOnlyFlags flags;
+    const std::string authorKey = "AUTHOR=";
+    SelectorKeys keys;
     std::ifstream in(path);
     std::string line;
     while(std::getline(in, line))
@@ -46,11 +47,13 @@ ConsoleOnlyFlags ReadConsoleOnlyFlags(const std::string & path)
         if(!line.empty() && line.back() == '\r')
             line.pop_back();
         if(line == "NES_ONLY=TRUE")
-            flags.nesOnly = true;
+            keys.nesOnly = true;
         else if(line == "SNES_ONLY=TRUE")
-            flags.snesOnly = true;
+            keys.snesOnly = true;
+        else if(line.compare(0, authorKey.size(), authorKey) == 0)
+            keys.author = line.substr(authorKey.size());
     }
-    return flags;
+    return keys;
 }
 
 }
@@ -119,7 +122,7 @@ std::string ReadBackStack(bool isRootScreen)
 }
 
 bool LoadCommands(const std::string & commandLocation, const std::string & scriptLocation, const std::string & optionsLocation,
-                   std::vector<Command> & commands, std::vector<bool> & isThemeItem)
+                   std::vector<Command> & commands, std::vector<ItemInfo> & items)
 {
     DirHandle dir(opendir(commandLocation.c_str()));
     if(!dir)
@@ -147,15 +150,15 @@ bool LoadCommands(const std::string & commandLocation, const std::string & scrip
         // c0000_0000 leading sentinel only - a later empty COMMAND_STR is a reserved blank slot instead
         if(commands.empty() && c.command.empty())
             continue;
-        ConsoleOnlyFlags consoleOnly = ReadConsoleOnlyFlags(commandLocation + file);
-        if(consoleOnly.nesOnly || consoleOnly.snesOnly)
+        SelectorKeys keys = ReadSelectorKeys(commandLocation + file);
+        if(keys.nesOnly || keys.snesOnly)
         {
             if(!sftypeLoaded)
             {
                 sftype = ReadSftype();
                 sftypeLoaded = true;
             }
-            if((consoleOnly.nesOnly && sftype != "nes") || (consoleOnly.snesOnly && sftype == "nes"))
+            if((keys.nesOnly && sftype != "nes") || (keys.snesOnly && sftype == "nes"))
                 continue;
         }
         if(!c.command.empty())
@@ -172,13 +175,13 @@ bool LoadCommands(const std::string & commandLocation, const std::string & scrip
             }
         }
         commands.push_back(c);
-        isThemeItem.push_back(file.compare(0, 6, "c0000_") != 0);
+        items.push_back({ file.compare(0, 6, "c0000_") != 0, std::move(keys.author) });
     }
     return true;
 }
 
 void AppendBackNavigation(const std::string & optionsLocation, const AppOptions & options, const std::string & backStack,
-                           std::vector<Command> & commands, std::vector<bool> & isThemeItem)
+                           std::vector<Command> & commands, std::vector<ItemInfo> & items)
 {
     std::string backCommand;
     if(!backStack.empty())
@@ -227,5 +230,5 @@ void AppendBackNavigation(const std::string & optionsLocation, const AppOptions 
     back.previewImage = optionsLocation + "images/preview_placeholder.png";
     back.command = backCommand;
     commands.push_back(back);
-    isThemeItem.push_back(false);
+    items.push_back({ false, "" });
 }

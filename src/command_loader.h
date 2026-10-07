@@ -38,11 +38,16 @@ AppOptions ParseArgs(int argc, char * argv[], const std::string & optionsLocatio
 // OM_BACK_STACK is set by OptionsMenu before launching "Theme Options"
 std::string ReadBackStack(bool isRootScreen);
 
-// isThemeItem[i] is false for a fixed "c0000_*" action, true for a theme/asset row
+struct ItemInfo
+{
+    bool isThemeItem; // false for a fixed "c0000_*" action, true for a theme/asset row
+    std::string author;
+};
+
 bool LoadCommands(const std::string & commandLocation, const std::string & scriptLocation, const std::string & optionsLocation,
-                   std::vector<Command> & commands, std::vector<bool> & isThemeItem);
+                   std::vector<Command> & commands, std::vector<ItemInfo> & items);
 
 void AppendBackNavigation(const std::string & optionsLocation, const AppOptions & options, const std::string & backStack,
-                           std::vector<Command> & commands, std::vector<bool> & isThemeItem);
+                           std::vector<Command> & commands, std::vector<ItemInfo> & items);
 
 #endif

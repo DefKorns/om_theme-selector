@@ -45,11 +45,11 @@ namespace
     }
 }
 
-ThemeManagerApp::ThemeManagerApp(std::string optionsLocation, AppOptions options, std::vector<Command> commands, std::vector<bool> isThemeItem)
+ThemeManagerApp::ThemeManagerApp(std::string optionsLocation, AppOptions options, std::vector<Command> commands, std::vector<ItemInfo> items)
     : optionsLocation_(std::move(optionsLocation))
     , options_(std::move(options))
     , commands_(std::move(commands))
-    , isThemeItem_(std::move(isThemeItem))
+    , items_(std::move(items))
 {
     LoadActiveThemeBorderColor(optionsLocation_);
     fprintf(stderr, "CHECKPOINT 1: commands loaded, count=%zu\n", commands_.size()); fflush(stderr);
@@ -92,7 +92,7 @@ void ThemeManagerApp::ComputePinnedAndThemeRanges()
         --pinnedStartIndex_;
 
     themeStart_ = 0;
-    while(themeStart_ < pinnedStartIndex_ && !isThemeItem_[themeStart_])
+    while(themeStart_ < pinnedStartIndex_ && !items_[themeStart_].isThemeItem)
         ++themeStart_;
 }
 
@@ -329,6 +329,7 @@ int ThemeManagerApp::RunGridLayout()
     std::vector<Texture> chipLabels(commands_.size());
     std::vector<Texture> tileImages(commands_.size());
     std::vector<Texture> tileLabels(commands_.size());
+    std::vector<Texture> tileAuthors(commands_.size());
     std::vector<std::vector<Texture>> tileRunFrames(commands_.size()); // sized >1 only for an animated _run01.png tile
     std::vector<bool> tileHideLabel(commands_.size(), false); // PREVIEW_HIDE_LABEL
     std::vector<bool> tileFitContain(commands_.size(), false); // PREVIEW_FIT_CONTAIN
@@ -358,6 +359,11 @@ int ThemeManagerApp::RunGridLayout()
         {
             label = TruncateToWidth(label, 15, TileW - 28);
             tileLabels[i] = Texture(label, 15, renderer_, 0, 0, false, ToAbgr(UiTheme::Text), true);
+            if(!items_[i].author.empty())
+            {
+                std::string author = TruncateToWidth("by: " + items_[i].author, 13, TileW - 20);
+                tileAuthors[i] = Texture(author, 13, renderer_, 0, 0, false, ToAbgr(UiTheme::Text), true);
+            }
         }
     }
     std::vector<bool> tileImageLoaded(commands_.size(), false);
@@ -591,16 +597,32 @@ int ThemeManagerApp::RunGridLayout()
                     Texture & tileArt = runFrames.size() > 1
                         ? runFrames[(SDL_GetTicks() / 100) % runFrames.size()]
                         : tileImages[idx];
-                    if(tileArt.rect.w > 0)
+                    Texture & author = tileAuthors[idx];
+                    if(tileArt.rect.w > 0 || author.rect.w > 0)
                     {
                         // clip to the tile, then mask the clip's square corners back to rounded
                         SDL_RenderSetClipRect(renderer_, &tileRect);
-                        if(tileFitContain[idx])
-                            // 10px margin keeps clear of the rounded-corner mask below
-                            FitCentered(tileArt, x, y, TileW, TileH, 10);
-                        else
-                            FitCover(tileArt, x, y, TileW, TileH, 0);
-                        tileArt.Draw(renderer_);
+                        if(tileArt.rect.w > 0)
+                        {
+                            if(tileFitContain[idx])
+                                // 10px margin keeps clear of the rounded-corner mask below
+                                FitCentered(tileArt, x, y, TileW, TileH, 10);
+                            else
+                                FitCover(tileArt, x, y, TileW, TileH, 0);
+                            tileArt.Draw(renderer_);
+                        }
+                        if(author.rect.w > 0)
+                        {
+                            const int stripH = author.rect.h + 6;
+                            const SDL_Rect strip{ x, y + TileH - stripH, TileW, stripH };
+                            SDL_SetRenderDrawBlendMode(renderer_, SDL_BLENDMODE_BLEND);
+                            SDL_SetRenderDrawColor(renderer_, 0, 0, 0, 0xB4);
+                            SDL_RenderFillRect(renderer_, &strip);
+                            SDL_SetRenderDrawBlendMode(renderer_, SDL_BLENDMODE_NONE);
+                            author.rect.x = x + (TileW - author.rect.w) / 2;
+                            author.rect.y = strip.y + (stripH - author.rect.h) / 2;
+                            author.Draw(renderer_);
+                        }
                         SDL_RenderSetClipRect(renderer_, nullptr);
                         DrawRoundedCornerMask(renderer_, tileRect, UiTheme::SelectedRowBg, UiTheme::BoxRadius);
                     }

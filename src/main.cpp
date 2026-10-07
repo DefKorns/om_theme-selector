@@ -33,11 +33,11 @@ int main(int argc, char * argv[])
     UiTheme::LoadThemeConfig(optionsLocation);
 
     std::vector<Command> commands;
-    std::vector<bool> isThemeItem;
-    if(!LoadCommands(options.commandLocation, options.scriptLocation, optionsLocation, commands, isThemeItem))
+    std::vector<ItemInfo> items;
+    if(!LoadCommands(options.commandLocation, options.scriptLocation, optionsLocation, commands, items))
         return 1;
 
-    AppendBackNavigation(optionsLocation, options, backStack, commands, isThemeItem);
+    AppendBackNavigation(optionsLocation, options, backStack, commands, items);
 
     if(commands.empty())
     {
@@ -45,6 +45,6 @@ int main(int argc, char * argv[])
         return 1;
     }
 
-    ThemeManagerApp app(optionsLocation, std::move(options), std::move(commands), std::move(isThemeItem));
+    ThemeManagerApp app(optionsLocation, std::move(options), std::move(commands), std::move(items));
     return app.Run();
 }
