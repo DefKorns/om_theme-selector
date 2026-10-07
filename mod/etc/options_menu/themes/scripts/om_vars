@@ -450,6 +450,7 @@ themeGenerator() {
   full_title="$(grep -F 'NAME=' "${om_mod_sub_cmds}/c0010_${theme_name}" | sed -e 's/.*=\(.*\)\[.*/\1/')"
   full_path="${theme_path}/${theme_name}"
   cd "${theme_path}" || exit
+  trap abortDownload TERM INT HUP
   translate DOWNLOADING
 
   if [ "${theme_name}" = "all" ]; then
@@ -534,8 +535,17 @@ downloadThemes() {
   return "$dl_all_rc"
 }
 
+abortDownload() {
+  trap - TERM INT HUP
+  [ -n "$dl_pid" ] && kill "$dl_pid" 2> /dev/null
+  [ -n "$unpacking" ] && rm -rf "$unpacking" "$unpacking.png"
+  rm -f "$system_name".*.tar.gz "$system_name".*.tar.gz.part "/tmp/${sftype}-pending" "/tmp/${sftype}-progress" "${sftype}-all"
+  exit 1
+}
+
 unpackTheme() {
   tarball="${system_name}.$1.tar.gz"
+  unpacking="$1"
   if [ "$(freeSpaceKb .)" -lt "$(unpackedSizeKb "$tarball")" ]; then
     dl_rc=3
     gzip -t "$tarball" 2> /dev/null || dl_rc=1
@@ -544,9 +554,11 @@ unpackTheme() {
     [ "$(freeSpaceKb .)" -lt 1024 ] && dl_rc=3
   else
     remove "$tarball"
+    unpacking=""
     return 0
   fi
   rm -rf "$tarball" "$1" "$1.png"
+  unpacking=""
   return "$dl_rc"
 }
 

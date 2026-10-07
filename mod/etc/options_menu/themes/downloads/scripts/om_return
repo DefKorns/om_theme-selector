@@ -23,7 +23,10 @@ remove "$om_dummy"
 
 if [ -n "$(ls -A $theme_path)" ]; then
   touch "$om_dummy"
-  themeCountChanged && themeLoader
+  if themeCountChanged; then
+    "$om_scripts/gen_splash" /tmp/om_splash.png THEME_LOADING && decodepng /tmp/om_splash.png > /dev/fb0
+    themeLoader
+  fi
 else
   remove "$om_mod_spacer"
   clearList
