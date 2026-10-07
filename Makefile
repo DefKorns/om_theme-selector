@@ -1,6 +1,6 @@
 MOD_ID       := om_theme-selector
 MOD_NAME     := Options Menu - Theme Selector
-MOD_CATEGORY := User Interface
+MOD_CATEGORY := Options Menu - Addons
 MOD_EXCLUDE  := exclude-file.txt
 MOD_DEPS     := mod/etc/options_menu/lib/theme_manager mod/bin/theme_downloader mod/bin/sprite_crop
 
