@@ -3,3 +3,6 @@
 * text=auto eol=lf
 
 *.ttf binary
+*.png binary
+*.lua binary
+*.wav binary
