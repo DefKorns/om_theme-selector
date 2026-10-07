@@ -70,6 +70,7 @@ om_mod_settings_scripts="$om_mod_settings/scripts"
 om_mod_license="$om_mod_scripts/om_license"
 diy_theme_path="$mountpoint/tmp/diy_theme"
 diy_resources="$diy_theme_path/resources"
+diy_selection_path="/tmp/diy_selection"
 diy_layout="$diy_resources/layout/asset/sprite"
 om_mod_license="$om_mod_scripts/om_license"
 thm_preview="$om_mod_sub/images"
@@ -751,28 +752,13 @@ diySpriteSelector() {
 
   [ ! -d "$diy_asset" ] && mkdir -p "$diy_asset"
   find "$diy_selected_asset" -name "$3" -exec cp {} "$diy_layout" \;
+  sel_category="$(basename "$(dirname "$(dirname "$0")")")"
+  mkdir -p "$diy_selection_path"
+  basename "$0" .sh > "$diy_selection_path/$sel_category"
   if [ ! -f "$b_file" ]; then
     sed '1,2d' "$om_theme_script" > "$b_file"
     echo themeSelector > "$p_file"
   fi
-  echo ""
-  echo "  ____ _____   __  _____ _   _ _____ __  __ _____    ____ ____  _____    _  _____ ___  ____  "
-  echo " |  _ \\_ _\\ \\ / / |_   _| | | | ____|  \\/  | ____|  / ___|  _ \\| ____|  / \\|_   _/ _ \\|  _ \\ "
-  echo " | | | | | \\ V /    | | | |_| |  _| | |\\/| |  _|   | |   | |_) |  _|   / _ \\ | || | | | |_) |"
-  echo " | |_| | |  | |     | | |  _  | |___| |  | | |___  | |___|  _ <| |___ / ___ \\| || |_| |  _ < "
-  echo " |____/___| |_|     |_| |_| |_|_____|_|  |_|_____|  \\____|_| \\_\\_____/_/   \\_\\_| \\___/|_| \\_\\"
-  echo "                                                                                             "
-  echo "                                                                                 by: DefKorns "
-  echo ""
-  echo ""
-  echo ""
-  translate ASSET_APPLIED_SUCCESS
-  echo ""
-  echo ""
-  translate SAVE_PREVIEW_HINT_LINE1
-  translate SAVE_PREVIEW_HINT_LINE2
-  echo ""
-  echo ""
 }
 
 diyThemeChecker() {
@@ -791,6 +777,7 @@ diyThemeChecker() {
 
 diyThemeRemover() {
   disableCmds "diy" "del_diy" "preview"
+  remove "$diy_selection_path"
 
   [ -d "$diy_theme_path" ] && find "$diy_theme_path" -type f -not -name 'assets_here' -exec rm {} +
 

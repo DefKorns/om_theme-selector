@@ -40,8 +40,13 @@ mod/etc/options_menu/lib/theme_manager: $(OBJECTS)
 	$(CROSS_PREFIX)$(CXX) $(OBJECTS) $(LDLIBS) $(LDFLAGS) -Wl,-rpath,/etc/options_menu/lib -o $@
 	$(CROSS_PREFIX)$(STRIP) $@
 
+DEPDIR = .deps
+
 %.o: %.cpp
-	$(CROSS_PREFIX)$(CXX) $(CXXFLAGS) -c $< -o $@
+	@mkdir -p $(DEPDIR)
+	$(CROSS_PREFIX)$(CXX) $(CXXFLAGS) -MMD -MP -MF $(DEPDIR)/$(subst /,_,$*).d -c $< -o $@
+
+-include $(wildcard $(DEPDIR)/*.d)
 
 %.o: %.c
 	$(CROSS_PREFIX)$(CC) $(CFLAGS) -c $< -o $@
@@ -72,6 +77,7 @@ update-headers:
 
 clean:
 	find . -name "*.o" -type f -not -path "./toolchain/*" -delete
+	rm -rf $(DEPDIR)
 	rm -f $(MOD_DEPS)
 	rm -rf out/
 

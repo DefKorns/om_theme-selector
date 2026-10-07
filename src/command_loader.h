@@ -26,6 +26,7 @@ struct AppOptions
     std::string folderThemesMapping;
     std::string folderMusicMapping;
     bool folderMusicScreen = false;
+    std::string selectedMarker;
 };
 
 // each screen remembers its last focused row here; cleared on leaving the theme manager
@@ -42,6 +43,8 @@ struct ItemInfo
 {
     bool isThemeItem; // false for a fixed "c0000_*" action, true for a theme/asset row
     std::string author;
+    bool needsAttention;
+    std::string attentionNotice;
 };
 
 bool LoadCommands(const std::string & commandLocation, const std::string & scriptLocation, const std::string & optionsLocation,

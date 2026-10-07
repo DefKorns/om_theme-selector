@@ -32,7 +32,7 @@ if [ -d "${theme_path}/${name}" ]; then
 fi
 
 cp -R "${diy_theme_path}" "${theme_path}/${name}"
-remove "${diy_theme_path}"
+remove "${diy_theme_path}" "$diy_selection_path"
 
 clearList
 disableCmds "clear" "preview" "diy"

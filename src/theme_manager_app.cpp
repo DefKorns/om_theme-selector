@@ -308,7 +308,6 @@ int ThemeManagerApp::RunGridLayout()
         const int contentW = c.command.empty() ? 0 : ChipIconW(idx) + TextWidth(Translate(c.name), chipLabelSize);
         chipWidths.push_back(std::max(MinChipW, contentW + 2*chipPadX));
     }
-    // the widest chips shrink first, down to a shared cap, when the strip overflows
     const int stripAvail = GridRight - GridLeft - std::max(0, stripSlotCount-1)*chipGap;
     auto StripWidthAt = [&](int cap)
     {
@@ -328,6 +327,22 @@ int ThemeManagerApp::RunGridLayout()
     titleText_ = Texture(Translate(options_.titleKey), UiTheme::SectionTitleFontSize - 6, renderer_, UiTheme::SectionTitleX, 0, false, ToAbgr(UiTheme::Text), true);
     titleText_.rect.y = hasStrip ? (StripTop + StripH + 22) : (UiTheme::HeaderDividerY + 22);
     const int GridTop = titleText_.rect.y + titleText_.rect.h + 20;
+
+    const int noticeSize = 14;
+    const int noticeGap = 24;
+    const int attentionDotSize = 10;
+    const int attentionDotInset = 7;
+    Texture noticeText;
+    for(int i = 0; i < (int)commands_.size(); ++i)
+    {
+        if(!items_[i].needsAttention || items_[i].attentionNotice.empty())
+            continue;
+        const int noticeAvail = GridRight - (titleText_.rect.x + titleText_.rect.w + noticeGap);
+        noticeText = Texture(TruncateToWidth(Translate(items_[i].attentionNotice), noticeSize, noticeAvail), noticeSize, renderer_, 0, 0, false, ToAbgr(UiTheme::Accent), true);
+        noticeText.rect.x = GridRight - noticeText.rect.w;
+        noticeText.rect.y = titleText_.rect.y + (titleText_.rect.h - noticeText.rect.h) / 2;
+        break;
+    }
     const int GridBottom = UiTheme::FooterDividerY - 14;
     const int LabelH = hasCaptions ? 18 : 0;
     const int RowGap = hasCaptions ? 8 : GridGap;
@@ -443,29 +458,34 @@ int ThemeManagerApp::RunGridLayout()
     // marks the tile of the theme currently applied on the console, so it stays visually
     // distinguishable from the rest of the grid regardless of where the cursor is
     std::vector<bool> isActiveTheme(commands_.size(), false);
-    if(options_.titleKey == "INSTALLED_THEMES")
+    const std::string activeMarker = options_.titleKey == "INSTALLED_THEMES" ? "/var/lib/clover/profiles/0/hakchi/lastTheme" : options_.selectedMarker;
+    auto RefreshActiveTiles = [&]()
     {
-        std::string activeTheme;
-        std::ifstream in("/var/lib/clover/profiles/0/hakchi/lastTheme");
-        std::getline(in, activeTheme);
-        if(!activeTheme.empty() && activeTheme.back() == '\r')
-            activeTheme.pop_back();
-
-        if(!activeTheme.empty())
+        std::fill(isActiveTheme.begin(), isActiveTheme.end(), false);
+        std::string activeName;
+        if(!activeMarker.empty())
         {
-            const std::string suffix = ".sh";
-            for(int i = themeStart_; i < pinnedStartIndex_; ++i)
-            {
-                const std::string & cmd = commands_[i].command;
-                if(cmd.size() <= suffix.size() || cmd.compare(cmd.size()-suffix.size(), suffix.size(), suffix) != 0)
-                    continue;
-                size_t slashPos = cmd.find_last_of('/');
-                size_t start = (slashPos == std::string::npos) ? 0 : slashPos+1;
-                if(cmd.compare(start, cmd.size()-suffix.size()-start, activeTheme) == 0)
-                    isActiveTheme[i] = true;
-            }
+            std::ifstream in(activeMarker);
+            std::getline(in, activeName);
         }
-    }
+        if(!activeName.empty() && activeName.back() == '\r')
+            activeName.pop_back();
+        if(activeName.empty())
+            return;
+
+        const std::string suffix = ".sh";
+        for(int i = themeStart_; i < pinnedStartIndex_; ++i)
+        {
+            const std::string & cmd = commands_[i].command;
+            if(cmd.size() <= suffix.size() || cmd.compare(cmd.size()-suffix.size(), suffix.size(), suffix) != 0)
+                continue;
+            size_t slashPos = cmd.find_last_of('/');
+            size_t start = (slashPos == std::string::npos) ? 0 : slashPos+1;
+            if(cmd.compare(start, cmd.size()-suffix.size()-start, activeName) == 0)
+                isActiveTheme[i] = true;
+        }
+    };
+    RefreshActiveTiles();
 
     int gridTopRow = 0;
     auto SetCurrentCommand = [&](int newId)
@@ -503,6 +523,7 @@ int ThemeManagerApp::RunGridLayout()
         {
             if(ActivateCommand(commands_[currentCommandId_]))
                 break;
+            RefreshActiveTiles();
         }
         else if(controller_->HeldRepeat(LEFT))
         {
@@ -599,9 +620,13 @@ int ThemeManagerApp::RunGridLayout()
                 label.rect.y = StripTop + (StripH - label.rect.h) / 2;
                 label.Draw(renderer_);
 
+                if(items_[idx].needsAttention)
+                    DrawRoundedFillRect(renderer_, { x + chipW - attentionDotSize - attentionDotInset, StripTop + attentionDotInset, attentionDotSize, attentionDotSize }, UiTheme::Accent, attentionDotSize / 2);
+
                 x += chipW + chipGap;
             }
         }
+        noticeText.Draw(renderer_);
 
         {
             for(int row = 0; row < GridRowsVisible; ++row)

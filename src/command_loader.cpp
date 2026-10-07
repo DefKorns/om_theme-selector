@@ -34,11 +34,13 @@ struct PipeCloser { void operator()(FILE * pipe) const { if(pipe) pclose(pipe); 
 using PipeHandle = std::unique_ptr<FILE, PipeCloser>;
 
 // my own convention, not OptionsMenu's Command format
-struct SelectorKeys { bool nesOnly = false; bool snesOnly = false; std::string author; };
+struct SelectorKeys { bool nesOnly = false; bool snesOnly = false; std::string author; std::string attentionPath; std::string attentionNotice; };
 
 SelectorKeys ReadSelectorKeys(const std::string & path)
 {
     const std::string authorKey = "AUTHOR=";
+    const std::string attentionPathKey = "ATTENTION_PATH=";
+    const std::string attentionNoticeKey = "ATTENTION_NOTICE=";
     SelectorKeys keys;
     std::ifstream in(path);
     std::string line;
@@ -52,8 +54,28 @@ SelectorKeys ReadSelectorKeys(const std::string & path)
             keys.snesOnly = true;
         else if(line.compare(0, authorKey.size(), authorKey) == 0)
             keys.author = line.substr(authorKey.size());
+        else if(line.compare(0, attentionPathKey.size(), attentionPathKey) == 0)
+            keys.attentionPath = line.substr(attentionPathKey.size());
+        else if(line.compare(0, attentionNoticeKey.size(), attentionNoticeKey) == 0)
+            keys.attentionNotice = line.substr(attentionNoticeKey.size());
     }
     return keys;
+}
+
+bool HasAnyFile(const std::string & dirPath)
+{
+    DirHandle dir(opendir(dirPath.c_str()));
+    if(!dir)
+        return false;
+    while(auto entry = readdir(dir.get()))
+    {
+        const std::string name = entry->d_name;
+        if(name == "." || name == "..")
+            continue;
+        if(entry->d_type == DT_REG || (entry->d_type == DT_DIR && HasAnyFile(dirPath + "/" + name)))
+            return true;
+    }
+    return false;
 }
 
 }
@@ -107,6 +129,8 @@ AppOptions ParseArgs(int argc, char * argv[], const std::string & optionsLocatio
             options.folderMusicMapping = argv[++i];
         else if(std::strcmp(argv[i], "--folderChannel") == 0 && i+1 < argc)
             options.folderMusicScreen = std::strcmp(argv[++i], "music") == 0;
+        else if(std::strcmp(argv[i], "--selectedMarker") == 0 && i+1 < argc)
+            options.selectedMarker = argv[++i];
     }
     if(!options.commandLocation.empty() && options.commandLocation.back() != '/')
         options.commandLocation += '/';
@@ -179,7 +203,8 @@ bool LoadCommands(const std::string & commandLocation, const std::string & scrip
             }
         }
         commands.push_back(c);
-        items.push_back({ file.compare(0, 6, "c0000_") != 0, std::move(keys.author) });
+        const bool needsAttention = !keys.attentionPath.empty() && HasAnyFile(keys.attentionPath);
+        items.push_back({ file.compare(0, 6, "c0000_") != 0, std::move(keys.author), needsAttention, std::move(keys.attentionNotice) });
     }
     return true;
 }
@@ -234,5 +259,5 @@ void AppendBackNavigation(const std::string & optionsLocation, const AppOptions 
     back.previewImage = optionsLocation + "images/preview_placeholder.png";
     back.command = backCommand;
     commands.push_back(back);
-    items.push_back({ false, "" });
+    items.push_back({ false, "", false, "" });
 }

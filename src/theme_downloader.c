@@ -80,7 +80,6 @@ static size_t write_to_file(void *ptr, size_t size, size_t nmemb, void *userdata
 
 enum fetch_result { FETCH_FAILED, FETCH_OK, FETCH_WRITE_ERROR };
 
-/* A .part file keeps an interrupted transfer away from the boot-time installer. */
 static enum fetch_result download_to(CURL *c, const char *url, const char *out_path) {
     char part_path[512];
     snprintf(part_path, sizeof(part_path), "%s.part", out_path);
@@ -121,7 +120,6 @@ static void wait_until_removed(const char *path) {
     while (path[0] && access(path, F_OK) == 0) usleep(REMOVAL_POLL_US);
 }
 
-/* Reports "<code> <name>" per theme so the caller can unpack while the next one downloads. */
 static enum exit_code fetch_theme_list(CURL *c, const char *sftype, const char *list_path) {
     FILE *list = fopen(list_path, "r");
     if (!list) return EXIT_FAILED;
