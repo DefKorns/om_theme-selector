@@ -231,7 +231,7 @@ hasThemesToInstall() {
   [ "$has_theme" = 0 ] && return
   for f in "$theme_path/$system_name".*.tar.gz; do
     [ -f "$f" ] || continue
-    tar -xzvf "$f" -C "$theme_path" && rm -f "$f"
+    tar -xzf "$f" -C "$theme_path" && rm -f "$f"
   done
 }
 
@@ -457,16 +457,8 @@ themeGenerator() {
     rc=$?
     failed=""
     if [ "$rc" = 0 ]; then
-      while IFS= read -r t; do
-        echo "$t"
-        echo ""
-        downloadTheme "$t"
-        case "$?" in
-          0) ;;
-          3) rc=3 && break ;;
-          *) failed="$failed $t" ;;
-        esac
-      done < "${sftype}-all"
+      downloadThemes "${sftype}-all"
+      rc=$?
     fi
     remove "${sftype}-all"
   else
@@ -502,12 +494,47 @@ unpackedSizeKb() {
 }
 
 downloadTheme() {
+  theme_downloader theme "$sftype" "$1" "${system_name}.$1.tar.gz" || return
+  unpackTheme "$1"
+}
+
+downloadThemes() {
+  pending="/tmp/${sftype}-pending"
+  progress="/tmp/${sftype}-progress"
+  while IFS= read -r t; do
+    [ -d "$t" ] || [ "$t" = "$sfregion" ] || echo "$t"
+  done < "$1" > "$pending"
+  remove "$progress"
+  mkfifo "$progress"
+  theme_downloader themes "$sftype" "$pending" > "$progress" &
+  dl_pid=$!
+  dl_all_rc=0
+  while read -r t_rc t; do
+    echo "$t"
+    echo ""
+    if [ "$t_rc" = 0 ]; then
+      unpackTheme "$t"
+      t_rc=$?
+    fi
+    case "$t_rc" in
+      0) ;;
+      3) dl_all_rc=3 && break ;;
+      *) failed="$failed $t" ;;
+    esac
+  done < "$progress"
+  kill "$dl_pid" 2> /dev/null
+  wait "$dl_pid"
+  [ "$?" = 3 ] && dl_all_rc=3
+  rm -f "$pending" "$progress" "$system_name".*.tar.gz "$system_name".*.tar.gz.part
+  return "$dl_all_rc"
+}
+
+unpackTheme() {
   tarball="${system_name}.$1.tar.gz"
-  theme_downloader theme "$sftype" "$1" "$tarball" || return
   if [ "$(freeSpaceKb .)" -lt "$(unpackedSizeKb "$tarball")" ]; then
     dl_rc=3
     gzip -t "$tarball" 2> /dev/null || dl_rc=1
-  elif ! tar -xzvf "$tarball"; then
+  elif ! tar -xzf "$tarball"; then
     dl_rc=1
     [ "$(freeSpaceKb .)" -lt 1024 ] && dl_rc=3
   else
