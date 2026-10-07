@@ -29,21 +29,10 @@ musicHackBind() {
   return 0
 }
 
-musicHackUnbind() {
-  audio_files="bgm_boot bgm_home se_sys_bounce se_sys_cancel se_sys_click se_sys_click_game se_sys_cursor se_sys_lock se_sys_ng se_sys_push se_sys_smoke se_sys_unlock"
-  local current_mounts
-  current_mounts="$(cat /proc/mounts)"
-
-  for wav_name in $audio_files; do
-    case "$current_mounts" in
-    *" ${original_theme_audio}/${wav_name}.wav "*)
-      # a folder's music can sit on top of the theme's own bind
-      while grep -q " ${original_theme_audio}/${wav_name}.wav " /proc/mounts; do
-        umount "${original_theme_audio}/${wav_name}.wav" || break
-      done
-      ;;
-    esac
-  done
+unbindThemeMounts() {
+  local mount_points
+  mount_points="$(awk -v dir="$original_theme/" 'index($5, dir) == 1 && ($4 ~ /\/themes\// || $4 ~ /^\/diy_theme\// || $4 ~ /\/music_menu\//) { print $5 }' /proc/self/mountinfo | sed -n '1!G;h;$p')"
+  [ -n "$mount_points" ] && echo "$mount_points" | xargs umount
 }
 
 fontBindFix() {
@@ -84,7 +73,6 @@ assignedFolderMusic() {
   return 1
 }
 
-# the entry for folder $1 inside its parent folder (not a Back/Home shortcut to it)
 folderEntry() {
   local folder_desktop
   for folder_desktop in "$game_storage"/*/CLV-S-00"$1"/CLV-S-00"$1".desktop; do
@@ -96,42 +84,44 @@ folderEntry() {
   return 1
 }
 
-# own assignment, else a theme named after the folder, else whatever its parent folder gets
-folderTheme() {
+activeFolderExists() {
+  local folder_desktop
+  for folder_desktop in "$game_storage/$active_folder.desktop" "$game_storage/$active_folder/$active_folder.desktop" "$game_storage"/*/"$active_folder"/"$active_folder".desktop; do
+    [ -f "$folder_desktop" ] && return 0
+  done
+  return 1
+}
+
+folderKeys() {
   local folder_code="$1"
   local folder_desktop
-  local folder_key
   local level=0
   if [ "$folder_code" == "000" ]; then
-    assignedFolderTheme "home"
+    echo "home"
     return
   fi
   while [ "$folder_code" != "000" ] && [ "$level" -lt 16 ]; do
     level=$((level + 1))
-    folder_desktop="$(folderEntry "$folder_code")" || return 1
-    folder_key="$(sed -n 's/^Name=//p' "$folder_desktop" | head -n1 | sed 's/ /_/g' | awk '{print tolower($0)}')"
+    folder_desktop="$(folderEntry "$folder_code")" || return
+    awk '/^Name=/ { name = substr($0, 6); gsub(/ /, "_", name); print tolower(name); exit }' "$folder_desktop"
+    folder_code="${folder_desktop%/*/*}"
+    folder_code="${folder_code##*/}"
+  done
+}
+
+folderTheme() {
+  local folder_key
+  for folder_key in $1; do
     assignedFolderTheme "$folder_key" && return 0
-    [ -n "$folder_key" ] && [ -d "$themes_path/$folder_key" ] && echo "$folder_key" && return 0
-    folder_code="$(basename "$(dirname "$(dirname "$folder_desktop")")")"
+    [ "$folder_key" != "home" ] && [ -d "$themes_path/$folder_key" ] && echo "$folder_key" && return 0
   done
   return 1
 }
 
 folderMusic() {
-  local folder_code="$1"
-  local folder_desktop
   local folder_key
-  local level=0
-  if [ "$folder_code" == "000" ]; then
-    assignedFolderMusic "home"
-    return
-  fi
-  while [ "$folder_code" != "000" ] && [ "$level" -lt 16 ]; do
-    level=$((level + 1))
-    folder_desktop="$(folderEntry "$folder_code")" || return 1
-    folder_key="$(sed -n 's/^Name=//p' "$folder_desktop" | head -n1 | sed 's/ /_/g' | awk '{print tolower($0)}')"
+  for folder_key in $1; do
     assignedFolderMusic "$folder_key" && return 0
-    folder_code="$(basename "$(dirname "$(dirname "$folder_desktop")")")"
   done
   return 1
 }
@@ -166,13 +156,12 @@ themeSelector() {
   local original_theme_audio="$original_theme/resources/sounds/hvc"
   local themes_path="$mountpoint/media/$modname/themes/$system_type"
   [ ! -d "$themes_path" ] && themes_path="$rootfs/usr/share/themes/$system_type"
-  local theme_dir_list
-  theme_dir_list="$(find "$themes_path" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | sed 's#^.*/##')"
   local theme_state_path="$mountpoint$profilepath/$modname"
   folder_id="$(cat "$theme_state_path/menu")"
   local active_folder="CLV-S-00${folder_id}"
   local last_theme="$theme_state_path/lastTheme"
   local active_theme_file="$theme_state_path/active_theme"
+  local applied_file="/tmp/om_theme_applied"
   [ -f "$last_theme" ] && previous_theme=$(cat "$last_theme")
 
   local selected_theme="CHANGEME"
@@ -189,74 +178,80 @@ themeSelector() {
   local bgm_home=""
   game_storage="$(findGameStorage)"
 
-  find "$game_storage" -maxdepth 3 -type f -name "$active_folder.desktop" | sort -u | while IFS= read -r _; do
-    if [ -f "$theme_state_path/om_themerandomizer" ]; then
-      selected_theme="$previous_theme"
-      local n="0"
-      while [ "$selected_theme" == "$previous_theme" ] && [ "$n" -lt 3 ]; do
-        n=$((n + 1))
-        selected_theme="$(printf '%s\n' "$theme_dir_list" | shuf | head -n1)"
-      done
-    fi
+  activeFolderExists || return 0
 
-    [ "$folder_id" == "000" ] && [ -d "$themes_path/default" ] && selected_theme="default"
-    if [ -f "$theme_state_path/om_themeperfolder" ]; then
-      local assigned_theme
-      assigned_theme="$(folderTheme "$folder_id")"
-      [ -n "$assigned_theme" ] && selected_theme="$assigned_theme"
-    fi
-    local assigned_music=""
-    [ -f "$theme_state_path/om_musicperfolder" ] && assigned_music="$(folderMusic "$folder_id")"
-
-    full_theme_path="$themes_path/$selected_theme"
-
-    if find "$diy_theme" -type f 2>/dev/null | read -r _; then
-      full_theme_path="$diy_theme"
-    fi
-
-    if [ "$selected_theme" != "$previous_theme" ] || [ ! -f "$last_theme" ] || [ ! -f "$active_theme_file" ]; then
-      echo "$selected_theme" >"$last_theme"
-      echo "$full_theme_path" >"$active_theme_file"
-    fi
-
-    if [ -d "$theme_font_path" ]; then
-      cmp -s "$title_font" "$theme_font_path/title.fnt" || fontBindFix "backup"
-    else
-      fontBindFix "restore"
-    fi
-
-    # lazy, since fontFix binds title.font on top of the overlay after every chmenu
-    while grep -q " $original_theme overlayfs " /proc/mounts; do
-      umount -l "$original_theme" || break
+  if [ -f "$theme_state_path/om_themerandomizer" ]; then
+    local theme_dir_list
+    theme_dir_list="$(find "$themes_path" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | sed 's#^.*/##')"
+    selected_theme="$previous_theme"
+    local n="0"
+    while [ "$selected_theme" == "$previous_theme" ] && [ "$n" -lt 3 ]; do
+      n=$((n + 1))
+      selected_theme="$(printf '%s\n' "$theme_dir_list" | shuf | head -n1)"
     done
-    musicHackUnbind
+  fi
 
-    cd "$themes_path/$previous_theme" && find ./* -type f ! -name "*.wav" ! -path "./fonts/*" | cut -c3- | while IFS= read -r umount_file; do
-      umount "$original_theme/$umount_file"
-    done
+  [ "$folder_id" == "000" ] && [ -d "$themes_path/default" ] && selected_theme="default"
+  local folder_keys=""
+  if [ -f "$theme_state_path/om_themeperfolder" ] || [ -f "$theme_state_path/om_musicperfolder" ]; then
+    folder_keys="$(folderKeys "$folder_id")"
+  fi
+  if [ -f "$theme_state_path/om_themeperfolder" ]; then
+    local assigned_theme
+    assigned_theme="$(folderTheme "$folder_keys")"
+    [ -n "$assigned_theme" ] && selected_theme="$assigned_theme"
+  fi
+  local assigned_music=""
+  [ -f "$theme_state_path/om_musicperfolder" ] && assigned_music="$(folderMusic "$folder_keys")"
 
-    if [ "$full_theme_path" != "$diy_theme" ] && [ -f "$full_theme_path/needs_overlay" ]; then
-      [ -d "$full_theme_path" ] && mount -t overlayfs -o lowerdir="$original_theme",upperdir="$full_theme_path" overlayfs "$original_theme"
-    else
-      if [ -z "$assigned_music" ] && [ -f "$theme_state_path/om_audiorandomizer" ] && [ -n "$(ls -A "$music_path")" ]; then
-        [ -z "$bgm_home" ] && bgm_home="$(find "$music_path" -maxdepth 1 -type f -iname "*.wav" | shuf | head -n1)"
-        if [ "$folder_id" = "000" ]; then
-          musicHackBind "$bgm_home" "$bgm_home" "$original_theme_audio"
-        else
-          [ -f "$theme_state_path/om_advmusichack" ] && [ -z "$(find "$full_theme_path" -type f -name "*.wav")" ] && musicHackBind "$bgm_home" "$bgm_home" "$original_theme_audio"
-        fi
-      fi
+  full_theme_path="$themes_path/$selected_theme"
 
-      local skip_bgm="none"
-      [ -n "$assigned_music" ] && skip_bgm="bgm_*.wav"
-      cd "$full_theme_path" && find . -type f ! -path "./fonts/*" ! -name "$skip_bgm" | while IFS= read -r theme_file; do
-        mount_bind "$full_theme_path/$theme_file" "$original_theme/$theme_file"
-      done
-    fi
-    [ -n "$assigned_music" ] && musicHackBind "$music_path/$assigned_music" "$music_path/$assigned_music" "$original_theme_audio"
+  if find "$diy_theme" -type f 2>/dev/null | read -r _; then
+    full_theme_path="$diy_theme"
+  fi
 
-    cd - >/dev/null || exit
-    break
+  if [ "$selected_theme" != "$previous_theme" ] || [ ! -f "$last_theme" ] || [ ! -f "$active_theme_file" ]; then
+    echo "$selected_theme" >"$last_theme"
+    echo "$full_theme_path" >"$active_theme_file"
+  fi
+
+  local applied="$full_theme_path|$assigned_music"
+  if [ -z "$mountpoint" ] && [ "$full_theme_path" != "$diy_theme" ] && [ -d "$full_theme_path" ] &&
+    [ ! -f "$theme_state_path/om_themerandomizer" ] && [ ! -f "$theme_state_path/om_audiorandomizer" ] &&
+    [ "$(cat "$applied_file" 2>/dev/null)" = "$applied" ]; then
+    return 0
+  fi
+
+  if [ -d "$theme_font_path" ]; then
+    cmp -s "$title_font" "$theme_font_path/title.fnt" || fontBindFix "backup"
+  else
+    fontBindFix "restore"
+  fi
+
+  unbindThemeMounts
+  while grep -q " $original_theme overlayfs " /proc/mounts; do
+    umount -l "$original_theme" || break
   done
 
+  if [ "$full_theme_path" != "$diy_theme" ] && [ -f "$full_theme_path/needs_overlay" ]; then
+    [ -d "$full_theme_path" ] && mount -t overlayfs -o lowerdir="$original_theme",upperdir="$full_theme_path" overlayfs "$original_theme"
+  else
+    if [ -z "$assigned_music" ] && [ -f "$theme_state_path/om_audiorandomizer" ] && [ -n "$(ls -A "$music_path")" ]; then
+      [ -z "$bgm_home" ] && bgm_home="$(find "$music_path" -maxdepth 1 -type f -iname "*.wav" | shuf | head -n1)"
+      if [ "$folder_id" = "000" ]; then
+        musicHackBind "$bgm_home" "$bgm_home" "$original_theme_audio"
+      else
+        [ -f "$theme_state_path/om_advmusichack" ] && [ -z "$(find "$full_theme_path" -type f -name "*.wav")" ] && musicHackBind "$bgm_home" "$bgm_home" "$original_theme_audio"
+      fi
+    fi
+
+    local skip_bgm="none"
+    [ -n "$assigned_music" ] && skip_bgm="bgm_*.wav"
+    find "$full_theme_path" -type f ! -path "$full_theme_path/fonts/*" ! -name "$skip_bgm" ! -name info ! -name bind_ok ! -name needs_overlay 2>/dev/null | while IFS= read -r theme_file; do
+      mount -o bind "$theme_file" "$original_theme/${theme_file#"$full_theme_path"/}"
+    done
+  fi
+  [ -n "$assigned_music" ] && musicHackBind "$music_path/$assigned_music" "$music_path/$assigned_music" "$original_theme_audio"
+
+  [ -z "$mountpoint" ] && echo "$applied" >"$applied_file"
 }
