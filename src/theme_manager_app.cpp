@@ -78,8 +78,7 @@ ThemeManagerApp::ThemeManagerApp(std::string optionsLocation, AppOptions options
 
     badgeA_ = Badge{ Texture("A", 16, renderer_, 0, 0, false, ToAbgr(UiTheme::BadgeLetter), true), Texture(Translate("HINT_SELECT"), 16, renderer_, 0, 0, false, ToAbgr(UiTheme::Text), true), UiTheme::BadgeADark, UiTheme::BadgeA };
     badgeRowRightEdge_ = UiTheme::BadgeClusterRightX - UiTheme::BadgeOuterSize - UiTheme::BadgeLabelGap - badgeA_.label.rect.w - UiTheme::BadgeGroupGap;
-    badgeOuter_ = Texture(optionsLocation_ + UiTheme::AssetBadgeOuter, renderer_);
-    badgeInner_ = Texture(optionsLocation_ + UiTheme::AssetBadgeInner, renderer_);
+    badges_.reset(new BadgePainter(optionsLocation_, renderer_));
     badgeHold_ = Badge{ Texture("B", 16, renderer_, 0, 0, false, ToAbgr(UiTheme::BadgeLetter), true), Texture(Translate("HINT_DELETE"), 16, renderer_, 0, 0, false, ToAbgr(UiTheme::Text), true), UiTheme::BadgeXDark, UiTheme::BadgeX };
 
     ComputePinnedAndThemeRanges();
@@ -98,33 +97,15 @@ void ThemeManagerApp::ComputePinnedAndThemeRanges()
 
 int ThemeManagerApp::DrawBadge(Badge & badge, int rightEdgeX)
 {
-    int groupW = UiTheme::BadgeOuterSize + UiTheme::BadgeLabelGap + badge.label.rect.w;
-    int x = rightEdgeX - groupW;
-    int y = UiTheme::BadgeBandY;
-    badgeOuter_.rect = { x, y, UiTheme::BadgeOuterSize, UiTheme::BadgeOuterSize };
-    SetColorMod(badgeOuter_.texture.get(), badge.rim);
-    badgeOuter_.Draw(renderer_);
-    int innerOffset = (UiTheme::BadgeOuterSize - UiTheme::BadgeInnerSize) / 2;
-    badgeInner_.rect = { x+innerOffset, y+innerOffset, UiTheme::BadgeInnerSize, UiTheme::BadgeInnerSize };
-    SetColorMod(badgeInner_.texture.get(), badge.fill);
-    badgeInner_.Draw(renderer_);
-    // glyph bearing makes the pure-math center look 1px down/left - nudged
-    badge.letter.rect.x = x + (UiTheme::BadgeOuterSize - badge.letter.rect.w)/2 + 1;
-    badge.letter.rect.y = y + (UiTheme::BadgeOuterSize - badge.letter.rect.h)/2 - 1;
-    badge.letter.Draw(renderer_);
-    badge.label.rect.x = x + UiTheme::BadgeOuterSize + UiTheme::BadgeLabelGap;
-    badge.label.rect.y = y + (UiTheme::BadgeOuterSize - badge.label.rect.h)/2;
-    badge.label.Draw(renderer_);
-    return x - UiTheme::BadgeGroupGap;
+    return badges_->Draw(badge, rightEdgeX, UiTheme::BadgeBandY);
 }
 
-// true if deleted - caller should break out of the main loop
-bool ThemeManagerApp::ConfirmDelete()
+bool ThemeManagerApp::ConfirmDelete(const ScreenSnapshot & background)
 {
-    const int DialogCenterX = 640, DialogTitleY = 320, DialogHintY = 360; // screen center (1280x720)
     const std::string & confirmKey = commands_[currentCommandId_].deleteConfirmKey;
-    Texture confirmTitle(Translate(confirmKey.empty() ? "DELETE_CONFIRM_GENERIC" : confirmKey), 24, renderer_, DialogCenterX, DialogTitleY, true, ToAbgr(UiTheme::Text), true);
-    Texture confirmHint(Translate("DELETE_CONFIRM_HINT"), 16, renderer_, DialogCenterX, DialogHintY, true, ToAbgr(UiTheme::Text), true);
+    ConfirmDialog dialog(renderer_, *badges_, Translate(confirmKey.empty() ? "DELETE_CONFIRM_GENERIC" : confirmKey),
+                         badges_->Make("A", Translate("HINT_CONFIRM"), UiTheme::BadgeADark, UiTheme::BadgeA),
+                         badges_->Make("B", Translate("HINT_CANCEL"), UiTheme::BadgeBDark, UiTheme::BadgeB));
     controller_->GetButtonStatus(B); // consume the still-held B from the triggering long-press
     bool confirmed = false;
     for(;;)
@@ -138,17 +119,29 @@ bool ThemeManagerApp::ConfirmDelete()
             break;
         }
         sdlContext_->StartFrame();
-        DrawFillRect(renderer_, UiTheme::FrameRect, UiTheme::Bg);
-        DrawStrokeRect(renderer_, UiTheme::FrameRect, UiTheme::Border, UiTheme::BorderWidth, UiTheme::BorderRadius);
-        confirmTitle.Draw(renderer_);
-        confirmHint.Draw(renderer_);
-        SetDrawColor(renderer_, bg_); // flat helpers leave the draw color dirty
+        background.Draw();
+        dialog.Draw();
+        SetDrawColor(renderer_, bg_);
         sdlContext_->EndFrame();
     }
     if(!confirmed)
         return false;
     system(commands_[currentCommandId_].deleteCommand.c_str());
     return true;
+}
+
+bool ThemeManagerApp::FinishFrame()
+{
+    SetDrawColor(renderer_, bg_);
+    if(!deleteRequested_)
+    {
+        sdlContext_->EndFrame();
+        return false;
+    }
+    deleteRequested_ = false;
+    const ScreenSnapshot background(renderer_);
+    sdlContext_->EndFrame();
+    return ConfirmDelete(background);
 }
 
 void ThemeManagerApp::DrawChromeCommon()
@@ -236,7 +229,7 @@ bool ThemeManagerApp::ActivateCommand(Command & cmd)
     return true;
 }
 
-bool ThemeManagerApp::UpdateBButton(bool & tapped)
+void ThemeManagerApp::UpdateBButton(bool & tapped)
 {
     tapped = false;
     bool bHeldNow = controller_->PeekButtonStatus(B);
@@ -245,8 +238,8 @@ bool ThemeManagerApp::UpdateBButton(bool & tapped)
         if(!bHoldFired_ && controller_->HeldMillis(B) >= BHoldThresholdMs)
         {
             bHoldFired_ = true;
-            if(!commands_[currentCommandId_].deleteCommand.empty() && ConfirmDelete())
-                return true;
+            if(!commands_[currentCommandId_].deleteCommand.empty())
+                deleteRequested_ = true;
         }
     }
     else
@@ -255,7 +248,6 @@ bool ThemeManagerApp::UpdateBButton(bool & tapped)
         bHoldFired_ = false;
     }
     bWasHeld_ = bHeldNow;
-    return false;
 }
 
 int ThemeManagerApp::RunGridLayout()
@@ -565,8 +557,7 @@ int ThemeManagerApp::RunGridLayout()
         }
         {
             bool tapped = false;
-            if(UpdateBButton(tapped))
-                break;
+            UpdateBButton(tapped);
             // quick tap - Back/Exit isn't a chip, B runs it directly
             if(tapped && pinnedStartIndex_ < (int)commands_.size() && ActivateCommand(commands_[pinnedStartIndex_]))
                 break;
@@ -708,8 +699,8 @@ int ThemeManagerApp::RunGridLayout()
                 gridScrollDown.Draw(renderer_, SDL_FLIP_VERTICAL);
         }
 
-        SetDrawColor(renderer_, bg_);
-        sdlContext_->EndFrame();
+        if(FinishFrame())
+            break;
     }
 
     return 0;
@@ -881,8 +872,7 @@ int ThemeManagerApp::RunListLayout()
         }
         {
             bool tapped = false;
-            if(UpdateBButton(tapped))
-                break;
+            UpdateBButton(tapped);
             // quick tap - Back/Exit isn't a row you navigate to, B runs it directly (matches the grid layout)
             if(tapped && pinnedStartIndex_ < (int)commands_.size() && ActivateCommand(commands_[pinnedStartIndex_]))
                 break;
@@ -899,9 +889,8 @@ int ThemeManagerApp::RunListLayout()
         if((topListItemNumber + DisplayItemCount) < pinnedStartIndex_)
             scrollDown.Draw(renderer_, SDL_FLIP_VERTICAL);
 
-        SetDrawColor(renderer_, bg_);
-
-        sdlContext_->EndFrame();
+        if(FinishFrame())
+            break;
     }
 
     return 0;

@@ -12,7 +12,9 @@
 
 #include "command_loader.h"
 #include "command.h"
+#include "framework/badge.h"
 #include "framework/controller.h"
+#include "framework/dialog.h"
 #include "framework/sdl_helper.h"
 
 #include <memory>
@@ -33,7 +35,6 @@ public:
     }
 
 private:
-    struct Badge { Texture letter; Texture label; Color rim; Color fill; };
     enum class FrameEvent { Continue, Quit, PowerButtonPressed };
 
     std::string optionsLocation_;
@@ -52,7 +53,8 @@ private:
 
     Texture gearIcon_, switchOn_, switchOff_;
     Texture appTitleText_, appVersionText_, titleText_, creditText_;
-    Texture badgeOuter_, badgeInner_;
+    std::unique_ptr<BadgePainter> badges_;
+    bool deleteRequested_ = false;
     Badge badgeA_;
     Badge badgeHold_;
     int badgeRowRightEdge_ = 0; // x just left of badge A - fixed once badgeA_ is built
@@ -64,14 +66,15 @@ private:
     void ComputePinnedAndThemeRanges();
 
     int DrawBadge(Badge & badge, int rightEdgeX);
-    bool ConfirmDelete();
+    bool ConfirmDelete(const ScreenSnapshot & background);
+    bool FinishFrame();
     void DrawChromeCommon();
     void DrawSectionTitle();
     Texture MakeScrollArrow(int x, int y) const;
 
     FrameEvent PollFrameEvents();
     bool ActivateCommand(Command & cmd); // true if the caller's loop should break
-    bool UpdateBButton(bool & tapped); // true if delete confirmed (caller should break); tapped on a quick tap
+    void UpdateBButton(bool & tapped);
 
     void ResumeUnderlyingUi() const; // CONTs the game PauseUI.sh stopped - nothing else does this on power-button exit
 
