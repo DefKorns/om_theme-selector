@@ -69,6 +69,7 @@ CATEGORY_UI_MOD=Categorie: Interface-mod
 CHECKING_THEME_FILES=Bestanden van het gekozen thema worden gecontroleerd.
 DOWNLOADING=Downloaden...
 INSTALLATION_COMPLETE=Installatie voltooid.
+ALL_THEMES_INSTALLED=Alle thema's zijn al geïnstalleerd, er is niets te downloaden.
 NOT_ENOUGH_SPACE=Onvoldoende vrije ruimte, maak ruimte vrij en probeer het opnieuw.
 THEMES_FAILED=Deze thema's konden niet worden geïnstalleerd:
 THEME_LIST_DOWNLOADING_LINE1=Themalijst Wordt Gedownload

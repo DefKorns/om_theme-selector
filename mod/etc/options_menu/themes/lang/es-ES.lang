@@ -69,6 +69,7 @@ CATEGORY_UI_MOD=Categoría: Mod de interfaz
 CHECKING_THEME_FILES=Comprobando los archivos del tema seleccionado.
 DOWNLOADING=Descargando...
 INSTALLATION_COMPLETE=Instalación completada.
+ALL_THEMES_INSTALLED=Todos los temas ya están instalados, no hay nada que descargar.
 NOT_ENOUGH_SPACE=No hay suficiente espacio libre, libera espacio e inténtalo de nuevo.
 THEMES_FAILED=Estos temas no se pudieron instalar:
 THEME_LIST_DOWNLOADING_LINE1=Descargando Lista de Temas

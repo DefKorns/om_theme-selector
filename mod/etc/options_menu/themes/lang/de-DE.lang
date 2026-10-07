@@ -69,6 +69,7 @@ CATEGORY_UI_MOD=Kategorie: Benutzeroberflächen-Mod
 CHECKING_THEME_FILES=Dateien des ausgewählten Themes werden geprüft.
 DOWNLOADING=Wird heruntergeladen...
 INSTALLATION_COMPLETE=Installation abgeschlossen.
+ALL_THEMES_INSTALLED=Alle Themen sind bereits installiert, nichts herunterzuladen.
 NOT_ENOUGH_SPACE=Nicht genügend freier Speicher, gib Speicher frei und versuche es erneut.
 THEMES_FAILED=Diese Themen konnten nicht installiert werden:
 THEME_LIST_DOWNLOADING_LINE1=Themenliste wird heruntergeladen

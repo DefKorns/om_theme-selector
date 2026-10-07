@@ -475,6 +475,7 @@ themeGenerator() {
   case "$rc" in
     0) translate INSTALLATION_COMPLETE ;;
     3) translate NOT_ENOUGH_SPACE ;;
+    4) translate ALL_THEMES_INSTALLED ;;
     *) netChecker ;;
   esac
   if [ -n "$failed" ]; then
@@ -504,6 +505,10 @@ downloadThemes() {
   while IFS= read -r t; do
     [ -d "$t" ] || [ "$t" = "$sfregion" ] || echo "$t"
   done < "$1" > "$pending"
+  if [ ! -s "$pending" ]; then
+    remove "$pending"
+    return 4
+  fi
   remove "$progress"
   mkfifo "$progress"
   theme_downloader themes "$sftype" "$pending" > "$progress" &

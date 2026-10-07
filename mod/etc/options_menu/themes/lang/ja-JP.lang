@@ -69,6 +69,7 @@ CATEGORY_UI_MOD=カテゴリ: UI Mod
 CHECKING_THEME_FILES=えらんだThemeのFileをかくにんしています
 DOWNLOADING=downloadしています...
 INSTALLATION_COMPLETE=インストールかんりょう
+ALL_THEMES_INSTALLED=すべてのThemeはインストールずみです. downloadするものはありません
 NOT_ENOUGH_SPACE=あきようりょうがたりません. ようりょうをあけて, もういちどおためしください.
 THEMES_FAILED=これらのThemeはインストールできませんでした:
 THEME_LIST_DOWNLOADING_LINE1=Themeいちらんを download しています
