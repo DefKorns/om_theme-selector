@@ -268,8 +268,11 @@ int ThemeManagerApp::RunGridLayout()
 
     // an empty slot stays reserved-width rather than compacted out, so a
     // conditional button appearing/disappearing doesn't shift the rest
+    int stripEnd = themeStart_;
+    while(stripEnd > 0 && commands_[stripEnd-1].command.empty())
+        --stripEnd;
     std::vector<int> stripSlots;
-    for(int i = 0; i < themeStart_; ++i)
+    for(int i = 0; i < stripEnd; ++i)
         stripSlots.push_back(i);
     const int stripSlotCount = static_cast<int>(stripSlots.size());
     std::vector<int> stripIndices;
@@ -287,15 +290,41 @@ int ThemeManagerApp::RunGridLayout()
     };
     const int chipGap = 14;
     const int chipIconSize = 22;
+    const int chipIconGap = 12;
+    const int chipPadX = 20;
+    const int chipLabelSize = 14;
+    const int MinChipW = 140;
 
     const bool hasStrip = stripSlotCount > 0;
     const int StripTop = UiTheme::HeaderDividerY + 22;
     const int StripH = hasStrip ? 58 : 0;
     const int GridLeft = UiTheme::FrameX + 32;
     const int GridRight = UiTheme::FrameX + UiTheme::FrameW - 32;
-    // capped so a strip with few slots doesn't stretch its chips wide
-    const int MaxChipW = 200;
-    const int chipW = hasStrip ? std::min(MaxChipW, (GridRight - GridLeft - (stripSlotCount-1)*chipGap) / stripSlotCount) : 0;
+    auto ChipIconW = [&](int idx) { return commands_[idx].previewImage.empty() ? 0 : chipIconSize + chipIconGap; };
+    std::vector<int> chipWidths;
+    for(int idx : stripSlots)
+    {
+        const Command & c = commands_[idx];
+        const int contentW = c.command.empty() ? 0 : ChipIconW(idx) + TextWidth(Translate(c.name), chipLabelSize);
+        chipWidths.push_back(std::max(MinChipW, contentW + 2*chipPadX));
+    }
+    // the widest chips shrink first, down to a shared cap, when the strip overflows
+    const int stripAvail = GridRight - GridLeft - std::max(0, stripSlotCount-1)*chipGap;
+    auto StripWidthAt = [&](int cap)
+    {
+        int total = 0;
+        for(int w : chipWidths)
+            total += std::min(w, cap);
+        return total;
+    };
+    int chipCap = chipWidths.empty() ? 0 : *std::max_element(chipWidths.begin(), chipWidths.end());
+    while(chipCap > MinChipW && StripWidthAt(chipCap) > stripAvail)
+        --chipCap;
+    for(int & w : chipWidths)
+        w = std::min(w, chipCap);
+    std::vector<int> chipWidthOf(commands_.size(), 0);
+    for(int pos = 0; pos < stripSlotCount; ++pos)
+        chipWidthOf[stripSlots[pos]] = chipWidths[pos];
     titleText_ = Texture(Translate(options_.titleKey), UiTheme::SectionTitleFontSize - 6, renderer_, UiTheme::SectionTitleX, 0, false, ToAbgr(UiTheme::Text), true);
     titleText_.rect.y = hasStrip ? (StripTop + StripH + 22) : (UiTheme::HeaderDividerY + 22);
     const int GridTop = titleText_.rect.y + titleText_.rect.h + 20;
@@ -341,7 +370,7 @@ int ThemeManagerApp::RunGridLayout()
         std::string label = Translate(c.name);
         if(i < themeStart_ || i >= pinnedStartIndex_)
         {
-            int labelAvail = chipW - chipIconSize - 24;
+            const int labelAvail = chipWidthOf[i] - 2*chipPadX - ChipIconW(i);
             if(c.previewImage.size())
             {
                 SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "1"); // smooth - these are small glyphs, nearest looks jagged
@@ -350,10 +379,9 @@ int ThemeManagerApp::RunGridLayout()
                 FitCentered(icon, 0, 0, chipIconSize, chipIconSize, 0);
                 SetColorMod(icon.texture.get(), UiTheme::Accent);
                 chipIcons[i] = icon;
-                labelAvail = chipW - chipIconSize - 32;
             }
-            label = TruncateToWidth(label, 14, labelAvail);
-            chipLabels[i] = Texture(label, 14, renderer_, 0, 0, false, ToAbgr(UiTheme::Text), true);
+            label = TruncateToWidth(label, chipLabelSize, labelAvail);
+            chipLabels[i] = Texture(label, chipLabelSize, renderer_, 0, 0, false, ToAbgr(UiTheme::Text), true);
         }
         else
         {
@@ -537,7 +565,8 @@ int ThemeManagerApp::RunGridLayout()
             int x = GridLeft;
             for(int pos = 0; pos < stripSlotCount; ++pos)
             {
-                int idx = stripSlots[pos];
+                const int idx = stripSlots[pos];
+                const int chipW = chipWidths[pos];
                 if(commands_[idx].command.empty())
                 {
                     x += chipW + chipGap;
@@ -557,14 +586,14 @@ int ThemeManagerApp::RunGridLayout()
                 Texture & icon = chipIcons[idx];
                 Texture & label = chipLabels[idx];
                 int iconW = icon.rect.h > 0 ? chipIconSize : 0;
-                int groupW = iconW + (iconW > 0 ? 12 : 0) + label.rect.w;
+                int groupW = iconW + (iconW > 0 ? chipIconGap : 0) + label.rect.w;
                 int gx = x + (chipW - groupW) / 2;
                 if(icon.rect.h > 0)
                 {
                     icon.rect.x = gx + (chipIconSize - icon.rect.w) / 2;
                     icon.rect.y = StripTop + (StripH - icon.rect.h) / 2;
                     icon.Draw(renderer_);
-                    gx += iconW + 12;
+                    gx += iconW + chipIconGap;
                 }
                 label.rect.x = gx;
                 label.rect.y = StripTop + (StripH - label.rect.h) / 2;

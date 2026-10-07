@@ -41,6 +41,11 @@ void FitCover(Texture & tex, int boxX, int boxY, int boxW, int boxH, int padding
     FitScaled(tex, boxX, boxY, boxW, boxH, padding, true);
 }
 
+int TextWidth(const std::string & text, int glyphSize)
+{
+    return CanRenderWithTTF(text, glyphSize) ? MeasureTTFWidth(text, glyphSize) : Utf8Length(text) * glyphSize;
+}
+
 std::string TruncateToWidth(const std::string & text, int glyphSize, int available)
 {
     std::string label = text;

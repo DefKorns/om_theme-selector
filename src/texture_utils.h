@@ -16,6 +16,7 @@
 
 void FitCentered(Texture & tex, int boxX, int boxY, int boxW, int boxH, int padding); // letterboxed
 void FitCover(Texture & tex, int boxX, int boxY, int boxW, int boxH, int padding); // cropped
+int TextWidth(const std::string & text, int glyphSize);
 std::string TruncateToWidth(const std::string & text, int glyphSize, int available);
 
 #endif
