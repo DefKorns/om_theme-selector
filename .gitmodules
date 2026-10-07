@@ -8,3 +8,6 @@
 	path = vendor/OptionsMenu
 	url = https://github.com/DefKorns/OptionsMenu
 	branch = modern-ui-ttf
+[submodule "hmod-build"]
+	path = hmod-build
+	url = https://github.com/DefKorns/hmod-build.git

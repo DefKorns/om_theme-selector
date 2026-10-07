@@ -22,7 +22,7 @@ if ! docker image inspect "$IMAGE" >/dev/null 2>&1; then
 fi
 
 echo "==> Running make inside the container..."
-docker run --rm -v "$PWD:/src" "$IMAGE" make -f Makefile.docker CROSS_PREFIX=arm-linux-gnueabihf- "$@"
+docker run --rm -v "$PWD:/src" "$IMAGE" make CROSS_PREFIX=arm-linux-gnueabihf- "$@"
 
 echo "==> Build complete:"
-ls -la mod/etc/options_menu/lib/theme_manager mod/bin/theme_downloader 2>/dev/null
+ls -la mod/etc/options_menu/lib/theme_manager mod/bin/theme_downloader out/*.hmod 2>/dev/null
