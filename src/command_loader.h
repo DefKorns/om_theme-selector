@@ -45,6 +45,7 @@ struct ItemInfo
     std::string author;
     bool needsAttention;
     std::string attentionNotice;
+    bool previewAlignTop; // PREVIEW_ALIGN_TOP
 };
 
 bool LoadCommands(const std::string & commandLocation, const std::string & scriptLocation, const std::string & optionsLocation,

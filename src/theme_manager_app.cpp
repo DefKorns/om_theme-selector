@@ -417,10 +417,10 @@ int ThemeManagerApp::RunGridLayout()
         tileHideLabel[idx] = c.previewHideLabel;
         tileFitContain[idx] = c.previewFitContain;
 
-        // _run01.png with sibling _run02/_run03/... is this project's naming
-        // convention for a multi-frame run-cycle animation
-        const std::string runSuffix = "_run01.png";
-        bool isRunCycle = c.previewImage.size() > runSuffix.size() &&
+        // a sprite preview named *01.png with sibling *02/*03/... is a multi-frame
+        // animation (mario_run01.png, pole01.png)
+        const std::string runSuffix = "01.png";
+        bool isRunCycle = c.previewNearest && c.previewImage.size() > runSuffix.size() &&
            c.previewImage.compare(c.previewImage.size() - runSuffix.size(), runSuffix.size(), runSuffix) == 0;
 
         if(tileFitContain[idx])
@@ -431,7 +431,7 @@ int ThemeManagerApp::RunGridLayout()
 
         if(isRunCycle)
         {
-            std::string base = c.previewImage.substr(0, c.previewImage.size() - runSuffix.size()) + "_run";
+            std::string base = c.previewImage.substr(0, c.previewImage.size() - runSuffix.size());
             std::vector<Texture> frames{ art };
             for(int n = 2; n <= 8; ++n)
             {
@@ -653,7 +653,11 @@ int ThemeManagerApp::RunGridLayout()
                                 // 10px margin keeps clear of the rounded-corner mask below
                                 FitCentered(tileArt, x, y, TileW, TileH, 10);
                             else
+                            {
                                 FitCover(tileArt, x, y, TileW, TileH, 0);
+                                if(items_[idx].previewAlignTop)
+                                    tileArt.rect.y = y;
+                            }
                             tileArt.Draw(renderer_);
                         }
                         if(author.rect.w > 0)

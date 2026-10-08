@@ -170,9 +170,9 @@ snes_theme_path="${om_mod_path}/snes"
 
 #### ARRAYS
 diy_asset_array="diy_packed diy_wall diy_wall_far diy_wall_near diy_mario diy_luigi diy_colors diy_pole" # verify
-del_shared="$nes_theme_path $disable_smb $disable_packed_nes $disable_colors_nes $om_mod_packed_nes $om_mod_sbm $om_mod_colors_nes ${om_mod_imgs}/smb.png ${om_mod_imgs}/packed_nes.png $disable_color $om_mod_colors"
+del_shared="$nes_theme_path $disable_smb $disable_packed_nes $disable_colors_nes $om_mod_packed_nes $om_mod_sbm $om_mod_colors_nes $disable_color $om_mod_colors"
 
-del_on_nes="$snes_theme_path $shonen_theme_path $disable_color $disable_pole $disable_mario $disable_luigi $disable_packed $disable_wall $disable_wall_far $disable_wall_near $om_mod_pole $om_mod_mario $om_mod_luigi $om_mod_wall $om_mod_wall_n $om_mod_wall_f $om_mod_packed $om_mod_colors ${om_mod_imgs}/luigi.png ${om_mod_imgs}/mario.png ${om_mod_imgs}/packed.png ${om_mod_imgs}/pole.png ${om_mod_imgs}/wall*.png"
+del_on_nes="$snes_theme_path $shonen_theme_path $disable_color $disable_pole $disable_mario $disable_luigi $disable_packed $disable_wall $disable_wall_far $disable_wall_near $om_mod_pole $om_mod_mario $om_mod_luigi $om_mod_wall $om_mod_wall_n $om_mod_wall_f $om_mod_packed $om_mod_colors"
 del_on_snes="$shonen_theme_path $del_shared"
 del_on_shonen="$snes_theme_path $del_shared"
 items_to_delete="$del_on_snes"
@@ -230,6 +230,7 @@ migrateThemes() {
 
 hasThemesToInstall() {
   [ "$has_theme" = 0 ] && return
+  "$om_scripts/gen_splash" /tmp/om_splash.png THEME_LOADING && decodepng /tmp/om_splash.png > /dev/fb0
   for f in "$theme_path/$system_name".*.tar.gz; do
     [ -f "$f" ] || continue
     tar -xzf "$f" -C "$theme_path" && rm -f "$f"
@@ -293,6 +294,7 @@ themeCountChanged() {
 }
 
 themeLoader() {
+  "$om_scripts/gen_splash" /tmp/om_splash.png THEME_LOADING && decodepng /tmp/om_splash.png > /dev/fb0
   removeRegionalTheme
   cd "$theme_path" && find . -mindepth 1 -maxdepth 1 -type d | sed 's#^\./##' | sort -u | while IFS= read -r thm; do
     full_path="$theme_path/$thm"
@@ -359,8 +361,8 @@ sleep 1
 
     preview_image="$thm_preview/$thm.png"
     [ ! -f "$preview_image" ] && preview_image="$theme_path/$thm.png"
-    [ ! -f "$preview_image" ] && [ -z "${thm##diy_theme*}" ] && preview_image="$options_menu/images/diy_preview.png"
-    [ ! -f "$preview_image" ] && preview_image="$options_menu/images/default_preview.png"
+    [ ! -f "$preview_image" ] && [ -z "${thm##diy_theme*}" ] && preview_image="$options_menu/images/preview_diy.png"
+    [ ! -f "$preview_image" ] && preview_image="$options_menu/images/preview_default.png"
 
     cmd_name="$(sed -r 's/NAME=//g' < "$full_path/info")"
     echo "COMMAND_NAME=$cmd_name
@@ -563,9 +565,7 @@ unpackTheme() {
   return "$dl_rc"
 }
 
-findDiyAsset() {
-  "$om_scripts/gen_splash" /tmp/om_splash.png THEME_LOADING && decodepng /tmp/om_splash.png > /dev/fb0
-
+diyAssetSpec() {
   diy_file="${1}.png"
   diy_sprite="$om_mod_sprites/${1}"
   asset_path="layout/asset/sprite/wallpaper"
@@ -585,12 +585,9 @@ findDiyAsset() {
       preview_square="1"
       preview_cols="5"
       ;;
-    wall)
+    wall | wall_near | wall_far)
       preview_square="1"
       preview_cols="5"
-      ;;
-    wall_near | wall_far)
-      preview_square="1"
       ;;
     sbm)
       diy_file="characters_sbm.png"
@@ -629,9 +626,12 @@ findDiyAsset() {
       asset="*.*"
       chars="1"
       preview_square="1"
+      preview_cols="5"
       ;;
   esac
+}
 
+diyCropFrame() {
   diy_crop_x=""
   diy_sprites_json="$om_mod_scripts/om_${1}.sprites.json"
   if [ "$colors" = "0" ] && [ -f "$diy_sprites_json" ]; then
@@ -643,6 +643,13 @@ findDiyAsset() {
     diy_crop_w="${diy_rest%%,*}"
     diy_crop_h="${diy_rest#*,}"
   fi
+}
+
+findDiyAsset() {
+  "$om_scripts/gen_splash" /tmp/om_splash.png THEME_LOADING && decodepng /tmp/om_splash.png > /dev/fb0
+
+  diyAssetSpec "$1"
+  diyCropFrame "$1"
   paths_to_search="$om_mod_sprites/assets/$1 $theme_path"
 
   find "$diy_sprite/commands" "$diy_sprite/scripts" -type f \
@@ -772,12 +779,59 @@ diyThemeChecker() {
     disableCmds "diy" "del_diy" "preview"
   fi
 
+  diyHomePreviews
+
   [ "$1" = "loader" ] && usleep 1000
+}
+
+# the console's own stock asset, read from the squashfs so an applied theme can't shadow it
+diyStockPreview() {
+  stock_preview=""
+  [ "$colors" = "1" ] && return
+  [ "$sftype" = "hvcj" ] && return # its packed.png atlas doesn't match om_packed.sprites.json
+  stock_file="$squashfs/usr/share/$original_theme_ui0/resources/$asset_path/$diy_file"
+  [ -f "$stock_file" ] || return
+
+  diyCropFrame "$1"
+  if [ -z "$diy_crop_x" ]; then
+    stock_preview="$stock_file"
+    return
+  fi
+  stock_crop="$om_mod_sprites/assets/$1/.stock.png"
+  [ -f "$stock_crop" ] || sprite_crop "$stock_file" "$diy_crop_x" "$diy_crop_y" "$diy_crop_w" "$diy_crop_h" "$stock_crop" || return
+  stock_preview="$stock_crop"
+}
+
+# each DIY home entry previews the asset picked for it, else the console's stock one
+diyHomePreviews() {
+  for home_cmd in "$om_mod_gen_cmds"/*; do
+    diy_category="$(sed -n 's/^COMMAND_STR=.*om_diy_asset \([a-z_]*\) .*/\1/p' "$home_cmd")"
+    [ -z "$diy_category" ] && continue
+
+    diyAssetSpec "$diy_category"
+    picked_cmd=""
+    [ -f "$diy_selection_path/$diy_category" ] && picked_cmd="$om_mod_sprites/$diy_category/commands/c0001_$(cat "$diy_selection_path/$diy_category")"
+    if [ -n "$picked_cmd" ] && [ -f "$picked_cmd" ]; then
+      home_preview="$(sed -n 's/^PREVIEW_IMAGE=//p' "$picked_cmd")"
+    else
+      diyStockPreview "$diy_category"
+      home_preview="$stock_preview"
+      [ -z "$home_preview" ] && home_preview="$(sed -n 's/^DEFAULT_PREVIEW_IMAGE=//p' "$home_cmd")"
+    fi
+    [ -z "$home_preview" ] && home_preview="$om_mod_imgs/preview_default.png"
+
+    home_nearest=""
+    [ "$chars" = "1" ] && home_nearest='\nPREVIEW_NEAREST=TRUE'
+
+    home_preview="$(printf '%s' "$home_preview" | sed 's/[&#\\]/\\&/g')"
+    sed -i -e '/^PREVIEW_NEAREST=/d' -e "s#^PREVIEW_IMAGE=.*#PREVIEW_IMAGE=$home_preview$home_nearest#" "$home_cmd"
+  done
 }
 
 diyThemeRemover() {
   disableCmds "diy" "del_diy" "preview"
   remove "$diy_selection_path"
+  diyHomePreviews
 
   [ -d "$diy_theme_path" ] && find "$diy_theme_path" -type f -not -name 'assets_here' -exec rm {} +
 
@@ -910,7 +964,7 @@ themeTitle() {
 themePreview() {
   preview="$thm_preview/$1.png"
   [ ! -f "$preview" ] && preview="$theme_path/$1.png"
-  [ ! -f "$preview" ] && preview="$options_menu/images/default_preview.png"
+  [ ! -f "$preview" ] && preview="$options_menu/images/preview_default.png"
   echo "$preview"
 }
 

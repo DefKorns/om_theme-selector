@@ -117,7 +117,7 @@ int ThemeManagerApp::RunFolderThemesLayout()
             loaded = 1;
             std::string path = theme >= 0 ? themes[theme].preview : "";
             if(path.empty() || !std::ifstream(path).good())
-                path = optionsLocation_ + (theme < 0 && model.GlobalThemeIsRandom() ? "images/randtheme.png" : "images/default_preview.png");
+                path = optionsLocation_ + (theme < 0 && model.GlobalThemeIsRandom() ? "images/preview_randtheme.png" : "images/preview_default.png");
             SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "1");
             slot = Texture(path, renderer_, 0, 0);
             SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "0");

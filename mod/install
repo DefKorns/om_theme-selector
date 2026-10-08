@@ -82,6 +82,11 @@ transfer_default
 # saves aren't mounted yet during install - om_theme_selector resets settings on first run
 om_firstrun="$rootfs/etc/options_menu/themes/om_firstrun"
 [ ! -f "$om_firstrun" ] && touch "$om_firstrun"
+for legacy_img in back chip_apply chip_clear chip_diy chip_download chip_preview chip_refresh chip_settings clear colors_nes default_preview diy_preview luigi mario packed packed_nes pole randtheme reboot sbm settings uninstall update wall wall_far wall_near; do
+  del "$rootfs/etc/options_menu/images/$legacy_img.png"
+done
+# DIY asset entries regenerate on their next open, so an update's preview layout reaches them
+find "$rootfs/etc/options_menu/themes/creator/sprites" -path '*/commands/c0001_*' -type f -exec rm {} + 2>/dev/null
 chmod +x "$rootfs/bin/sprite_crop"
 chmod +x "$rootfs/bin/theme_downloader"
 chmod +x "$rootfs/etc/options_menu/lib/theme_manager"

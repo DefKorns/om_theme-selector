@@ -3,4 +3,4 @@ COMMAND_TYPE=EXTERNAL
 RESTART_UI=FALSE
 CHILD=TRUE
 COMMAND_STR=sh %script_dir%/om_preview &
-PREVIEW_IMAGE=/etc/options_menu/images/chip_preview.png
+PREVIEW_IMAGE=/etc/options_menu/images/ui/chip_preview.png

@@ -34,7 +34,7 @@ struct PipeCloser { void operator()(FILE * pipe) const { if(pipe) pclose(pipe); 
 using PipeHandle = std::unique_ptr<FILE, PipeCloser>;
 
 // my own convention, not OptionsMenu's Command format
-struct SelectorKeys { bool nesOnly = false; bool snesOnly = false; std::string author; std::string attentionPath; std::string attentionNotice; };
+struct SelectorKeys { bool nesOnly = false; bool snesOnly = false; std::string author; std::string attentionPath; std::string attentionNotice; bool previewAlignTop = false; };
 
 SelectorKeys ReadSelectorKeys(const std::string & path)
 {
@@ -52,6 +52,8 @@ SelectorKeys ReadSelectorKeys(const std::string & path)
             keys.nesOnly = true;
         else if(line == "SNES_ONLY=TRUE")
             keys.snesOnly = true;
+        else if(line == "PREVIEW_ALIGN_TOP=TRUE")
+            keys.previewAlignTop = true;
         else if(line.compare(0, authorKey.size(), authorKey) == 0)
             keys.author = line.substr(authorKey.size());
         else if(line.compare(0, attentionPathKey.size(), attentionPathKey) == 0)
@@ -204,7 +206,7 @@ bool LoadCommands(const std::string & commandLocation, const std::string & scrip
         }
         commands.push_back(c);
         const bool needsAttention = !keys.attentionPath.empty() && HasAnyFile(keys.attentionPath);
-        items.push_back({ file.compare(0, 6, "c0000_") != 0, std::move(keys.author), needsAttention, std::move(keys.attentionNotice) });
+        items.push_back({ file.compare(0, 6, "c0000_") != 0, std::move(keys.author), needsAttention, std::move(keys.attentionNotice), keys.previewAlignTop });
     }
     return true;
 }
@@ -259,5 +261,5 @@ void AppendBackNavigation(const std::string & optionsLocation, const AppOptions 
     back.previewImage = optionsLocation + "images/preview_placeholder.png";
     back.command = backCommand;
     commands.push_back(back);
-    items.push_back({ false, "", false, "" });
+    items.push_back({ false, "", false, "", false });
 }
