@@ -1,20 +1,25 @@
 {
-	"folders": [
+    "folders": [
         {
-            "name": "om_theme-selectorv2",
+            "name": "om_theme-selector",
             "path": "."
         },
-        {
-            "name": "out",
-            "path": "out"
-        }
+        // {
+        //     "name": "out",
+        //     "path": "out"
+        // }
     ],
     "settings": {
         "files.autoSave": "off",
+        "[bash]": {
+            "editor.formatOnSave": true,
+            "editor.tabSize": 2,
+            "editor.insertSpaces": true,
+            "editor.detectIndentation": false
+        },
         // "terminal.integrated.shell.windows": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
-    "terminal.integrated.shell.windows": "C:\\Program Files\\Git\\bin\\bash.exe",
-
-        "shellformat.path": "C:\\bin\\shfmt_v3.2.4_windows_amd64.exe",
+        // "terminal.integrated.shell.windows": "C:\\Program Files\\Git\\bin\\bash.exe",
+        "shellformat.path": "C:\\bin\\shfmt_v3.12.0_windows_amd64.exe",
         "window.zoomLevel": 0,
         "files.associations": {
             "b[0-9]*": "shellscript",
@@ -27,18 +32,40 @@
             "c[0-9]*": "properties"
         },
         "explorer.confirmDragAndDrop": false,
-        "prettier.disableLanguages": [
-            "html"
-        ],
         "git.confirmSync": false,
         "vsicons.projectDetection.autoReload": true,
         "vsicons.dontShowNewVersionMessage": true,
         "explorer.confirmDelete": false,
-        "terminal.integrated.rendererType": "dom",
+        // "terminal.integrated.rendererType": "dom",
         "workbench.iconTheme": "vscode-icons",
-        "beautify.config": "",
-        "http.proxyAuthorization": null,
-        "workbench.colorTheme": "Flatland Monokai",
-
+        // "beautify.config": "",
+        // "http.proxyAuthorization": null,
+        //
+        "editor.tabSize": 2,
+        // "editor.wordWrap": "wordWrapColumn",
+        // "editor.wordWrapColumn": 80,
+        // "editor.fontSize": 16,
+        "editor.insertSpaces": true,
+        "editor.detectIndentation": false,
+        "editor.renderWhitespace": "all",
+        "shellcheck.enable": true,
+        "shellcheck.useWorkspaceRootAsCwd": true,
+        "shellcheck.run": "onSave",
+        "shellcheck.enableQuickFix": true,
+        "shellcheck.customArgs": [
+            "-x"
+        ],
+        "shellcheck.exclude": [
+            "3046",
+            "3014",
+            "3046",
+            "3051"
+        ],
+        // "shellformat.flag": "-i 2 -ci -sr -bn",
+        "shfmtIde.flag": "-p -bn -ci -i=2 -ln=posix/sh",
+        "shfmt.executableArgs": [
+            "-i=2",
+            "-ci"
+        ]
     }
 }

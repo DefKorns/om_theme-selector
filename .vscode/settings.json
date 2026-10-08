@@ -29,4 +29,5 @@
         "editor.tabSize": 2,
     },
     "diffEditor.ignoreTrimWhitespace": false,
+    "shellcheck.useWorkspaceRootAsCwd": true,
 }

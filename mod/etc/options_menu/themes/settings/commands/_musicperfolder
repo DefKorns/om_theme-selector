@@ -1,0 +1,6 @@
+COMMAND_NAME=MUSIC_PER_FOLDER
+COMMAND_TYPE=EXTERNAL
+RESTART_UI=FALSE
+COMMAND_STR=sh %script_dir%/om_theme mpf
+STATE_STR=sh %script_dir%/om_state music_per_folder
+PREVIEW_IMAGE=/etc/options_menu/images/preview_music_per_folder.png

@@ -500,7 +500,33 @@ default/
 temp/
 mod/etc/options_menu/themes/scripts/b8024_themeselector
 mod-/
+mod-backup/
 out--/
+
+# excluded from every build (exclude-file.txt) - kept on disk for local
+# testing, never tracked
+mod/etc/options_menu/themes/creator/sprites/assets/luigi/Fire_Bros/
+mod/etc/options_menu/themes/creator/sprites/assets/luigi/Frogman/
+mod/etc/options_menu/themes/creator/sprites/assets/luigi/Hammer_Bro/
+mod/etc/options_menu/themes/creator/sprites/assets/luigi/Little_Bro/
+mod/etc/options_menu/themes/creator/sprites/assets/luigi/Racoon_tail/
+mod/etc/options_menu/themes/creator/sprites/assets/luigi/Super_Bro/
+mod/etc/options_menu/themes/creator/sprites/assets/luigi/Tanooki/
+mod/etc/options_menu/themes/creator/sprites/assets/mario/Fire_Bros/
+mod/etc/options_menu/themes/creator/sprites/assets/mario/Frogman/
+mod/etc/options_menu/themes/creator/sprites/assets/mario/Hammer_Bro/
+mod/etc/options_menu/themes/creator/sprites/assets/mario/Little_Bro/
+mod/etc/options_menu/themes/creator/sprites/assets/mario/Racoon_tail/
+mod/etc/options_menu/themes/creator/sprites/assets/mario/Super_Bro/
+mod/etc/options_menu/themes/creator/sprites/assets/mario/Tanooki/
+mod/etc/options_menu/themes/creator/sprites/assets/wall/Fire_Bros/
+mod/etc/options_menu/themes/creator/sprites/assets/wall/Frogman/
+mod/etc/options_menu/themes/creator/sprites/assets/wall/Hammer_Bro/
+mod/etc/options_menu/themes/creator/sprites/assets/wall/Little_Bro/
+mod/etc/options_menu/themes/creator/sprites/assets/wall/Racoon_tail/
+mod/etc/options_menu/themes/creator/sprites/assets/wall/Super_Bro/
+mod/etc/options_menu/themes/creator/sprites/assets/wall/Tanooki/
+mod/etc/options_menu/themes/creator/sprites/assets/packed_nes/*.png
 mod/etc/options_menu/themes-old/
 modules/
 mod/etc/options_menu/themes/scripts/scripts/*
@@ -512,7 +538,6 @@ mod/etc/options_menu/themes/scripts/commands/c0009_*
 mod/etc/options_menu/themes/scripts/commands/c0010_*
 mod/etc/options_menu/themes/settings/commandss/
 mod/etc/options_menu/images/retro_gaming.zip
-Makefile
 mod/etc/options_menu/themes/downloads/scripts/getAll
 retro_gaming.zip
 mod/etc/options_menu/b8025_fontfix
@@ -522,3 +547,14 @@ out---backup/
 BACKUP.gpg
 out---/
 
+preinit
+b0010_functions
+b0050_boot
+_console_originals/
+tools/*.py
+tools/MaterialSymbolsOutlined.codepoints
+tools/MaterialSymbolsOutlined.ttf
+src/cacert.pem
+mod/etc/options_menu/lib/
+vendor/chmenu
+.deps/

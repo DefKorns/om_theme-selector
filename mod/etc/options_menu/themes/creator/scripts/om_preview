@@ -1,6 +1,7 @@
 #!/bin/sh
+# shellcheck disable=SC2086,SC2154,SC3046,SC3051
 #
-#  Copyright (c) 2022 DefKorns (https://defkorns.github.io/LICENSE)
+#  Copyright (c) 2026 DefKorns (https://defkorns.github.io/LICENSE)
 #
 #  This program is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -15,14 +16,22 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
+# shellcheck source=/dev/null
 source $mountpoint/etc/options_menu/themes/scripts/om_vars
 script_init
 
-decodepng "$omLoaders/themepreview.png" >/dev/fb0
+"$om_scripts/gen_splash" /tmp/om_splash.png THEME_PREVIEW_LOADING && decodepng /tmp/om_splash.png >/dev/fb0
 if [ ! -f "$b_file" ]; then
-	sed '1,2d' $omThemeScript >"$b_file"
-	echo "themeSelector" >"$p_file"
+  sed '1,2d' $om_theme_script >"$b_file"
+  echo "themeSelector" >"$p_file"
 fi
+
+# chmenu/restart alone don't re-run preinit.d, so themeSelector's own
+# DIY_THEME pickup (om_themescript) never re-fired - call it directly here,
+# same as it'll run again at the next real boot via b_file/p_file
+# shellcheck source=/dev/null
+source "$b_file"
+themeSelector
 
 echo "usleep 20000; \
 uistart; \

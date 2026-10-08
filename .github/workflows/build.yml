@@ -1,0 +1,17 @@
+name: Build
+
+on:
+  push:
+    branches: ['**']
+    tags: ['v*']
+  pull_request:
+
+jobs:
+  hmod:
+    uses: DefKorns/hmod-build/.github/workflows/hmod.yml@master
+    with:
+      release-name: Theme Selector
+      docker: true
+    secrets: inherit
+    permissions:
+      contents: write

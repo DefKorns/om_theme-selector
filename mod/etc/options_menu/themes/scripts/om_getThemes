@@ -1,23 +1,25 @@
 #!/bin/sh
+# shellcheck disable=SC2086,SC2154,SC3046,SC3051
 #
-#  Copyright (c) 2022 DefKorns (https://defkorns.github.io/LICENSE)
-#  
+#  Copyright (c) 2026 DefKorns (https://defkorns.github.io/LICENSE)
+#
 #  This program is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation, either version 3 of the License, or
 #  (at your option) any later version.
-#  
+#
 #  This program is distributed in the hope that it will be useful,
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU General Public License for more details.
-#  
+#
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
+# shellcheck source=/dev/null
 source $mountpoint/etc/options_menu/themes/scripts/om_vars
 script_init
 
-[ ! -f "$subDummy" ] && get_theme_list
+[ ! -f "$sub_dummy" ] && getThemeList
 
-$optionsMenu/options --commandPath $omModSubCmds/ --scriptPath $omModSubScripts --title "$omTitle" &
+$options_menu/lib/theme_manager --commandPath $om_mod_sub_cmds/ --scriptPath $om_mod_sub_scripts --title AVAILABLE_THEMES &

@@ -1,7 +1,7 @@
 #!/bin/sh
 # shellcheck disable=SC2154,SC2068
 #
-#  Copyright (c) 2022 DefKorns (https://defkorns.github.io/LICENSE)
+#  Copyright (c) 2026 DefKorns (https://defkorns.github.io/LICENSE)
 #
 #  This program is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -16,98 +16,126 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
-remove() {
+removeItem() {
   for f in $@; do
     [ -f "$f" ] || [ -d "$f" ] && rm -rf "$f"
   done
 }
 
-FONT_PATH="$rootfs/usr/share/fonts"
-TITLE_FONT="$FONT_PATH/title.fnt"
-TITLE_FONT_BACKUP="${TITLE_FONT}.backup"
-UI0="ui/$sftype-$sfregion"
-UI1=""
+font_path="$rootfs/usr/share/fonts"
+ui_dir="ui/$sftype-$sfregion"
+ui_subdir=""
 
 case "$sftype" in
 hvcj)
-  UI0="ui/hvc"
+  ui_dir="ui/hvc"
   ;;
 nes)
-  UI0="clover-ui"
-  UI1="nes/"
+  ui_dir="clover-ui"
+  ui_subdir="nes/"
   if [ "$sfregion" = "jpn" ]; then
-    UI0="clover-ui"
-    UI1="hvc"
+    ui_dir="clover-ui"
+    ui_subdir="hvc"
   fi
   ;;
 snes)
-  [ "$sfregion" = "jpn" ] && UI0="ui/shvc"
+  [ "$sfregion" = "jpn" ] && ui_dir="ui/shvc"
   ;;
 esac
 
-ORIGINAL_THEME="$mountpoint/usr/share/$UI0"
+original_theme="$mountpoint/usr/share/$ui_dir"
 
-copy "$rootfs/etc/options_menu/themes/scripts/om_chmenu_og" "$rootfs/bin/chmenu"
-copy "$rootfs/etc/options_menu/themes/scripts/om_fontfix_og" "$rootfs/etc/preinit.d/b8025_fontfix"
-remove "$mountpoint/$profilepath/$modname/lastTheme"
-remove "$mountpoint/$profilepath/$modname/prevTheme"
-remove "$mountpoint/$profilepath/$modname/activeTheme"
-remove "$mountpoint/$profilepath/$modname/om_advmusichack"
-remove "$mountpoint/$profilepath/$modname/om_audiorandomizer"
-remove "$mountpoint/$profilepath/$modname/om_themerandomizer"
-remove "$mountpoint/$profilepath/$modname/om_firstrun"
-remove "$rootfs/usr/share/themes"
-remove "$rootfs/usr/share/music_menu"
+sed -i '/# themeselector fix *$/,+2d' "$rootfs/bin/chmenu"
+sed -i '/# themeselector$/,+4d' "$rootfs/etc/preinit.d/b8025_fontfix"
+removeItem "$mountpoint/$profilepath/$modname/lastTheme"
+removeItem "$mountpoint/$profilepath/$modname/prevTheme"
+removeItem "$mountpoint/$profilepath/$modname/active_theme"
+removeItem "$mountpoint/$profilepath/$modname/folder_themes"
+removeItem "$mountpoint/$profilepath/$modname/folder_music"
+removeItem "$mountpoint/$profilepath/$modname/om_advmusichack"
+removeItem "$mountpoint/$profilepath/$modname/om_audiorandomizer"
+removeItem "$mountpoint/$profilepath/$modname/om_themerandomizer"
+removeItem "$mountpoint/$profilepath/$modname/om_firstrun"
+removeItem "$rootfs/usr/share/themes"
+removeItem "$rootfs/usr/share/music_menu"
 chmod +x "$rootfs/bin/chmenu"
-remove "$rootfs/etc/preinit.d/b8024_themeselector"
-remove "$rootfs/etc/preinit.d/p8024_themeselector"
-remove "$rootfs/etc/options_menu/commands/c0090_ThemeOptions"
-remove "$rootfs/etc/options_menu/scripts/om_themeselector"
-remove "$rootfs/etc/options_menu/themes"
-remove "$rootfs/etc/options_menu/images/audioall.png"
-remove "$rootfs/etc/options_menu/images/audiohome.png"
-remove "$rootfs/etc/options_menu/images/back.png"
-remove "$rootfs/etc/options_menu/images/clear.png"
-remove "$rootfs/etc/options_menu/images/colors_nes.png"
-remove "$rootfs/etc/options_menu/images/default_preview.png"
-remove "$rootfs/etc/options_menu/images/diy.png"
-remove "$rootfs/etc/options_menu/images/download.png"
-remove "$rootfs/etc/options_menu/images/loading"
-remove "$rootfs/etc/options_menu/images/downloadtheme.png"
-remove "$rootfs/etc/options_menu/images/downloadthemelist.png"
-remove "$rootfs/etc/options_menu/images/themepreview.png"
-remove "$rootfs/etc/options_menu/images/downloadtheme.png"
-remove "$rootfs/etc/options_menu/images/downloadthemelist.png"
-remove "$rootfs/etc/options_menu/images/loading.png"
-remove "$rootfs/etc/options_menu/images/themepreview.png"
-remove "$rootfs/etc/options_menu/images/loadingassets.png"
-remove "$rootfs/etc/options_menu/images/luigi.png"
-remove "$rootfs/etc/options_menu/images/mario.png"
-remove "$rootfs/etc/options_menu/images/packed.png"
-remove "$rootfs/etc/options_menu/images/packed_nes.png"
-remove "$rootfs/etc/options_menu/images/pole.png"
-remove "$rootfs/etc/options_menu/images/randtheme.png"
-remove "$rootfs/etc/options_menu/images/retro_gaming.zip"
-remove "$rootfs/etc/options_menu/images/saving.png"
-remove "$rootfs/etc/options_menu/images/sbm.png"
-remove "$rootfs/etc/options_menu/images/settings.png"
-remove "$rootfs/etc/options_menu/images/themes.png"
-remove "$rootfs/etc/options_menu/images/uninstall.png"
-remove "$rootfs/etc/options_menu/images/update.png"
-remove "$rootfs/etc/options_menu/images/wall.png"
-remove "$rootfs/etc/options_menu/images/wall_far.png"
-remove "$rootfs/etc/options_menu/images/loading"
-remove "$rootfs/etc/usr/bin/pngpack-upx"
+removeItem "$rootfs/etc/preinit.d/b8024_themeselector"
+removeItem "$rootfs/etc/preinit.d/p8024_themeselector"
+removeItem "$rootfs/etc/options_menu/commands/c0075_ThemeOptions"
+removeItem "$rootfs/etc/options_menu/scripts/om_themeselector"
+removeItem "$rootfs/etc/options_menu/scripts/om_theme_selector"
+removeItem "$rootfs/etc/options_menu/themes"
+removeItem "$rootfs/etc/options_menu/images/advanced.png"
+removeItem "$rootfs/etc/options_menu/images/audio.png"
+removeItem "$rootfs/etc/options_menu/images/audioall.png"
+removeItem "$rootfs/etc/options_menu/images/audiohome.png"
+removeItem "$rootfs/etc/options_menu/images/back.png"
+removeItem "$rootfs/etc/options_menu/images/ui/chip_apply.png"
+removeItem "$rootfs/etc/options_menu/images/ui/chip_clear.png"
+removeItem "$rootfs/etc/options_menu/images/ui/chip_diy.png"
+removeItem "$rootfs/etc/options_menu/images/ui/chip_download.png"
+removeItem "$rootfs/etc/options_menu/images/ui/chip_preview.png"
+removeItem "$rootfs/etc/options_menu/images/ui/chip_refresh.png"
+removeItem "$rootfs/etc/options_menu/images/ui/chip_settings.png"
+removeItem "$rootfs/etc/options_menu/images/clear.png"
+removeItem "$rootfs/etc/options_menu/images/colors_nes.png"
+removeItem "$rootfs/etc/options_menu/images/default_preview.png"
+removeItem "$rootfs/etc/options_menu/images/diy.png"
+removeItem "$rootfs/etc/options_menu/images/download.png"
+removeItem "$rootfs/etc/options_menu/images/exit.png"
+removeItem "$rootfs/etc/options_menu/images/loading"
+removeItem "$rootfs/etc/options_menu/images/luigi.png"
+removeItem "$rootfs/etc/options_menu/images/mario.png"
+removeItem "$rootfs/etc/options_menu/images/packed.png"
+removeItem "$rootfs/etc/options_menu/images/packed_nes.png"
+removeItem "$rootfs/etc/options_menu/images/pole.png"
+removeItem "$rootfs/etc/options_menu/images/preview_assign_music.png"
+removeItem "$rootfs/etc/options_menu/images/preview_audio_randomizer_all.png"
+removeItem "$rootfs/etc/options_menu/images/preview_audio_randomizer_home.png"
+removeItem "$rootfs/etc/options_menu/images/preview_clean_up.png"
+removeItem "$rootfs/etc/options_menu/images/preview_colors_nes.png"
+removeItem "$rootfs/etc/options_menu/images/preview_default.png"
+removeItem "$rootfs/etc/options_menu/images/preview_diy.png"
+removeItem "$rootfs/etc/options_menu/images/preview_diy_theme.png"
+removeItem "$rootfs/etc/options_menu/images/preview_download_themes.png"
+removeItem "$rootfs/etc/options_menu/images/preview_luigi.png"
+removeItem "$rootfs/etc/options_menu/images/preview_mario.png"
+removeItem "$rootfs/etc/options_menu/images/preview_music_per_folder.png"
+removeItem "$rootfs/etc/options_menu/images/preview_packed.png"
+removeItem "$rootfs/etc/options_menu/images/preview_packed_nes.png"
+removeItem "$rootfs/etc/options_menu/images/preview_pole.png"
+removeItem "$rootfs/etc/options_menu/images/preview_randtheme.png"
+removeItem "$rootfs/etc/options_menu/images/preview_sbm.png"
+removeItem "$rootfs/etc/options_menu/images/preview_theme_options.png"
+removeItem "$rootfs/etc/options_menu/images/preview_theme_randomizer.png"
+removeItem "$rootfs/etc/options_menu/images/preview_uninstall.png"
+removeItem "$rootfs/etc/options_menu/images/preview_update_theme_list.png"
+removeItem "$rootfs/etc/options_menu/images/preview_wall.png"
+removeItem "$rootfs/etc/options_menu/images/preview_wall_far.png"
+removeItem "$rootfs/etc/options_menu/images/preview_wall_near.png"
+removeItem "$rootfs/etc/options_menu/images/randtheme.png"
+removeItem "$rootfs/etc/options_menu/images/reboot.png"
+removeItem "$rootfs/etc/options_menu/images/retro_gaming.zip"
+removeItem "$rootfs/etc/options_menu/images/retroarch.png"
+removeItem "$rootfs/etc/options_menu/images/saving.png"
+removeItem "$rootfs/etc/options_menu/images/sbm.png"
+removeItem "$rootfs/etc/options_menu/images/settings.png"
+removeItem "$rootfs/etc/options_menu/images/shutdown.png"
+removeItem "$rootfs/etc/options_menu/images/themes.png"
+removeItem "$rootfs/etc/options_menu/images/uninstall.png"
+removeItem "$rootfs/etc/options_menu/images/update.png"
+removeItem "$rootfs/etc/options_menu/images/wall.png"
+removeItem "$rootfs/etc/options_menu/images/wall_far.png"
+removeItem "$rootfs/etc/options_menu/images/wall_near.png"
+removeItem "$rootfs/etc/usr/bin/pngpack-upx"
+removeItem "$rootfs/bin/sprite_crop"
+removeItem "$rootfs/bin/theme_downloader"
+removeItem "$rootfs/etc/options_menu/lib/theme_manager"
 
-[ -f "$TITLE_FONT_BACKUP" ] && mv "$TITLE_FONT_BACKUP" "$TITLE_FONT"
-for FONT in s m l small medium large; do
-  umount "${ORIGINAL_THEME}/resources/fonts/${UI1}/${FONT}.fnt"
-  rm "${FONT_PATH}/${FONT}.fnt"
+[ -f "${font_path}/title.fnt.backup" ] && cp "${font_path}/title.fnt.backup" "${font_path}/title.fnt"
+for font_name in s m l small medium large; do
+  umount "${original_theme}/resources/fonts/${ui_subdir}/${font_name}.fnt" 2>/dev/null
+  rm -f "${font_path}/${font_name}.fnt"
 done
-
-echo "COMMAND_NAME=Exit
-COMMAND_TYPE=EXTERNAL
-RESTART_UI=TRUE
-COMMAND_STR=echo \"Closing Options Menu\"" >"$rootfs/etc/options_menu/commands/c9999_Exit"
 
 unset cfg_OM_ThemeSelector_enabled

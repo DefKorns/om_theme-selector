@@ -1,25 +1,33 @@
 #!/bin/sh
+# shellcheck disable=SC2086,SC2154,SC3046,SC3051
 #
-#  Copyright (c) 2022 DefKorns (https://defkorns.github.io/LICENSE)
-#  
+#  Copyright (c) 2026 DefKorns (https://defkorns.github.io/LICENSE)
+#
 #  This program is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation, either version 3 of the License, or
 #  (at your option) any later version.
-#  
+#
 #  This program is distributed in the hope that it will be useful,
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU General Public License for more details.
-#  
+#
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
-# shellcheck disable=SC2154,SC1090,SC2039,SC2086
+# shellcheck source=/dev/null
 source $mountpoint/etc/options_menu/themes/scripts/om_vars
 script_init
+
+font_path="$mountpoint/media/$modname/fonts"
+[ ! -d "$font_path" ] && font_path="$rootfs/usr/share/fonts"
+[ -f "${font_path}/title.fnt.backup" ] && cp "${font_path}/title.fnt.backup" "${font_path}/title.fnt"
+for font_name in s m l small medium large; do
+  rm -f "${font_path}/${font_name}.fnt"
+done
 
 remove "$b_file" "$p_file"
 hakchi reboot
 
-$optionsMenu/options --commandPath $omModSettingsCmds/ --scriptPath $omModSettingsScripts --title "$omTitle" &
+$options_menu/lib/theme_manager --commandPath $om_mod_settings_cmds/ --scriptPath $om_mod_settings_scripts --title THEME_SETTINGS --layout list &

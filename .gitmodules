@@ -1,0 +1,13 @@
+[submodule "toolchain"]
+	path = toolchain
+	url = https://github.com/DefKorns/classicmini-cross-toolchain.git
+[submodule "pngpack"]
+	path = pngpack
+	url = https://github.com/DefKorns/pngpack.git
+[submodule "vendor/OptionsMenu"]
+	path = vendor/OptionsMenu
+	url = https://github.com/DefKorns/OptionsMenu
+	branch = modern-ui-ttf
+[submodule "hmod-build"]
+	path = hmod-build
+	url = https://github.com/DefKorns/hmod-build.git
