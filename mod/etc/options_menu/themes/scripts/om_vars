@@ -205,6 +205,12 @@ themeIsBindable() {
 }
 
 
+loadingSplash() {
+  [ -n "$loading_splash" ] && return
+  loading_splash=1
+  "$om_scripts/gen_splash" --loading 2> /dev/null
+}
+
 migrateThemes() {
   [ "$theme_path" = "$nand_theme_path" ] && return 1
   [ -n "$(ls -A "$nand_theme_path" 2> /dev/null)" ] || return 1
@@ -230,7 +236,7 @@ migrateThemes() {
 
 hasThemesToInstall() {
   [ "$has_theme" = 0 ] && return
-  "$om_scripts/gen_splash" /tmp/om_splash.png THEME_LOADING && decodepng /tmp/om_splash.png > /dev/fb0
+  loadingSplash
   for f in "$theme_path/$system_name".*.tar.gz; do
     [ -f "$f" ] || continue
     tar -xzf "$f" -C "$theme_path" && rm -f "$f"
@@ -294,7 +300,7 @@ themeCountChanged() {
 }
 
 themeLoader() {
-  "$om_scripts/gen_splash" /tmp/om_splash.png THEME_LOADING && decodepng /tmp/om_splash.png > /dev/fb0
+  loadingSplash
   removeRegionalTheme
   cd "$theme_path" && find . -mindepth 1 -maxdepth 1 -type d | sed 's#^\./##' | sort -u | while IFS= read -r thm; do
     full_path="$theme_path/$thm"
@@ -646,7 +652,7 @@ diyCropFrame() {
 }
 
 findDiyAsset() {
-  "$om_scripts/gen_splash" /tmp/om_splash.png THEME_LOADING && decodepng /tmp/om_splash.png > /dev/fb0
+  loadingSplash
 
   diyAssetSpec "$1"
   diyCropFrame "$1"
@@ -784,11 +790,10 @@ diyThemeChecker() {
   [ "$1" = "loader" ] && usleep 1000
 }
 
-# the console's own stock asset, read from the squashfs so an applied theme can't shadow it
 diyStockPreview() {
   stock_preview=""
   [ "$colors" = "1" ] && return
-  [ "$sftype" = "hvcj" ] && return # its packed.png atlas doesn't match om_packed.sprites.json
+  [ "$sftype" = "hvcj" ] && return
   stock_file="$squashfs/usr/share/$original_theme_ui0/resources/$asset_path/$diy_file"
   [ -f "$stock_file" ] || return
 
@@ -802,7 +807,6 @@ diyStockPreview() {
   stock_preview="$stock_crop"
 }
 
-# each DIY home entry previews the asset picked for it, else the console's stock one
 diyHomePreviews() {
   for home_cmd in "$om_mod_gen_cmds"/*; do
     diy_category="$(sed -n 's/^COMMAND_STR=.*om_diy_asset \([a-z_]*\) .*/\1/p' "$home_cmd")"

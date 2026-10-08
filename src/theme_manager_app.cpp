@@ -417,8 +417,6 @@ int ThemeManagerApp::RunGridLayout()
         tileHideLabel[idx] = c.previewHideLabel;
         tileFitContain[idx] = c.previewFitContain;
 
-        // a sprite preview named *01.png with sibling *02/*03/... is a multi-frame
-        // animation (mario_run01.png, pole01.png)
         const std::string runSuffix = "01.png";
         bool isRunCycle = c.previewNearest && c.previewImage.size() > runSuffix.size() &&
            c.previewImage.compare(c.previewImage.size() - runSuffix.size(), runSuffix.size(), runSuffix) == 0;

@@ -19,7 +19,7 @@
 source $mountpoint/etc/options_menu/themes/scripts/om_vars
 script_init
 
-"$om_scripts/gen_splash" /tmp/om_splash.png THEME_LOADING && decodepng /tmp/om_splash.png >/dev/fb0
+loadingSplash
 
 modCleanUp
 
