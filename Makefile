@@ -66,10 +66,11 @@ mod/bin/theme_downloader: src/theme_downloader.o src/ca_bundle.o
 	upx --best $@
 
 # DIY sprite previews (om_vars). Built by pngpack's own Makefile; its default
-# LDFLAGS (-dead_strip) is macOS-only.
+# LDFLAGS (-dead_strip) is macOS-only. The rpath picks up options_menu_compat's
+# private libstdc++ when another hmod has replaced the system one.
 mod/bin/sprite_crop: pngpack/pngpacker/sprite_crop.cpp pngpack/pngpacker/pixeltools.cpp
 	mkdir -p $(@D)
-	$(MAKE) -C pngpack build/sprite_crop CROSS=$(CROSS_PREFIX) LDFLAGS=-Wl,--gc-sections
+	$(MAKE) -C pngpack build/sprite_crop CROSS=$(CROSS_PREFIX) LDFLAGS='-Wl,--gc-sections -Wl,-rpath,/etc/options_menu/lib'
 	cp pngpack/build/sprite_crop $@
 
 update-headers:
