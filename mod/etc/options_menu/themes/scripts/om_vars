@@ -198,7 +198,7 @@ esac
 original_theme_path="$mountpoint/usr/share/$original_theme_ui0"
 
 themeIsBindable() {
-  find "$1" -type f ! -path "$1/fonts/*" ! -path "$1/info" ! -path "$1/dependencies.json" \
+  find "$1" -type f ! -path "$1/fonts/*" ! -path "$1/extras/*" ! -path "$1/info" ! -path "$1/dependencies.json" \
     ! -path "$1/resources/scripts/env/env_*.lua" | while IFS= read -r f; do
     [ -f "$original_theme_path/${f#"$1"/}" ] || exit 1
   done
@@ -581,6 +581,7 @@ diyAssetSpec() {
   preview_square="0"
   preview_cols=""
   preview_top="0"
+  theme_preview=""
   json=""
 
   case "$1" in
@@ -607,6 +608,7 @@ diyAssetSpec() {
       preview_square="1"
       preview_cols="4" # full UI screenshots - too detailed to shrink to 7 cols
       preview_top="1"
+      theme_preview="extras/preview_baseui.png"
       ;;
     packed_nes)
       diy_file="${sftype}.png"
@@ -616,6 +618,7 @@ diyAssetSpec() {
       preview_square="1"
       preview_cols="4" # full UI screenshots - too detailed to shrink to 7 cols
       preview_top="1"
+      theme_preview="extras/preview_baseui.png"
       ;;
     colors)
       asset_path="scripts/env"
@@ -717,7 +720,11 @@ $sprite_hash"
             preview_image="$temp_preview"
           fi
           [ "$chars" = "1" ] && temp_preview="$preview_image"
-          if [ "$colors" = "0" ] && [ "$chars" != "1" ] && [ -n "$diy_crop_x" ]; then
+          own_preview=""
+          [ -n "$theme_preview" ] && [ "$p" = "$theme_path" ] && [ -f "$info_path/$theme_preview" ] && own_preview="$info_path/$theme_preview"
+          if [ -n "$own_preview" ]; then
+            preview_image="$own_preview" # drawn by the theme author, for atlases a fixed crop can't show (Wii)
+          elif [ "$colors" = "0" ] && [ "$chars" != "1" ] && [ -n "$diy_crop_x" ]; then
             if [ ! -f "$temp_preview" ]; then
               # backgrounded, batched 4 at a time (this console's core count)
               sprite_crop "$preview_image" "$diy_crop_x" "$diy_crop_y" "$diy_crop_w" "$diy_crop_h" "$temp_preview" &
@@ -731,7 +738,8 @@ $sprite_hash"
             preview_image="$temp_preview" # cropped copy, queued above or already cached
           fi
 
-          if ! printf '%s\n' "$existing_cmds" | grep -qxF "c0001_$asset_name" || ! printf '%s\n' "$existing_scripts" | grep -qxF "$asset_name.sh"; then
+          if ! printf '%s\n' "$existing_cmds" | grep -qxF "c0001_$asset_name" || ! printf '%s\n' "$existing_scripts" | grep -qxF "$asset_name.sh" ||
+            { [ -n "$own_preview" ] && ! grep -qxF "PREVIEW_IMAGE=$own_preview" "$cmd_file"; }; then
             touch "$cmd_file"
             cmd_name="$(echo "$asset_name" | sed -e 's/_/ /g' | awk '{for(i=1;i<=NF;i++){$i=toupper(substr($i,1,1))substr($i,2)}}1')"
             [ "$p" = "$theme_path" ] && cmd_name="$(sed -r 's/NAME=//g' < "$info_path/info" | awk '{$NF="";sub(/[ \t]+$/,"")}1')"

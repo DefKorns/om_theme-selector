@@ -247,7 +247,7 @@ themeSelector() {
 
     local skip_bgm="none"
     [ -n "$assigned_music" ] && skip_bgm="bgm_*.wav"
-    find "$full_theme_path" -type f ! -path "$full_theme_path/fonts/*" ! -name "$skip_bgm" ! -name info ! -name bind_ok ! -name needs_overlay 2>/dev/null | while IFS= read -r theme_file; do
+    find "$full_theme_path" -type f ! -path "$full_theme_path/fonts/*" ! -path "$full_theme_path/extras/*" ! -name "$skip_bgm" ! -name info ! -name bind_ok ! -name needs_overlay 2>/dev/null | while IFS= read -r theme_file; do
       mount -o bind "$theme_file" "$original_theme/${theme_file#"$full_theme_path"/}"
     done
   fi
