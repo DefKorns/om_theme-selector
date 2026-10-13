@@ -52,14 +52,11 @@ ThemeManagerApp::ThemeManagerApp(std::string optionsLocation, AppOptions options
     , items_(std::move(items))
 {
     LoadActiveThemeBorderColor(optionsLocation_);
-    fprintf(stderr, "CHECKPOINT 1: commands loaded, count=%zu\n", commands_.size()); fflush(stderr);
 
     // std::make_unique is C++14; this project builds as C++11
     sdlContext_.reset(new SDL_Context(std::chrono::milliseconds(33), false));
-    fprintf(stderr, "CHECKPOINT 2: sdl_context created\n"); fflush(stderr);
     renderer_ = sdlContext_->renderer;
     controller_.reset(new Controller(1));
-    fprintf(stderr, "CHECKPOINT 3: controller created\n"); fflush(stderr);
 
     bg_ = UiTheme::Bg;
     SetDrawColor(renderer_, bg_);
@@ -74,7 +71,6 @@ ThemeManagerApp::ThemeManagerApp(std::string optionsLocation, AppOptions options
     appVersionText_.rect.y -= appVersionText_.rect.h / 2;
     titleText_ = Texture(Translate(options_.titleKey), UiTheme::SectionTitleFontSize, renderer_, UiTheme::SectionTitleX, UiTheme::SectionTitleY, false, ToAbgr(UiTheme::Text), true);
     creditText_ = Texture("Theme Manager - by DefKorns", 16, renderer_, UiTheme::CreditX, UiTheme::CreditY, false, ToAbgr(UiTheme::Text), true);
-    fprintf(stderr, "CHECKPOINT 4: basic textures created\n"); fflush(stderr);
 
     badgeA_ = Badge{ Texture("A", 16, renderer_, 0, 0, false, ToAbgr(UiTheme::BadgeLetter), true), Texture(Translate("HINT_SELECT"), 16, renderer_, 0, 0, false, ToAbgr(UiTheme::Text), true), UiTheme::BadgeADark, UiTheme::BadgeA };
     badgeRowRightEdge_ = UiTheme::BadgeClusterRightX - UiTheme::BadgeOuterSize - UiTheme::BadgeLabelGap - badgeA_.label.rect.w - UiTheme::BadgeGroupGap;

@@ -105,9 +105,12 @@ static enum fetch_result fetch_theme(CURL *c, const char *sftype, const char *th
     char system_name[32];
     char gh_url[512];
     char fallback_url[512];
+    char *escaped = curl_easy_escape(c, theme_name, 0);
+    if (!escaped) return FETCH_FAILED;
     to_upper(system_name, sftype, sizeof(system_name));
-    snprintf(gh_url, sizeof(gh_url), "%s/%s.%s.tar.gz", GITHUB_BASE, system_name, theme_name);
-    snprintf(fallback_url, sizeof(fallback_url), "%s%s.%s.tar.gz", CLASSICMODS_THEMES, system_name, theme_name);
+    snprintf(gh_url, sizeof(gh_url), "%s/%s.%s.tar.gz", GITHUB_BASE, system_name, escaped);
+    snprintf(fallback_url, sizeof(fallback_url), "%s%s.%s.tar.gz", CLASSICMODS_THEMES, system_name, escaped);
+    curl_free(escaped);
     return fetch_with_fallback(c, gh_url, fallback_url, out_path);
 }
 
@@ -116,8 +119,9 @@ static enum exit_code result_code(enum fetch_result r) {
     return r == FETCH_OK ? EXIT_OK : EXIT_FAILED;
 }
 
-static void wait_until_removed(const char *path) {
-    while (path[0] && access(path, F_OK) == 0) usleep(REMOVAL_POLL_US);
+/* Stop waiting if the unpacking shell is gone. */
+static void wait_until_removed(const char *path, pid_t unpacker) {
+    while (path[0] && access(path, F_OK) == 0 && getppid() == unpacker) usleep(REMOVAL_POLL_US);
 }
 
 static enum exit_code fetch_theme_list(CURL *c, const char *sftype, const char *list_path) {
@@ -129,10 +133,11 @@ static enum exit_code fetch_theme_list(CURL *c, const char *sftype, const char *
     char out_path[TARBALLS_ON_DISK][512] = {{0}};
     int slot = 0;
     enum exit_code code = EXIT_OK;
+    const pid_t unpacker = getppid();
     while (fgets(name, sizeof(name), list)) {
         name[strcspn(name, "\r\n")] = '\0';
         if (!name[0]) continue;
-        wait_until_removed(out_path[slot]);
+        wait_until_removed(out_path[slot], unpacker);
         snprintf(out_path[slot], sizeof(out_path[slot]), "%s.%s.tar.gz", system_name, name);
         code = result_code(fetch_theme(c, sftype, name, out_path[slot]));
         if (code != EXIT_OK) out_path[slot][0] = '\0';

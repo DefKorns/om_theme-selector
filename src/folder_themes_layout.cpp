@@ -106,15 +106,33 @@ int ThemeManagerApp::RunFolderThemesLayout()
     const std::vector<FolderOption> & themes = model.Options(Channel::Theme);
     std::vector<Texture> previews(themes.size());
     std::vector<char> previewLoaded(themes.size(), 0); // not vector<bool>: Preview() needs a real reference
+    std::vector<unsigned> previewUsed(themes.size(), 0);
+    unsigned previewClock = 0;
+    int previewCount = 0;
+    const int maxPreviews = pickerRows + 4; // whole picker page + detail, so a redraw never evicts what it draws
     Texture fallbackPreview;
     char fallbackLoaded = 0;
     auto Preview = [&](int theme) -> Texture &
     {
         char & loaded = theme >= 0 ? previewLoaded[theme] : fallbackLoaded;
         Texture & slot = theme >= 0 ? previews[theme] : fallbackPreview;
+        if(theme >= 0)
+            previewUsed[theme] = ++previewClock;
+        if(!loaded && theme >= 0 && previewCount >= maxPreviews)
+        {
+            int oldest = -1;
+            for(int i = 0; i < static_cast<int>(previews.size()); ++i)
+                if(previewLoaded[i] && i != theme && (oldest < 0 || previewUsed[i] < previewUsed[oldest]))
+                    oldest = i;
+            previews[oldest] = Texture();
+            previewLoaded[oldest] = 0;
+            --previewCount;
+        }
         if(!loaded)
         {
             loaded = 1;
+            if(theme >= 0)
+                ++previewCount;
             std::string path = theme >= 0 ? themes[theme].preview : "";
             if(path.empty() || !std::ifstream(path).good())
                 path = optionsLocation_ + (theme < 0 && model.GlobalThemeIsRandom() ? "images/preview_randtheme.png" : "images/preview_default.png");

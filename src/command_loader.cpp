@@ -17,6 +17,7 @@
 #include <list>
 #include <memory>
 #include <dirent.h>
+#include <sys/stat.h>
 
 namespace {
 
@@ -64,6 +65,17 @@ SelectorKeys ReadSelectorKeys(const std::string & path)
     return keys;
 }
 
+// some filesystems leave d_type as DT_UNKNOWN
+unsigned char EntryType(const std::string & dirPath, const dirent * entry)
+{
+    if(entry->d_type != DT_UNKNOWN)
+        return entry->d_type;
+    struct stat st;
+    if(stat((dirPath + "/" + entry->d_name).c_str(), &st) != 0)
+        return DT_UNKNOWN;
+    return S_ISREG(st.st_mode) ? DT_REG : S_ISDIR(st.st_mode) ? DT_DIR : DT_UNKNOWN;
+}
+
 bool HasAnyFile(const std::string & dirPath)
 {
     DirHandle dir(opendir(dirPath.c_str()));
@@ -74,7 +86,8 @@ bool HasAnyFile(const std::string & dirPath)
         const std::string name = entry->d_name;
         if(name == "." || name == "..")
             continue;
-        if(entry->d_type == DT_REG || (entry->d_type == DT_DIR && HasAnyFile(dirPath + "/" + name)))
+        const unsigned char type = EntryType(dirPath, entry);
+        if(type == DT_REG || (type == DT_DIR && HasAnyFile(dirPath + "/" + name)))
             return true;
     }
     return false;
@@ -159,7 +172,7 @@ bool LoadCommands(const std::string & commandLocation, const std::string & scrip
 
     std::list<std::string> fileList;
     while(auto entry = readdir(dir.get()))
-        if(entry->d_type == DT_REG && entry->d_name[0] == 'c')
+        if(entry->d_name[0] == 'c' && EntryType(commandLocation, entry) == DT_REG)
             fileList.push_back(entry->d_name);
     fileList.sort();
 

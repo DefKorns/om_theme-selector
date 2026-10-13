@@ -11,9 +11,20 @@
 
 #include <csignal>
 #include <cstdio>
-#include <cstdlib>
 #include <fstream>
+#include <string>
 #include <unistd.h>
+
+namespace {
+
+std::string ProcessName(const std::string & pid)
+{
+    std::string name;
+    std::getline(std::ifstream("/proc/" + pid + "/comm"), name);
+    return name;
+}
+
+}
 
 void SingleInstanceLock::Acquire()
 {
@@ -39,6 +50,9 @@ void SingleInstanceLock::TakeOverStaleInstance()
     in.close();
     if(oldPid <= 0 || oldPid == getpid() || kill(oldPid, 0) != 0)
         return;
+    // the pid may have been reused after a crash left the lock behind
+    if(ProcessName(std::to_string(oldPid)) != ProcessName("self"))
+        return;
     kill(oldPid, SIGTERM);
     for(int i = 0; i < 40 && kill(oldPid, 0) == 0; ++i)
         usleep(50000);
@@ -46,4 +60,8 @@ void SingleInstanceLock::TakeOverStaleInstance()
         kill(oldPid, SIGKILL);
 }
 
-void SingleInstanceLock::HandleSigTerm(int) { std::exit(0); }
+void SingleInstanceLock::HandleSigTerm(int)
+{
+    unlink(LockPath);
+    _exit(0);
+}

@@ -17,9 +17,6 @@ public:
     SingleInstanceLock(const SingleInstanceLock &) = delete;
     SingleInstanceLock & operator=(const SingleInstanceLock &) = delete;
 
-    // The lock lives in a function-local static (not a stack local) so its
-    // destructor still runs from HandleSigTerm's std::exit() - std::exit()
-    // only unwinds static-storage objects, not automatic ones.
     static void Acquire();
 
 private:
@@ -29,7 +26,7 @@ private:
     ~SingleInstanceLock();
 
     static void TakeOverStaleInstance();
-    static void HandleSigTerm(int); // runs ~SingleInstanceLock() during cleanup
+    static void HandleSigTerm(int);
 };
 
 #endif
