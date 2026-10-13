@@ -580,6 +580,7 @@ diyAssetSpec() {
   colors="0"
   preview_square="0"
   preview_cols=""
+  preview_top="0"
   json=""
 
   case "$1" in
@@ -605,6 +606,7 @@ diyAssetSpec() {
       asset_path="sprites"
       preview_square="1"
       preview_cols="4" # full UI screenshots - too detailed to shrink to 7 cols
+      preview_top="1"
       ;;
     packed_nes)
       diy_file="${sftype}.png"
@@ -613,6 +615,7 @@ diyAssetSpec() {
       asset="$diy_file"
       preview_square="1"
       preview_cols="4" # full UI screenshots - too detailed to shrink to 7 cols
+      preview_top="1"
       ;;
     colors)
       asset_path="scripts/env"
@@ -665,6 +668,11 @@ findDiyAsset() {
   # read once - avoids a [ -f ] stat() per theme below, slow on USB/SD
   existing_cmds="$(ls -1 "$diy_sprite/commands" 2>/dev/null)"
   existing_scripts="$(ls -1 "$diy_sprite/scripts" 2>/dev/null)"
+  if [ "$preview_top" = "1" ] && [ -n "$existing_cmds" ]; then
+    grep -Lx "PREVIEW_ALIGN_TOP=TRUE" "$diy_sprite/commands"/c0001_* 2>/dev/null | while IFS= read -r old_cmd; do
+      echo "PREVIEW_ALIGN_TOP=TRUE" >> "$old_cmd"
+    done
+  fi
 
   diy_crop_batch=0
   diy_seen_hashes="" # collapses themes that reuse a byte-identical source asset under a different name
@@ -738,6 +746,9 @@ PREVIEW_SQUARE=TRUE"
             preview_cols_str=""
             [ -n "$preview_cols" ] && preview_cols_str="
 PREVIEW_GRID_COLS=$preview_cols"
+            preview_top_str=""
+            [ "$preview_top" = "1" ] && preview_top_str="
+PREVIEW_ALIGN_TOP=TRUE"
             preview_fit_str=""
             [ "$chars" = "1" ] && preview_fit_str="
 PREVIEW_FIT_CONTAIN=TRUE
@@ -745,7 +756,7 @@ PREVIEW_HIDE_LABEL=TRUE"
             echo "COMMAND_NAME=$cmd_name
 COMMAND_TYPE=INTERNAL
 COMMAND_STR=sh $sprite_script.sh
-PREVIEW_IMAGE=$preview_image${preview_nearest}${preview_square_str}${preview_cols_str}${preview_fit_str}" > "$cmd_file"
+PREVIEW_IMAGE=$preview_image${preview_nearest}${preview_square_str}${preview_cols_str}${preview_top_str}${preview_fit_str}" > "$cmd_file"
 
             copy "$om_mod_license" "$sprite_script.sh"
             echo "diySpriteSelector \"$full_asset_path\" \"$asset_path\" \"$asset\"" >> "$sprite_script.sh"
