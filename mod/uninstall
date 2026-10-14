@@ -129,7 +129,6 @@ removeItem "$rootfs/etc/options_menu/images/wall_far.png"
 removeItem "$rootfs/etc/options_menu/images/wall_near.png"
 removeItem "$rootfs/etc/usr/bin/pngpack-upx"
 removeItem "$rootfs/bin/sprite_crop"
-removeItem "$rootfs/bin/theme_downloader"
 removeItem "$rootfs/etc/options_menu/lib/theme_manager"
 
 [ -f "${font_path}/title.fnt.backup" ] && cp "${font_path}/title.fnt.backup" "${font_path}/title.fnt"

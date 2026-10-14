@@ -34,7 +34,7 @@ Full guides are on the **[wiki](https://github.com/DefKorns/om_theme-selector/wi
 ## Requirements
 
 - [Hakchi2 CE](https://github.com/TeamShinkansen/hakchi2/releases/latest)
-- [My Options Menu fork](https://github.com/DefKorns/OptionsMenu/releases) — the base UI this mod plugs into
+- [My Options Menu fork](https://github.com/DefKorns/OptionsMenu/releases) v2.0.0-alpha12 or newer — the base UI this mod plugs into
 - [Hakchi Wi-Fi mod (WPA Supplicant)](https://hakchi.net/hakchi/hmods/wpa-supplicant.hmod) — only to download themes from the console
 - A USB/SD drive is recommended: themes are often 5–30 MB each
 
@@ -78,7 +78,7 @@ The Theme Manager's own UI (not your game themes) reads its color palette from `
 ```sh
 git clone --recursive https://github.com/DefKorns/om_theme-selector.git
 cd om_theme-selector
-./build.sh            # cross-compiles theme_manager, theme_downloader and sprite_crop, then packages out/om_theme-selector.hmod
+./build.sh            # cross-compiles theme_manager and sprite_crop, then packages out/om_theme-selector.hmod
 ./build.sh compile    # binaries only
 ```
 

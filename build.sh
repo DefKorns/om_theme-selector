@@ -27,4 +27,4 @@ docker run --rm -v "$PWD:/src" "$IMAGE" make CROSS_PREFIX=arm-linux-gnueabihf- "
 find vendor/OptionsMenu -name "*.o" -type f -delete
 
 echo "==> Build complete:"
-ls -la mod/etc/options_menu/lib/theme_manager mod/bin/theme_downloader out/*.hmod 2>/dev/null
+ls -la mod/etc/options_menu/lib/theme_manager out/*.hmod 2>/dev/null

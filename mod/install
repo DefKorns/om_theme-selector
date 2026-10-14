@@ -87,7 +87,7 @@ for legacy_img in back chip_apply chip_clear chip_diy chip_download chip_preview
 done
 find "$rootfs/etc/options_menu/themes/creator/sprites" -path '*/commands/c0001_*' -type f -exec rm {} + 2>/dev/null
 chmod +x "$rootfs/bin/sprite_crop"
-chmod +x "$rootfs/bin/theme_downloader"
+del "$rootfs/bin/theme_downloader"
 chmod +x "$rootfs/etc/options_menu/lib/theme_manager"
 
 theme_cfg="$rootfs/etc/options_menu/theme.cfg"

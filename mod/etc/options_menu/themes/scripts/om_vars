@@ -147,6 +147,9 @@ disable_wall_far="$om_mod_gen_cmds/_wall_far"
 enable_wall_near="$om_mod_gen_cmds/c0004_wall_near"
 disable_wall_near="$om_mod_gen_cmds/_wall_near"
 list_name="-list-v2.tar.gz"
+themes_github_url="https://github.com/DefKorns/om-theme-downloads/releases/download/themes-v1"
+themes_classicmods_url="http://classicmods.net/files/themes/themeselector"
+catalogs_classicmods_url="http://classicmods.net/files/themes/themeselector-scripts"
 
 # SHARED
 thm_chk="$mountpoint$profilepath/$modname/active_theme"
@@ -391,14 +394,14 @@ getThemeList() {
   "$om_scripts/gen_splash" /tmp/om_splash.png THEME_LIST_DOWNLOADING_LINE1 THEME_LIST_DOWNLOADING_LINE2 && decodepng /tmp/om_splash.png > /dev/fb0
   cd "$om_mod_sub" || exit
 
+  if [ ! -x "$om_scripts/downloader" ]; then
+    "$om_scripts/gen_splash" /tmp/om_splash.png DOWNLOADER_MISSING_LINE1 DOWNLOADER_MISSING_LINE2 && decodepng /tmp/om_splash.png > /dev/fb0
+    sleep 3
+    return 1
+  fi
   if [ ! -e "${catalog_type}${list_name}" ]; then
     clearDownloads
-    theme_downloader catalog "$catalog_type" "${catalog_type}${list_name}"
-    case "$?" in
-      0) ;;
-      3) translate NOT_ENOUGH_SPACE ;;
-      *) netChecker ;;
-    esac
+    omDownload "${catalog_type}${list_name}" "$themes_github_url/${catalog_type}${list_name}"       "$catalogs_classicmods_url/${catalog_type}${list_name}"
   fi
   tar -xzf "${catalog_type}${list_name}" || return
   # shellcheck disable=SC2035
@@ -462,11 +465,16 @@ themeGenerator() {
   full_title="$(grep -F 'NAME=' "${om_mod_sub_cmds}/c0010_${theme_name}" | sed -e 's/.*=\(.*\)\[.*/\1/')"
   full_path="${theme_path}/${theme_name}"
   cd "${theme_path}" || exit
+  if [ ! -x "$om_scripts/downloader" ]; then
+    translate DOWNLOADER_MISSING_LINE1
+    translate DOWNLOADER_MISSING_LINE2
+    return 1
+  fi
   trap abortDownload TERM INT HUP
   translate DOWNLOADING
 
   if [ "${theme_name}" = "all" ]; then
-    theme_downloader all-manifest "$catalog_type" "${catalog_type}-all"
+    omDownload "${catalog_type}-all" "$themes_github_url/${catalog_type}-all" "$catalogs_classicmods_url/${catalog_type}-all"
     rc=$?
     failed=""
     if [ "$rc" = 0 ]; then
@@ -487,9 +495,7 @@ themeGenerator() {
   echo ""
   case "$rc" in
     0) translate INSTALLATION_COMPLETE ;;
-    3) translate NOT_ENOUGH_SPACE ;;
     4) translate ALL_THEMES_INSTALLED ;;
-    *) netChecker ;;
   esac
   if [ -n "$failed" ]; then
     echo ""
@@ -507,51 +513,60 @@ unpackedSizeKb() {
   echo $(( size_kb + size_kb / 10 ))
 }
 
+urlEncodeName() {
+  printf '%s' "$1" | sed 's/%/%25/g; s/#/%23/g; s/?/%3F/g'
+}
+
+remoteTarball() {
+  echo "${system_name}.$(urlEncodeName "$1").tar.gz"
+}
+
 downloadTheme() {
-  theme_downloader theme "$catalog_type" "$1" "${system_name}.$1.tar.gz" || return
+  remote="$(remoteTarball "$1")"
+  omDownload "${system_name}.$1.tar.gz" "$themes_github_url/$remote" "$themes_classicmods_url/$remote" || return
   unpackTheme "$1"
+  rc=$?
+  downloadError "$rc"
+  return "$rc"
 }
 
 downloadThemes() {
   pending="/tmp/${sftype}-pending"
-  progress="/tmp/${sftype}-progress"
   while IFS= read -r t; do
-    [ -d "$t" ] || [ "$t" = "$sfregion" ] || echo "$t"
+    { [ -d "$t" ] || [ "$t" = "$sfregion" ]; } && continue
+    remote="$(remoteTarball "$t")"
+    printf '%s\t%s\t%s\n' "${system_name}.$t.tar.gz" "$themes_github_url/$remote" "$themes_classicmods_url/$remote"
   done < "$1" > "$pending"
   if [ ! -s "$pending" ]; then
     remove "$pending"
     return 4
   fi
-  remove "$progress"
-  mkfifo "$progress"
-  theme_downloader themes "$catalog_type" "$pending" > "$progress" &
-  dl_pid=$!
-  dl_all_rc=0
-  while read -r t_rc t; do
-    echo "$t"
-    echo ""
-    if [ "$t_rc" = 0 ]; then
-      unpackTheme "$t"
-      t_rc=$?
-    fi
-    case "$t_rc" in
-      0) ;;
-      3) dl_all_rc=3 && break ;;
-      *) failed="$failed $t" ;;
-    esac
-  done < "$progress"
-  kill "$dl_pid" 2> /dev/null
-  wait "$dl_pid"
-  [ "$?" = 3 ] && dl_all_rc=3
-  rm -f "$pending" "$progress" "$system_name".*.tar.gz "$system_name".*.tar.gz.part
-  return "$dl_all_rc"
+  omDownloadAll "$pending" installDownloaded 2
+  rc=$?
+  remove "$pending"
+  return "$rc"
+}
+
+# omDownloadAll handler: <rc> <tarball>
+installDownloaded() {
+  t="${2#"$system_name".}"
+  t="${t%.tar.gz}"
+  t_rc="$1"
+  if [ "$t_rc" = 0 ]; then
+    unpackTheme "$t"
+    t_rc=$?
+  fi
+  case "$t_rc" in
+    0) ;;
+    3) downloadError 3 && return 3 ;;
+    *) failed="$failed $t" ;;
+  esac
 }
 
 abortDownload() {
   trap - TERM INT HUP
-  [ -n "$dl_pid" ] && kill "$dl_pid" 2> /dev/null
   [ -n "$unpacking" ] && rm -rf "$unpacking" "$unpacking.png"
-  rm -f "$system_name".*.tar.gz "$system_name".*.tar.gz.part "/tmp/${sftype}-pending" "/tmp/${sftype}-progress" "${catalog_type}-all"
+  rm -f "$system_name".*.tar.gz "/tmp/${sftype}-pending" "${catalog_type}-all"
   exit 1
 }
 

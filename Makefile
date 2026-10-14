@@ -2,7 +2,7 @@ MOD_ID       := om_theme-selector
 MOD_NAME     := Options Menu - Theme Selector
 MOD_CATEGORY := Options Menu - Addons
 MOD_EXCLUDE  := exclude-file.txt
-MOD_DEPS     := mod/etc/options_menu/lib/theme_manager mod/bin/theme_downloader mod/bin/sprite_crop
+MOD_DEPS     := mod/etc/options_menu/lib/theme_manager mod/bin/sprite_crop
 
 # Set CROSS_PREFIX=arm-linux-gnueabihf- to cross-compile for the console
 # (build.sh does this inside the Docker toolchain); leave unset to build natively.
@@ -25,12 +25,6 @@ VENDOR_SRC_DIR = vendor/OptionsMenu/src
 SOURCES = src/main.cpp src/single_instance_lock.cpp src/command_loader.cpp src/texture_utils.cpp src/theme_manager_app.cpp src/folder_theme_model.cpp src/folder_themes_layout.cpp $(VENDOR_SRC_DIR)/command.cpp $(VENDOR_SRC_DIR)/localization.cpp $(FRAMEWORK_DIR)/sdl_context.cpp $(FRAMEWORK_DIR)/texture.cpp $(FRAMEWORK_DIR)/controller.cpp $(FRAMEWORK_DIR)/powerwatch.cpp $(FRAMEWORK_DIR)/draw_helpers.cpp $(FRAMEWORK_DIR)/utf8.cpp $(FRAMEWORK_DIR)/font8x8_lookup.cpp $(FRAMEWORK_DIR)/uitheme.cpp $(FRAMEWORK_DIR)/badge.cpp $(FRAMEWORK_DIR)/dialog.cpp
 OBJECTS = $(SOURCES:.cpp=.o)
 
-# Build theme_downloader with the toolchain's static curl+OpenSSL.
-CC = gcc
-CURL_PREFIX = /opt/curl-static
-CFLAGS = -O2 -Wall -I$(CURL_PREFIX)/include
-CURL_LDLIBS = -L$(CURL_PREFIX)/lib -L/usr/lib/arm-linux-gnueabihf -lcurl -lssl -lcrypto -lz -ldl -lpthread
-
 all: hmod
 
 compile: $(MOD_DEPS)
@@ -47,23 +41,6 @@ DEPDIR = .deps
 	$(CROSS_PREFIX)$(CXX) $(CXXFLAGS) -MMD -MP -MF $(DEPDIR)/$(subst /,_,$*).d -c $< -o $@
 
 -include $(wildcard $(DEPDIR)/*.d)
-
-%.o: %.c
-	$(CROSS_PREFIX)$(CC) $(CFLAGS) -c $< -o $@
-
-# Fetch the gitignored CA bundle for fresh builds.
-src/cacert.pem:
-	curl -fL -o src/cacert.pem https://curl.se/ca/cacert.pem
-
-# Embed cacert.pem from src/ to keep "src/" out of the symbol names.
-src/ca_bundle.o: src/cacert.pem
-	cd src && $(CROSS_PREFIX)ld -r -b binary -o ca_bundle.o cacert.pem
-
-mod/bin/theme_downloader: src/theme_downloader.o src/ca_bundle.o
-	mkdir -p $(@D)
-	$(CROSS_PREFIX)$(CC) src/theme_downloader.o src/ca_bundle.o $(CURL_LDLIBS) -o $@
-	$(CROSS_PREFIX)$(STRIP) $@
-	upx --best $@
 
 # DIY sprite previews (om_vars). Built by pngpack's own Makefile; its default
 # LDFLAGS (-dead_strip) is macOS-only. The rpath picks up options_menu_compat's

@@ -42,7 +42,7 @@ A theme named after a folder (lower snake_case, e.g. `nintendo_-_nintendo_entert
 ## Requirements
 
 - [Hakchi2 CE](https://github.com/TeamShinkansen/hakchi2/releases/latest)
-- [My Options Menu fork](https://github.com/DefKorns/OptionsMenu/releases)
+- [My Options Menu fork](https://github.com/DefKorns/OptionsMenu/releases) v2.0.0-alpha12 or newer
 - [Hakchi Wi-Fi mod (WPA Supplicant)](https://hakchi.net/hakchi/hmods/wpa-supplicant.hmod) — only to download themes from the console
 - A USB/SD drive is recommended: themes are often 5–30 MB each
 
