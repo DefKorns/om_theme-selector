@@ -98,6 +98,8 @@ enable_downloads="$om_mod_commands/c0000_2_download"
 disable_downloads="$om_mod_commands/_2_download"
 enable_clear="$om_mod_commands/c0000_5_remove"
 disable_clear="$om_mod_commands/_5_remove"
+enable_clear_downloads="$om_mod_sub_cmds/c0000_removeThemes"
+disable_clear_downloads="$om_mod_sub_cmds/_removeThemes"
 enable_settings="$om_mod_commands/c0000_4_options"
 disable_settings="$om_mod_commands/_4_options"
 enable_audio_setting="$om_mod_settings_cmds/c0001_audiorandomizer"
@@ -156,6 +158,7 @@ thm_chk="$mountpoint$profilepath/$modname/active_theme"
 catalog_type="$s_type"
 [ "$s_type" = "hvc" ] && catalog_type="nes"
 system_name="$(echo "$catalog_type" | awk '{print toupper($0)}')"
+seen_themes="$mod_state_path/seen_themes_$catalog_type"
 om_mod_path="$nand_path/$modtitle"
 nand_theme_path="$nand_path/$modtitle/$s_type"
 theme_path="$usb_path/$modtitle/$s_type"
@@ -256,7 +259,7 @@ clearList() {
 }
 
 clearDownloads() {
-  find "$om_mod_sub_cmds" "$om_mod_sub_scripts" "$om_mod_sub" -type f \
+  find "$om_mod_sub" -type f \
     -not -name 'c000[0-8]_*' -not -name 'c999[0-9]_*' \
     -not -name 'om_*' -not -name '_*' -not -path "$thm_preview/*" -exec rm {} +
 }
@@ -265,13 +268,9 @@ enableMenuOptions() {
   enableCmds "theme_generator" "clear"
   disableCmds "settings" "color"
 
-  if [ ! -f "$om_dummy" ]; then
-    disableCmds "clear"
-  fi
-
   toggleDownloads
 
-  [ -z "$(ls -A "$theme_path")" ] && disableCmds "theme_generator"
+  [ -z "$(ls -A "$theme_path")" ] && disableCmds "theme_generator" "clear"
 
   if [ -f "$b_file" ] || [ -f "$p_file" ]; then
     enableCmds "settings"
@@ -407,9 +406,30 @@ getThemeList() {
   tar -xzf "${catalog_type}${list_name}" || return
   # shellcheck disable=SC2035
   rm -f *.tar.gz
+  markNewThemes
   removeRegionalTheme
   touch "$sub_dummy"
   usleep 1000
+}
+
+# no seen list yet: a first run marks nothing as new
+markNewThemes() {
+  catalog_themes="$(find "$om_mod_sub_cmds" -name 'c0010_*' | sed 's#.*/c0010_##' | grep -vx all)"
+  if [ -f "$seen_themes" ]; then
+    for t in $catalog_themes; do
+      grep -qx "$t" "$seen_themes" || printf '\nNEW=TRUE\n' >> "$om_mod_sub_cmds/c0010_$t"
+    done
+  fi
+  { cat "$seen_themes" 2> /dev/null; echo "$catalog_themes"; } | sort -u > "$seen_themes.tmp" && mv "$seen_themes.tmp" "$seen_themes"
+}
+
+showDownloads() {
+  if ls "$om_mod_sub_cmds"/c0010_* > /dev/null 2>&1; then
+    enableCmds "clear_downloads"
+  else
+    disableCmds "clear_downloads"
+  fi
+  $options_menu/lib/theme_manager --commandPath $om_mod_sub_cmds/ --scriptPath $om_mod_sub_scripts --title AVAILABLE_THEMES --downloads &
 }
 
 injectFile() {
@@ -519,6 +539,7 @@ writeThemeInfo() {
   info_title="$1"
   info_cmd="${om_mod_sub_cmds}/c0010_$1"
   [ -f "$info_cmd" ] || return 0
+  sed -i '/^NEW=TRUE$/d' "$info_cmd"
   info_title="$(grep -F 'NAME=' "$info_cmd" | sed -e 's/.*=\(.*\)\[.*/\1/')"
   echo "NAME=${info_title}[$(du -sh "$theme_path/$1" | cut -f1)b]" > "$theme_path/$1/info"
 }

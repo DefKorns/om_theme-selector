@@ -221,7 +221,8 @@ bool ThemeManagerApp::ActivateCommand(Command & cmd)
     {
         const size_t index = static_cast<size_t>(&cmd - commands_.data());
         const std::string title = cmd.name.substr(0, cmd.name.find(" ["));
-        RunDownloadCommand(cmd.command, Translate(title), items_[index].author, *sdlContext_, *controller_, { gearIcon_, appTitleText_, appVersionText_, creditText_ });
+        if(RunDownloadCommand(cmd.command, Translate(title), items_[index].author, *sdlContext_, *controller_, { gearIcon_, appTitleText_, appVersionText_, creditText_ }))
+            items_[index].isNew = false;
         return false;
     }
     if(cmd.runInternal)
@@ -374,6 +375,8 @@ int ThemeManagerApp::RunGridLayout()
     std::vector<std::vector<Texture>> tileRunFrames(commands_.size()); // sized >1 only for an animated _run01.png tile
     std::vector<bool> tileHideLabel(commands_.size(), false); // PREVIEW_HIDE_LABEL
     std::vector<bool> tileFitContain(commands_.size(), false); // PREVIEW_FIT_CONTAIN
+    Texture newBadge(Translate("NEW_BADGE"), 13, renderer_, 0, 0, false, ToAbgr(UiTheme::Bg), true);
+    const int newBadgePad = 7;
     for(int i = 0; i < (int)commands_.size(); ++i)
     {
         Command & c = commands_[i];
@@ -697,6 +700,14 @@ int ThemeManagerApp::RunGridLayout()
                         strokeW = 3;
                     }
                     DrawStrokeRect(renderer_, tileRect, stroke, strokeW, UiTheme::BoxRadius);
+                    if(items_[idx].isNew)
+                    {
+                        const SDL_Rect pill{ x + 10, y + 10, newBadge.rect.w + 2 * newBadgePad, newBadge.rect.h + 4 };
+                        DrawRoundedFillRect(renderer_, pill, UiTheme::Accent, pill.h / 2);
+                        newBadge.rect.x = pill.x + newBadgePad;
+                        newBadge.rect.y = pill.y + 2;
+                        newBadge.Draw(renderer_);
+                    }
                     if(!tileHideLabel[idx])
                     {
                         tileLabels[idx].rect.x = x + (TileW - tileLabels[idx].rect.w) / 2;

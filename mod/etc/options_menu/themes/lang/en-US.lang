@@ -67,6 +67,7 @@ CATEGORY_UI_MOD=Category: User Interface Mod
 CHECKING_THEME_FILES=Checking selected theme files.
 DOWNLOADING=Downloading...
 INSTALLING_THEME=Installing
+NEW_BADGE=NEW
 INSTALLATION_COMPLETE=Installation complete.
 ALL_THEMES_INSTALLED=All themes are already installed, nothing to download.
 NOT_ENOUGH_SPACE=Not enough free space, free some space and try again.

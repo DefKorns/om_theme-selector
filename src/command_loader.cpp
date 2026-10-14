@@ -9,6 +9,7 @@
 
 #include "command_loader.h"
 
+#include <algorithm>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -35,7 +36,7 @@ struct PipeCloser { void operator()(FILE * pipe) const { if(pipe) pclose(pipe); 
 using PipeHandle = std::unique_ptr<FILE, PipeCloser>;
 
 // my own convention, not OptionsMenu's Command format
-struct SelectorKeys { bool nesOnly = false; bool snesOnly = false; std::string author; std::string attentionPath; std::string attentionNotice; bool previewAlignTop = false; };
+struct SelectorKeys { bool nesOnly = false; bool snesOnly = false; std::string author; std::string attentionPath; std::string attentionNotice; bool previewAlignTop = false; bool isNew = false; };
 
 SelectorKeys ReadSelectorKeys(const std::string & path)
 {
@@ -55,6 +56,8 @@ SelectorKeys ReadSelectorKeys(const std::string & path)
             keys.snesOnly = true;
         else if(line == "PREVIEW_ALIGN_TOP=TRUE")
             keys.previewAlignTop = true;
+        else if(line == "NEW=TRUE")
+            keys.isNew = true;
         else if(line.compare(0, authorKey.size(), authorKey) == 0)
             keys.author = line.substr(authorKey.size());
         else if(line.compare(0, attentionPathKey.size(), attentionPathKey) == 0)
@@ -161,9 +164,30 @@ std::string ReadBackStack(bool isRootScreen)
     return (isRootScreen && backStackEnv) ? backStackEnv : "";
 }
 
+// right after the "All" entry, otherwise in catalog order
+void MoveNewThemesUp(std::vector<Command> & commands, std::vector<ItemInfo> & items, const std::vector<bool> & allEntry)
+{
+    std::vector<size_t> order(commands.size());
+    for(size_t i = 0; i < order.size(); ++i)
+        order[i] = i;
+    auto Rank = [&](size_t i) { return !items[i].isThemeItem ? 0 : allEntry[i] ? 1 : items[i].isNew ? 2 : 3; };
+    std::stable_sort(order.begin(), order.end(), [&](size_t a, size_t b) { return Rank(a) < Rank(b); });
+
+    std::vector<Command> sortedCommands;
+    std::vector<ItemInfo> sortedItems;
+    for(size_t i : order)
+    {
+        sortedCommands.push_back(std::move(commands[i]));
+        sortedItems.push_back(std::move(items[i]));
+    }
+    commands = std::move(sortedCommands);
+    items = std::move(sortedItems);
+}
+
 bool LoadCommands(const std::string & commandLocation, const std::string & scriptLocation, const std::string & optionsLocation,
                    std::vector<Command> & commands, std::vector<ItemInfo> & items)
 {
+    std::vector<bool> allEntry;
     DirHandle dir(opendir(commandLocation.c_str()));
     if(!dir)
     {
@@ -220,8 +244,10 @@ bool LoadCommands(const std::string & commandLocation, const std::string & scrip
         }
         commands.push_back(c);
         const bool needsAttention = !keys.attentionPath.empty() && HasAnyFile(keys.attentionPath);
-        items.push_back({ file.compare(0, 6, "c0000_") != 0, std::move(keys.author), needsAttention, std::move(keys.attentionNotice), keys.previewAlignTop });
+        items.push_back({ file.compare(0, 6, "c0000_") != 0, std::move(keys.author), needsAttention, std::move(keys.attentionNotice), keys.previewAlignTop, keys.isNew });
+        allEntry.push_back(file.size() > 4 && file.compare(file.size() - 4, 4, "_all") == 0);
     }
+    MoveNewThemesUp(commands, items, allEntry);
     return true;
 }
 

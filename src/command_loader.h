@@ -47,6 +47,7 @@ struct ItemInfo
     bool needsAttention;
     std::string attentionNotice;
     bool previewAlignTop;
+    bool isNew;
 };
 
 bool LoadCommands(const std::string & commandLocation, const std::string & scriptLocation, const std::string & optionsLocation,

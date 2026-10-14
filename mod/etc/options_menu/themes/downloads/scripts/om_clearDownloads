@@ -23,4 +23,4 @@ script_init
 clearDownloads
 remove "$sub_dummy"
 
-$options_menu/lib/theme_manager --commandPath $om_mod_sub_cmds/ --scriptPath $om_mod_sub_scripts --title AVAILABLE_THEMES --downloads &
+showDownloads
