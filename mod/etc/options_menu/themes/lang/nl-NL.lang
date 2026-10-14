@@ -66,6 +66,7 @@ DIY_DRAFT_NOTICE=Eigen thema niet opgeslagen: open Eigen thema om het op te slaa
 CATEGORY_UI_MOD=Categorie: Interface-mod
 CHECKING_THEME_FILES=Bestanden van het gekozen thema worden gecontroleerd.
 DOWNLOADING=Downloaden...
+INSTALLING_THEME=Installeren:
 INSTALLATION_COMPLETE=Installatie voltooid.
 ALL_THEMES_INSTALLED=Alle thema's zijn al geïnstalleerd, er is niets te downloaden.
 NOT_ENOUGH_SPACE=Onvoldoende vrije ruimte, maak ruimte vrij en probeer het opnieuw.

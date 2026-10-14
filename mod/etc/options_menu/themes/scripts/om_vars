@@ -496,7 +496,9 @@ themeGenerator() {
     echo ""
     translate THEMES_FAILED
     echo "$failed"
+    return 1
   fi
+  return "$rc"
 }
 
 freeSpaceKb() {
@@ -513,6 +515,7 @@ urlEncodeName() {
 }
 
 writeThemeInfo() {
+  info_title="$1"
   info_cmd="${om_mod_sub_cmds}/c0010_$1"
   [ -f "$info_cmd" ] || return 0
   info_title="$(grep -F 'NAME=' "$info_cmd" | sed -e 's/.*=\(.*\)\[.*/\1/')"
@@ -557,6 +560,7 @@ installDownloaded() {
     unpackTheme "$t" && writeThemeInfo "$t"
     t_rc=$?
   fi
+  [ "$t_rc" = 0 ] && echo "$info_title"
   case "$t_rc" in
     0) ;;
     3) downloadError 3 && return 3 ;;

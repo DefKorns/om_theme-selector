@@ -66,6 +66,7 @@ DIY_DRAFT_NOTICE=Tema personalizado por gravar: abre Tema Personalizado para o g
 CATEGORY_UI_MOD=Categoria: Mod de Interface
 CHECKING_THEME_FILES=A verificar os ficheiros do tema selecionado.
 DOWNLOADING=A descarregar...
+INSTALLING_THEME=A instalar
 INSTALLATION_COMPLETE=Instalação concluída.
 ALL_THEMES_INSTALLED=Todos os temas já estão instalados, não há nada para descarregar.
 NOT_ENOUGH_SPACE=Não há espaço livre suficiente, liberta algum espaço e tenta novamente.

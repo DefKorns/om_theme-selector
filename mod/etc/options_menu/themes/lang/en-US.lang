@@ -66,6 +66,7 @@ DIY_DRAFT_NOTICE=Unsaved custom theme: open DIY Theme to save it, or it's discar
 CATEGORY_UI_MOD=Category: User Interface Mod
 CHECKING_THEME_FILES=Checking selected theme files.
 DOWNLOADING=Downloading...
+INSTALLING_THEME=Installing
 INSTALLATION_COMPLETE=Installation complete.
 ALL_THEMES_INSTALLED=All themes are already installed, nothing to download.
 NOT_ENOUGH_SPACE=Not enough free space, free some space and try again.

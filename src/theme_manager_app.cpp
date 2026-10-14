@@ -8,6 +8,7 @@
   */
 
 #include "theme_manager_app.h"
+#include "download_screen.h"
 #include "texture_utils.h"
 #include "framework/draw_helpers.h"
 #include "framework/powerwatch.h"
@@ -75,7 +76,7 @@ ThemeManagerApp::ThemeManagerApp(std::string optionsLocation, AppOptions options
     badgeA_ = Badge{ Texture("A", 16, renderer_, 0, 0, false, ToAbgr(UiTheme::BadgeLetter), true), Texture(Translate("HINT_SELECT"), 16, renderer_, 0, 0, false, ToAbgr(UiTheme::Text), true), UiTheme::BadgeADark, UiTheme::BadgeA };
     badgeRowRightEdge_ = UiTheme::BadgeClusterRightX - UiTheme::BadgeOuterSize - UiTheme::BadgeLabelGap - badgeA_.label.rect.w - UiTheme::BadgeGroupGap;
     badges_.reset(new BadgePainter(optionsLocation_, renderer_));
-    if(options_.showStorage)
+    if(options_.downloadsScreen)
         storage_.reset(new StorageIndicator(renderer_));
     badgeHold_ = Badge{ Texture("B", 16, renderer_, 0, 0, false, ToAbgr(UiTheme::BadgeLetter), true), Texture(Translate("HINT_DELETE"), 16, renderer_, 0, 0, false, ToAbgr(UiTheme::Text), true), UiTheme::BadgeXDark, UiTheme::BadgeX };
 
@@ -216,6 +217,13 @@ void ThemeManagerApp::ResumeUnderlyingUi() const
 
 bool ThemeManagerApp::ActivateCommand(Command & cmd)
 {
+    if(cmd.runInternal && options_.downloadsScreen && cmd.command.find("/get_all") == std::string::npos)
+    {
+        const size_t index = static_cast<size_t>(&cmd - commands_.data());
+        const std::string title = cmd.name.substr(0, cmd.name.find(" ["));
+        RunDownloadCommand(cmd.command, Translate(title), items_[index].author, *sdlContext_, *controller_, { gearIcon_, appTitleText_, appVersionText_, creditText_ });
+        return false;
+    }
     if(cmd.runInternal)
     {
         cmd.RunCommand(*sdlContext_, controller_.get(), { gearIcon_, appTitleText_, appVersionText_, creditText_ }, bg_);

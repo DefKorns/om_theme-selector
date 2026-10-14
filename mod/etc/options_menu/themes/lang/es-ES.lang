@@ -66,6 +66,7 @@ DIY_DRAFT_NOTICE=Tema personalizado sin guardar: abre Tema personalizado para gu
 CATEGORY_UI_MOD=Categoría: Mod de interfaz
 CHECKING_THEME_FILES=Comprobando los archivos del tema seleccionado.
 DOWNLOADING=Descargando...
+INSTALLING_THEME=Instalando
 INSTALLATION_COMPLETE=Instalación completada.
 ALL_THEMES_INSTALLED=Todos los temas ya están instalados, no hay nada que descargar.
 NOT_ENOUGH_SPACE=No hay suficiente espacio libre, libera espacio e inténtalo de nuevo.

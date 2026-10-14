@@ -66,6 +66,7 @@ DIY_DRAFT_NOTICE=Eigenes Theme nicht gespeichert: öffne Eigenes Theme zum Speic
 CATEGORY_UI_MOD=Kategorie: Benutzeroberflächen-Mod
 CHECKING_THEME_FILES=Dateien des ausgewählten Themes werden geprüft.
 DOWNLOADING=Wird heruntergeladen...
+INSTALLING_THEME=Installiere
 INSTALLATION_COMPLETE=Installation abgeschlossen.
 ALL_THEMES_INSTALLED=Alle Themen sind bereits installiert, nichts herunterzuladen.
 NOT_ENOUGH_SPACE=Nicht genügend freier Speicher, gib Speicher frei und versuche es erneut.

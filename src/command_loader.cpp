@@ -145,8 +145,8 @@ AppOptions ParseArgs(int argc, char * argv[], const std::string & optionsLocatio
             options.folderMusicScreen = std::strcmp(argv[++i], "music") == 0;
         else if(std::strcmp(argv[i], "--selectedMarker") == 0 && i+1 < argc)
             options.selectedMarker = argv[++i];
-        else if(std::strcmp(argv[i], "--storage") == 0)
-            options.showStorage = true;
+        else if(std::strcmp(argv[i], "--downloads") == 0)
+            options.downloadsScreen = true;
     }
     if(!options.commandLocation.empty() && options.commandLocation.back() != '/')
         options.commandLocation += '/';
