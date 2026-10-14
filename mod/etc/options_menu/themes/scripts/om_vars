@@ -462,8 +462,6 @@ themeGenerator() {
   translate CHECKING_THEME_FILES
   echo ""
   theme_name="${1}"
-  full_title="$(grep -F 'NAME=' "${om_mod_sub_cmds}/c0010_${theme_name}" | sed -e 's/.*=\(.*\)\[.*/\1/')"
-  full_path="${theme_path}/${theme_name}"
   cd "${theme_path}" || exit
   if [ ! -x "$om_scripts/downloader" ]; then
     translate DOWNLOADER_MISSING_LINE1
@@ -485,10 +483,7 @@ themeGenerator() {
   else
     downloadTheme "$theme_name"
     rc=$?
-    if [ "$rc" = 0 ]; then
-      size="$(du -sh "${full_path}" | cut -f1)"
-      echo "NAME=${full_title}[${size}b]" > "${full_path}/info"
-    fi
+    [ "$rc" = 0 ] && writeThemeInfo "$theme_name"
   fi
 
   removeRegionalTheme
@@ -515,6 +510,13 @@ unpackedSizeKb() {
 
 urlEncodeName() {
   printf '%s' "$1" | sed 's/%/%25/g; s/#/%23/g; s/?/%3F/g'
+}
+
+writeThemeInfo() {
+  info_cmd="${om_mod_sub_cmds}/c0010_$1"
+  [ -f "$info_cmd" ] || return 0
+  info_title="$(grep -F 'NAME=' "$info_cmd" | sed -e 's/.*=\(.*\)\[.*/\1/')"
+  echo "NAME=${info_title}[$(du -sh "$theme_path/$1" | cut -f1)b]" > "$theme_path/$1/info"
 }
 
 remoteTarball() {
@@ -552,7 +554,7 @@ installDownloaded() {
   t="${t%.tar.gz}"
   t_rc="$1"
   if [ "$t_rc" = 0 ]; then
-    unpackTheme "$t"
+    unpackTheme "$t" && writeThemeInfo "$t"
     t_rc=$?
   fi
   case "$t_rc" in
