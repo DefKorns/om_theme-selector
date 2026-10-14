@@ -150,7 +150,9 @@ list_name="-list-v2.tar.gz"
 
 # SHARED
 thm_chk="$mountpoint$profilepath/$modname/active_theme"
-system_name="$(echo "$s_type" | awk '{print toupper($0)}')"
+catalog_type="$s_type"
+[ "$s_type" = "hvc" ] && catalog_type="nes"
+system_name="$(echo "$catalog_type" | awk '{print toupper($0)}')"
 om_mod_path="$nand_path/$modtitle"
 nand_theme_path="$nand_path/$modtitle/$s_type"
 theme_path="$usb_path/$modtitle/$s_type"
@@ -389,17 +391,18 @@ getThemeList() {
   "$om_scripts/gen_splash" /tmp/om_splash.png THEME_LIST_DOWNLOADING_LINE1 THEME_LIST_DOWNLOADING_LINE2 && decodepng /tmp/om_splash.png > /dev/fb0
   cd "$om_mod_sub" || exit
 
-  if [ ! -e "${s_type}${list_name}" ]; then
+  if [ ! -e "${catalog_type}${list_name}" ]; then
     clearDownloads
-    theme_downloader catalog "$s_type" "${s_type}${list_name}"
+    theme_downloader catalog "$catalog_type" "${catalog_type}${list_name}"
     case "$?" in
       0) ;;
       3) translate NOT_ENOUGH_SPACE ;;
       *) netChecker ;;
     esac
   fi
+  tar -xzf "${catalog_type}${list_name}" || return
   # shellcheck disable=SC2035
-  tar -xzf "${s_type}${list_name}" && rm -f *.tar.gz
+  rm -f *.tar.gz
   removeRegionalTheme
   touch "$sub_dummy"
   usleep 1000
@@ -463,14 +466,14 @@ themeGenerator() {
   translate DOWNLOADING
 
   if [ "${theme_name}" = "all" ]; then
-    theme_downloader all-manifest "$sftype" "${sftype}-all"
+    theme_downloader all-manifest "$catalog_type" "${catalog_type}-all"
     rc=$?
     failed=""
     if [ "$rc" = 0 ]; then
-      downloadThemes "${sftype}-all"
+      downloadThemes "${catalog_type}-all"
       rc=$?
     fi
-    remove "${sftype}-all"
+    remove "${catalog_type}-all"
   else
     downloadTheme "$theme_name"
     rc=$?
@@ -505,7 +508,7 @@ unpackedSizeKb() {
 }
 
 downloadTheme() {
-  theme_downloader theme "$sftype" "$1" "${system_name}.$1.tar.gz" || return
+  theme_downloader theme "$catalog_type" "$1" "${system_name}.$1.tar.gz" || return
   unpackTheme "$1"
 }
 
@@ -521,7 +524,7 @@ downloadThemes() {
   fi
   remove "$progress"
   mkfifo "$progress"
-  theme_downloader themes "$sftype" "$pending" > "$progress" &
+  theme_downloader themes "$catalog_type" "$pending" > "$progress" &
   dl_pid=$!
   dl_all_rc=0
   while read -r t_rc t; do
@@ -548,7 +551,7 @@ abortDownload() {
   trap - TERM INT HUP
   [ -n "$dl_pid" ] && kill "$dl_pid" 2> /dev/null
   [ -n "$unpacking" ] && rm -rf "$unpacking" "$unpacking.png"
-  rm -f "$system_name".*.tar.gz "$system_name".*.tar.gz.part "/tmp/${sftype}-pending" "/tmp/${sftype}-progress" "${sftype}-all"
+  rm -f "$system_name".*.tar.gz "$system_name".*.tar.gz.part "/tmp/${sftype}-pending" "/tmp/${sftype}-progress" "${catalog_type}-all"
   exit 1
 }
 
