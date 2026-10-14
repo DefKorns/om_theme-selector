@@ -16,12 +16,7 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
-# Reports current on/off state for a Settings toggle row - read-only
-# counterpart to om_theme/om_audio, which flip the same flag files. The
-# engine calls this once per toggle row every time the Settings screen
-# loads, so it reads $mod_state_path from the cache om_settings writes just
-# before launching theme_manager, instead of re-sourcing om_functions/
-# preinit (~0.1-0.3s) five times over for the same value.
+# on/off state of a Settings toggle; reads the path om_settings cached
 mod_state_path="$(cat /tmp/om_state_path 2> /dev/null)"
 if [ -z "$mod_state_path" ]; then
   # shellcheck source=/dev/null

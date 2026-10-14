@@ -95,8 +95,7 @@ bool HasAnyFile(const std::string & dirPath)
 
 }
 
-// child screens inherit this via fork+exec, same as OM_BACK_STACK - so only the first screen
-// that needs sftype pays for the shell fork
+// inherited by child screens, so only the first one forks a shell
 std::string ReadSftype()
 {
     if(const char * env = std::getenv("OM_SFTYPE"))
@@ -146,6 +145,8 @@ AppOptions ParseArgs(int argc, char * argv[], const std::string & optionsLocatio
             options.folderMusicScreen = std::strcmp(argv[++i], "music") == 0;
         else if(std::strcmp(argv[i], "--selectedMarker") == 0 && i+1 < argc)
             options.selectedMarker = argv[++i];
+        else if(std::strcmp(argv[i], "--storage") == 0)
+            options.showStorage = true;
     }
     if(!options.commandLocation.empty() && options.commandLocation.back() != '/')
         options.commandLocation += '/';
@@ -188,7 +189,7 @@ bool LoadCommands(const std::string & commandLocation, const std::string & scrip
             continue;
         Command c(in); // closes `in` itself once read
 
-        // c0000_0000 leading sentinel only - a later empty COMMAND_STR is a reserved blank slot instead
+        // only a leading c0000_0000 is the sentinel; later empty ones are blank slots
         if(commands.empty() && c.command.empty())
             continue;
         if(c.usbOnly && !usbReady)

@@ -75,6 +75,8 @@ ThemeManagerApp::ThemeManagerApp(std::string optionsLocation, AppOptions options
     badgeA_ = Badge{ Texture("A", 16, renderer_, 0, 0, false, ToAbgr(UiTheme::BadgeLetter), true), Texture(Translate("HINT_SELECT"), 16, renderer_, 0, 0, false, ToAbgr(UiTheme::Text), true), UiTheme::BadgeADark, UiTheme::BadgeA };
     badgeRowRightEdge_ = UiTheme::BadgeClusterRightX - UiTheme::BadgeOuterSize - UiTheme::BadgeLabelGap - badgeA_.label.rect.w - UiTheme::BadgeGroupGap;
     badges_.reset(new BadgePainter(optionsLocation_, renderer_));
+    if(options_.showStorage)
+        storage_.reset(new StorageIndicator(renderer_));
     badgeHold_ = Badge{ Texture("B", 16, renderer_, 0, 0, false, ToAbgr(UiTheme::BadgeLetter), true), Texture(Translate("HINT_DELETE"), 16, renderer_, 0, 0, false, ToAbgr(UiTheme::Text), true), UiTheme::BadgeXDark, UiTheme::BadgeX };
 
     ComputePinnedAndThemeRanges();
@@ -254,8 +256,7 @@ int ThemeManagerApp::RunGridLayout()
     const bool hasCaptions = themeStart_ < pinnedStartIndex_ && !commands_[themeStart_].previewHideLabel;
     const int GridGap = 20;
 
-    // an empty slot stays reserved-width rather than compacted out, so a
-    // conditional button appearing/disappearing doesn't shift the rest
+    // empty slots keep their width so the other chips don't shift
     int stripEnd = themeStart_;
     while(stripEnd > 0 && commands_[stripEnd-1].command.empty())
         --stripEnd;
@@ -376,7 +377,7 @@ int ThemeManagerApp::RunGridLayout()
             const int labelAvail = chipWidthOf[i] - 2*chipPadX - ChipIconW(i);
             if(c.previewImage.size())
             {
-                SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "1"); // smooth - these are small glyphs, nearest looks jagged
+                SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "1"); // nearest looks jagged on small glyphs
                 Texture icon(c.previewImage, renderer_, 0, 0);
                 SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "0");
                 FitCentered(icon, 0, 0, chipIconSize, chipIconSize, 0);
@@ -441,8 +442,7 @@ int ThemeManagerApp::RunGridLayout()
         }
     };
 
-    // marks the tile of the theme currently applied on the console, so it stays visually
-    // distinguishable from the rest of the grid regardless of where the cursor is
+    // the theme applied on the console
     std::vector<bool> isActiveTheme(commands_.size(), false);
     const std::string activeMarker = options_.titleKey == "INSTALLED_THEMES" ? "/var/lib/clover/profiles/0/hakchi/lastTheme" : options_.selectedMarker;
     auto RefreshActiveTiles = [&]()
@@ -510,6 +510,8 @@ int ThemeManagerApp::RunGridLayout()
             if(ActivateCommand(commands_[currentCommandId_]))
                 break;
             RefreshActiveTiles();
+            if(storage_)
+                storage_->Refresh();
         }
         else if(controller_->HeldRepeat(LEFT))
         {
@@ -552,7 +554,7 @@ int ThemeManagerApp::RunGridLayout()
         {
             bool tapped = false;
             UpdateBButton(tapped);
-            // quick tap - Back/Exit isn't a chip, B runs it directly
+            // quick tap runs Back/Exit
             if(tapped && pinnedStartIndex_ < (int)commands_.size() && ActivateCommand(commands_[pinnedStartIndex_]))
                 break;
         }
@@ -612,6 +614,11 @@ int ThemeManagerApp::RunGridLayout()
             }
         }
         noticeText.Draw(renderer_);
+        if(storage_)
+        {
+            storage_->Update();
+            storage_->Draw(GridRight, titleText_.rect.y + titleText_.rect.h / 2);
+        }
 
         {
             for(int row = 0; row < GridRowsVisible; ++row)
@@ -711,7 +718,7 @@ int ThemeManagerApp::RunListLayout()
     scrollDown.rect.y = UiTheme::ScrollDownY;
     SDL_Rect selectedRowRect{ UiTheme::ListX, UiTheme::RowFirstY - 2, UiTheme::ListContentRightX - UiTheme::ListX, 0 };
 
-    // B runs Back/Exit directly - same footer badge and behavior as the grid layout
+    // B runs Back/Exit, as in the grid
     Badge badgeB{ Texture("B", 16, renderer_, 0, 0, false, ToAbgr(UiTheme::BadgeLetter), true),
                   Texture(pinnedStartIndex_ < (int)commands_.size() ? Translate(commands_[pinnedStartIndex_].name) : "", 16, renderer_, 0, 0, false, ToAbgr(UiTheme::Text), true),
                   UiTheme::BadgeBDark, UiTheme::BadgeB };
@@ -727,7 +734,6 @@ int ThemeManagerApp::RunListLayout()
     }
 
     const int modernRowPitch = std::max(UiTheme::RowPitch, GetTTFLineHeight(RowGlyphSize));
-    // Back/Exit no longer takes a row of its own here - B runs it directly via the footer badge above
     const int DisplayItemCount = std::max(1, (UiTheme::FooterDividerY - UiTheme::ListBottomMargin - UiTheme::RowFirstY) / modernRowPitch);
 
     int topListItemNumber = pinnedStartIndex_ + 1; // forces the first SetCurrentCommand to lay out row positions
@@ -752,9 +758,7 @@ int ThemeManagerApp::RunListLayout()
             updateCommandYPos = true;
         }
 
-        // never scroll past the point where the list stops filling the display area -
-        // otherwise restoring focus on a short list (e.g. after a toggle relaunches this
-        // screen) scrolls the focused row to the top and hides earlier rows for no reason
+        // a short list never scrolls, or a restored focus would hide earlier rows
         const int maxTopListItemNumber = std::max(0, pinnedStartIndex_-DisplayItemCount);
         if(topListItemNumber > maxTopListItemNumber)
         {
@@ -846,8 +850,7 @@ int ThemeManagerApp::RunListLayout()
         }
         else if(controller_->HeldRepeat(UP) && pinnedStartIndex_ > 0)
         {
-            // bounded so an all-separator list can't spin forever; stays below
-            // pinnedStartIndex_ - Back/Exit isn't a row here, B runs it directly
+            // bounded for an all-separator list; Back/Exit isn't a row
             int newCommandId = currentCommandId_;
             for(int tries = 0; tries < pinnedStartIndex_; ++tries)
             {
@@ -871,7 +874,7 @@ int ThemeManagerApp::RunListLayout()
         {
             bool tapped = false;
             UpdateBButton(tapped);
-            // quick tap - Back/Exit isn't a row you navigate to, B runs it directly (matches the grid layout)
+            // quick tap runs Back/Exit
             if(tapped && pinnedStartIndex_ < (int)commands_.size() && ActivateCommand(commands_[pinnedStartIndex_]))
                 break;
         }

@@ -547,7 +547,6 @@ downloadThemes() {
   return "$rc"
 }
 
-# omDownloadAll handler: <rc> <tarball>
 installDownloaded() {
   t="${2#"$system_name".}"
   t="${t%.tar.gz}"
@@ -686,7 +685,7 @@ findDiyAsset() {
     -not -name 'om_*' -not -name 'c999[0-9]_*' -not -name 'c0000_*' \
     -not -name 'c0001_*' -not -name '_*' -exec rm {} +
 
-  # read once - avoids a [ -f ] stat() per theme below, slow on USB/SD
+  # one read instead of a stat per theme (slow on USB/SD)
   existing_cmds="$(ls -1 "$diy_sprite/commands" 2>/dev/null)"
   existing_scripts="$(ls -1 "$diy_sprite/scripts" 2>/dev/null)"
   if [ "$preview_top" = "1" ] && [ -n "$existing_cmds" ]; then
@@ -696,11 +695,11 @@ findDiyAsset() {
   fi
 
   diy_crop_batch=0
-  diy_seen_hashes="" # collapses themes that reuse a byte-identical source asset under a different name
+  diy_seen_hashes="" # skips assets identical to one already listed
   for p in $paths_to_search; do
     if [ "$(ls -A "$p")" ]; then
       # shellcheck disable=SC2038
-      # a temp file, not a pipe into the while loop: a pipe would put the backgrounded crops in a subshell the wait below can't catch
+      # a temp file, not a pipe: wait can't catch jobs in a pipe's subshell
       cd "$p" && find . -mindepth 1 -maxdepth 1 -type d | xargs -n 1 basename | sort -u > /tmp/diy_asset_list
       while IFS= read -r asset_name; do
 
@@ -721,7 +720,7 @@ findDiyAsset() {
 
           preview_image="$full_asset_path/$diy_file"
 
-          # hashed pre-crop, so this doesn't have to wait on the backgrounded crop job below
+          # hashed pre-crop, so it doesn't wait on the crop job
           if [ -f "$preview_image" ]; then
             sprite_hash="$(md5sum "$preview_image" | cut -d' ' -f1)"
             if printf '%s\n' "$diy_seen_hashes" | grep -qxF "$sprite_hash"; then
@@ -741,10 +740,10 @@ $sprite_hash"
           own_preview=""
           [ -n "$theme_preview" ] && [ "$p" = "$theme_path" ] && [ -f "$info_path/$theme_preview" ] && own_preview="$info_path/$theme_preview"
           if [ -n "$own_preview" ]; then
-            preview_image="$own_preview" # drawn by the theme author, for atlases a fixed crop can't show (Wii)
+            preview_image="$own_preview" # for atlases a fixed crop can't show
           elif [ "$colors" = "0" ] && [ "$chars" != "1" ] && [ -n "$diy_crop_x" ]; then
             if [ ! -f "$temp_preview" ]; then
-              # backgrounded, batched 4 at a time (this console's core count)
+              # 4 at a time (core count)
               sprite_crop "$preview_image" "$diy_crop_x" "$diy_crop_y" "$diy_crop_w" "$diy_crop_h" "$temp_preview" &
               diy_crop_batch=$((diy_crop_batch + 1))
               if [ "$diy_crop_batch" -ge 4 ]; then

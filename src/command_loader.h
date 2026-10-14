@@ -27,6 +27,7 @@ struct AppOptions
     std::string folderMusicMapping;
     bool folderMusicScreen = false;
     std::string selectedMarker;
+    bool showStorage = false;
 };
 
 // each screen remembers its last focused row here; cleared on leaving the theme manager

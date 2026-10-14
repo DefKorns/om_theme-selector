@@ -41,7 +41,7 @@ struct ResolvedOption
     int fromFolder;
 };
 
-// Folder -> theme and folder -> music assignments, resolved the same way om_themescript applies them on chmenu
+// folder -> theme/music, resolved like om_themescript
 class FolderThemeModel
 {
 public:

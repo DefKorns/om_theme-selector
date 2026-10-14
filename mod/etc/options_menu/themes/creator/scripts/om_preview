@@ -26,9 +26,7 @@ if [ ! -f "$b_file" ]; then
   echo "themeSelector" >"$p_file"
 fi
 
-# chmenu/restart alone don't re-run preinit.d, so themeSelector's own
-# DIY_THEME pickup (om_themescript) never re-fired - call it directly here,
-# same as it'll run again at the next real boot via b_file/p_file
+# chmenu doesn't re-run preinit.d, so apply the DIY theme here
 # shellcheck source=/dev/null
 source "$b_file"
 themeSelector

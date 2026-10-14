@@ -10,7 +10,7 @@
 #ifndef SINGLE_INSTANCE_LOCK_H_
 #define SINGLE_INSTANCE_LOCK_H_
 
-// Keeps one theme_manager on /dev/fb0, taking over a stale instance instead of rejecting the new launch.
+// takes over a stale instance instead of refusing to start
 class SingleInstanceLock
 {
 public:

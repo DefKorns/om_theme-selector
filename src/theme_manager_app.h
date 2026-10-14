@@ -12,6 +12,7 @@
 
 #include "command_loader.h"
 #include "command.h"
+#include "storage_indicator.h"
 #include "framework/badge.h"
 #include "framework/controller.h"
 #include "framework/dialog.h"
@@ -21,7 +22,6 @@
 #include <string>
 #include <vector>
 
-// Owns the SDL/controller session for one screen and runs its grid or list layout loop.
 class ThemeManagerApp
 {
 public:
@@ -54,6 +54,7 @@ private:
     Texture gearIcon_, switchOn_, switchOff_;
     Texture appTitleText_, appVersionText_, titleText_, creditText_;
     std::unique_ptr<BadgePainter> badges_;
+    std::unique_ptr<StorageIndicator> storage_;
     bool deleteRequested_ = false;
     Badge badgeA_;
     Badge badgeHold_;
@@ -76,7 +77,7 @@ private:
     bool ActivateCommand(Command & cmd); // true if the caller's loop should break
     void UpdateBButton(bool & tapped);
 
-    void ResumeUnderlyingUi() const; // CONTs the game PauseUI.sh stopped - nothing else does this on power-button exit
+    void ResumeUnderlyingUi() const; // nothing else resumes it on a power-button exit
 
     std::string FocusStatePath() const;
     void SaveFocusState() const;

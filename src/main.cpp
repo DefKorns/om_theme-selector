@@ -7,8 +7,7 @@
   * (at your option) any later version.
   */
 
-// Standalone theme manager using the vendored OptionsMenu engine. Each
-// screen relaunches this binary with a different --commandPath.
+// Each screen relaunches this binary with its own --commandPath.
 
 #include "single_instance_lock.h"
 #include "command_loader.h"
