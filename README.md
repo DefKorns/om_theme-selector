@@ -34,7 +34,7 @@ Full guides are on the **[wiki](https://github.com/DefKorns/om_theme-selector/wi
 ## Requirements
 
 - [Hakchi2 CE](https://github.com/TeamShinkansen/hakchi2/releases/latest)
-- [My Options Menu fork](https://github.com/DefKorns/OptionsMenu/releases) v2.0.0-alpha12 or newer — the base UI this mod plugs into
+- [My Options Menu fork](https://github.com/DefKorns/OptionsMenu/releases) v2.0.0-beta1 or newer — the base UI this mod plugs into
 - [Hakchi Wi-Fi mod (WPA Supplicant)](https://hakchi.net/hakchi/hmods/wpa-supplicant.hmod) — only to download themes from the console
 - A USB/SD drive is recommended: themes are often 5–30 MB each
 
@@ -95,6 +95,8 @@ The downloadable themes catalog lives in [om-theme-downloads](https://github.com
 ## Thanks
 
 - AluCarD
+- Aranthys
+- AxelStone
 - [BsLeNuL](https://github.com/bslenul)
 - [CompCom](https://github.com/CompCom) — original Options Menu
 - [KMFDManic](https://github.com/KMFDManic)
