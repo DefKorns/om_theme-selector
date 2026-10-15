@@ -1,5 +1,5 @@
 #!/bin/sh
-# shellcheck disable=SC2086,SC2154,SC3046,SC3051
+# shellcheck disable=SC2034,SC2086,SC2154,SC3046,SC3051
 #
 #  Copyright (c) 2026 DefKorns (https://defkorns.github.io/LICENSE)
 #
@@ -23,10 +23,14 @@ remove "$om_dummy"
 
 if [ -n "$(ls -A $theme_path)" ]; then
   touch "$om_dummy"
-  themeCountChanged && themeLoader
+  if themeCountChanged; then
+    [ "$((new_count - ${old_count:-0}))" -lt 5 ] && loading_splash=1
+    themeLoader
+  fi
 else
   remove "$om_mod_spacer"
   clearList
 fi
+toggleThemeCmds
 
 usleep 50000 && $options_menu/lib/theme_manager --title INSTALLED_THEMES &

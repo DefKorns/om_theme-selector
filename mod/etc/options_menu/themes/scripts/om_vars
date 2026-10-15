@@ -264,13 +264,20 @@ clearDownloads() {
     -not -name 'om_*' -not -name '_*' -not -path "$thm_preview/*" -exec rm {} +
 }
 
+toggleThemeCmds() {
+  if [ -z "$(ls -A "$theme_path")" ]; then
+    disableCmds "theme_generator" "clear"
+  else
+    enableCmds "theme_generator" "clear"
+  fi
+  [ ! -d "$has_folders" ] && disableCmds "theme_generator"
+}
+
 enableMenuOptions() {
-  enableCmds "theme_generator" "clear"
   disableCmds "settings" "color"
 
   toggleDownloads
-
-  [ -z "$(ls -A "$theme_path")" ] && disableCmds "theme_generator" "clear"
+  toggleThemeCmds
 
   if [ -f "$b_file" ] || [ -f "$p_file" ]; then
     enableCmds "settings"
@@ -292,7 +299,6 @@ enableMenuOptions() {
       rename "${subdir}/${sprite_src}.png" "${subdir}/${sprite_dest}.png"
     done
   fi
-  [ ! -d "$has_folders" ] && disableCmds "theme_generator"
 }
 
 # avoids re-running the full themeLoader scan (~1.7s) when nothing changed
