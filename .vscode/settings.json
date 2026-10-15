@@ -22,5 +22,5 @@
     },
     "diffEditor.ignoreTrimWhitespace": false,
     "shellcheck.useWorkspaceRootAsCwd": true,
-    "cmake.sourceDirectory": "E:/Documents/_projects/hmods/om_theme-selector/pngpack/jsoncpp",
+    "cmake.sourceDirectory": "E:/Documents/_projects/hmods/om_theme-selector/vendor/pngpack/jsoncpp",
 }

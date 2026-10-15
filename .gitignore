@@ -557,3 +557,6 @@ tools/MaterialSymbolsOutlined.ttf
 mod/etc/options_menu/lib/
 vendor/chmenu
 .deps/
+
+# local-only files (console dumps, test hmods)
+local/

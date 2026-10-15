@@ -45,20 +45,20 @@ DEPDIR = .deps
 # DIY sprite previews (om_vars). Built by pngpack's own Makefile; its default
 # LDFLAGS (-dead_strip) is macOS-only. The rpath picks up options_menu_compat's
 # private libstdc++ when another hmod has replaced the system one.
-mod/bin/sprite_crop: pngpack/pngpacker/sprite_crop.cpp pngpack/pngpacker/pixeltools.cpp
+mod/bin/sprite_crop: vendor/pngpack/pngpacker/sprite_crop.cpp vendor/pngpack/pngpacker/pixeltools.cpp
 	mkdir -p $(@D)
-	$(MAKE) -C pngpack build/sprite_crop CROSS=$(CROSS_PREFIX) LDFLAGS='-Wl,--gc-sections -Wl,-rpath,/etc/options_menu/lib'
-	cp pngpack/build/sprite_crop $@
+	$(MAKE) -C vendor/pngpack build/sprite_crop CROSS=$(CROSS_PREFIX) LDFLAGS='-Wl,--gc-sections -Wl,-rpath,/etc/options_menu/lib'
+	cp vendor/pngpack/build/sprite_crop $@
 
 update-headers:
 	sh tools/update-license-headers.sh $(YEAR)
 
 clean:
-	find . -name "*.o" -type f -not -path "./toolchain/*" -delete
+	find . -name "*.o" -type f -not -path "./vendor/*" -delete
 	rm -rf $(DEPDIR)
 	rm -f $(MOD_DEPS)
 	rm -rf out/
 
-include hmod-build/hmod.mk
+include vendor/hmod-build/hmod.mk
 
 .PHONY: all compile update-headers clean

@@ -4,9 +4,9 @@ set -euo pipefail
 # stops Git Bash from mangling the /src path below into a Windows path
 export MSYS_NO_PATHCONV=1
 
-if [ ! -f toolchain/Dockerfile.jessie-armhf ]; then
-    echo "==> Fetching toolchain submodule..."
-    git submodule update --init --recursive toolchain
+if [ ! -f vendor/hmod-build/toolchain-image.sh ]; then
+    echo "==> Fetching vendor/hmod-build submodule..."
+    git submodule update --init vendor/hmod-build
 fi
 
 if [ ! -f vendor/OptionsMenu/src/framework/sdl_context.cpp ]; then
@@ -15,7 +15,7 @@ if [ ! -f vendor/OptionsMenu/src/framework/sdl_context.cpp ]; then
 fi
 
 echo "==> Getting the toolchain image..."
-IMAGE=$(sh hmod-build/toolchain-image.sh)
+IMAGE=$(sh vendor/hmod-build/toolchain-image.sh)
 
 echo "==> Running make inside the container..."
 docker run --rm -v "$PWD:/src" "$IMAGE" make CROSS_PREFIX=arm-linux-gnueabihf- "$@"
