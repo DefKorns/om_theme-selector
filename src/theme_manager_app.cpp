@@ -217,23 +217,29 @@ void ThemeManagerApp::ResumeUnderlyingUi() const
 
 bool ThemeManagerApp::ActivateCommand(Command & cmd)
 {
-    if(cmd.runInternal && options_.downloadsScreen && cmd.command.find("/get_all") == std::string::npos)
+    if(!cmd.runInternal)
+    {
+        system(cmd.command.c_str());
+        return true;
+    }
+    const ModernChrome chrome{ gearIcon_, appTitleText_, appVersionText_, creditText_ };
+    if(options_.downloadsScreen && cmd.command.find("/get_all") == std::string::npos)
     {
         const size_t index = static_cast<size_t>(&cmd - commands_.data());
         const std::string title = cmd.name.substr(0, cmd.name.find(" ["));
-        if(RunDownloadCommand(cmd.command, Translate(title), items_[index].author, *sdlContext_, *controller_, { gearIcon_, appTitleText_, appVersionText_, creditText_ }))
+        if(RunDownloadCommand(cmd.command, Translate(title), items_[index].author, *sdlContext_, *controller_, chrome))
             items_[index].isNew = false;
-        return false;
     }
-    if(cmd.runInternal)
+    else
     {
-        cmd.RunCommand(*sdlContext_, controller_.get(), { gearIcon_, appTitleText_, appVersionText_, creditText_ }, bg_);
+        cmd.RunCommand(*sdlContext_, controller_.get(), chrome, bg_);
         if(cmd.isToggle)
             cmd.UpdateState();
-        return false;
     }
-    system(cmd.command.c_str());
-    return true;
+    // the caller's frame was cleared before the command drew over it
+    SetDrawColor(renderer_, bg_);
+    SDL_RenderClear(renderer_);
+    return false;
 }
 
 void ThemeManagerApp::UpdateBButton(bool & tapped)
