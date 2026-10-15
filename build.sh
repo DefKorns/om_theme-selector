@@ -1,26 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# stops Git Bash from mangling the /src path below into a Windows path
-export MSYS_NO_PATHCONV=1
+[ -f vendor/hmod-build/docker-make.sh ] || git submodule update --init vendor/hmod-build
+[ -f vendor/OptionsMenu/src/framework/sdl_context.cpp ] || git submodule update --init --recursive vendor/OptionsMenu
 
-if [ ! -f vendor/hmod-build/toolchain-image.sh ]; then
-    echo "==> Fetching vendor/hmod-build submodule..."
-    git submodule update --init vendor/hmod-build
-fi
+sh vendor/hmod-build/docker-make.sh "$@"
 
-if [ ! -f vendor/OptionsMenu/src/framework/sdl_context.cpp ]; then
-    echo "==> Fetching vendor/OptionsMenu submodule..."
-    git submodule update --init --recursive vendor/OptionsMenu
-fi
-
-echo "==> Getting the toolchain image..."
-IMAGE=$(sh vendor/hmod-build/toolchain-image.sh)
-
-echo "==> Running make inside the container..."
-docker run --rm -v "$PWD:/src" "$IMAGE" make CROSS_PREFIX=arm-linux-gnueabihf- "$@"
-
-find vendor/OptionsMenu -name "*.o" -type f -delete
-
-echo "==> Build complete:"
 ls -la mod/etc/options_menu/lib/theme_manager out/*.hmod 2>/dev/null
