@@ -498,27 +498,9 @@ out/
 default-strings.lng
 default/
 temp/
-mod/etc/options_menu/themes/scripts/b8024_themeselector
-mod-/
-out--/
-mod/etc/options_menu/themes-old/
-modules/
-mod/etc/options_menu/themes/scripts/scripts/*
-mod/etc/options_menu/themes/scripts/80s_neon*
-mod/etc/options_menu/themes/scripts/ghost*
 
-mod/etc/options_menu/themes/scripts/images/
-mod/etc/options_menu/themes/scripts/commands/c0009_*
-mod/etc/options_menu/themes/scripts/commands/c0010_*
-mod/etc/options_menu/themes/settings/commandss/
-mod/etc/options_menu/images/retro_gaming.zip
-Makefile
-mod/etc/options_menu/themes/downloads/scripts/getAll
-retro_gaming.zip
-mod/etc/options_menu/b8025_fontfix
-mod/etc/options_menu/p8025_fontfix
-old.themescript.sh
-out---backup/
-BACKUP.gpg
-out---/
+mod/etc/options_menu/lib/
+.deps/
 
+# local-only files (console dumps, test hmods)
+local/

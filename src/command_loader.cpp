@@ -1,0 +1,310 @@
+/**
+  * Copyright (c) 2026 DefKorns (https://defkorns.github.io/LICENSE)
+  *
+  * This program is free software: you can redistribute it and/or modify
+  * it under the terms of the GNU General Public License as published by
+  * the Free Software Foundation, either version 3 of the License, or
+  * (at your option) any later version.
+  */
+
+#include "command_loader.h"
+
+#include <algorithm>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <fstream>
+#include <iostream>
+#include <list>
+#include <memory>
+#include <dirent.h>
+#include <sys/stat.h>
+
+namespace {
+
+void ReplaceAll(std::string & command, const std::string & oldString, const std::string & newString)
+{
+    size_t pos;
+    while((pos = command.find(oldString)) != std::string::npos)
+        command.replace(pos, oldString.size(), newString);
+}
+
+struct DirCloser { void operator()(DIR * dir) const { if(dir) closedir(dir); } };
+using DirHandle = std::unique_ptr<DIR, DirCloser>;
+
+struct PipeCloser { void operator()(FILE * pipe) const { if(pipe) pclose(pipe); } };
+using PipeHandle = std::unique_ptr<FILE, PipeCloser>;
+
+// my own convention, not OptionsMenu's Command format
+struct SelectorKeys { bool nesOnly = false; bool snesOnly = false; std::string author; std::string attentionPath; std::string attentionNotice; bool previewAlignTop = false; bool isNew = false; };
+
+SelectorKeys ReadSelectorKeys(const std::string & path)
+{
+    const std::string authorKey = "AUTHOR=";
+    const std::string attentionPathKey = "ATTENTION_PATH=";
+    const std::string attentionNoticeKey = "ATTENTION_NOTICE=";
+    SelectorKeys keys;
+    std::ifstream in(path);
+    std::string line;
+    while(std::getline(in, line))
+    {
+        if(!line.empty() && line.back() == '\r')
+            line.pop_back();
+        if(line == "NES_ONLY=TRUE")
+            keys.nesOnly = true;
+        else if(line == "SNES_ONLY=TRUE")
+            keys.snesOnly = true;
+        else if(line == "PREVIEW_ALIGN_TOP=TRUE")
+            keys.previewAlignTop = true;
+        else if(line == "NEW=TRUE")
+            keys.isNew = true;
+        else if(line.compare(0, authorKey.size(), authorKey) == 0)
+            keys.author = line.substr(authorKey.size());
+        else if(line.compare(0, attentionPathKey.size(), attentionPathKey) == 0)
+            keys.attentionPath = line.substr(attentionPathKey.size());
+        else if(line.compare(0, attentionNoticeKey.size(), attentionNoticeKey) == 0)
+            keys.attentionNotice = line.substr(attentionNoticeKey.size());
+    }
+    return keys;
+}
+
+// some filesystems leave d_type as DT_UNKNOWN
+unsigned char EntryType(const std::string & dirPath, const dirent * entry)
+{
+    if(entry->d_type != DT_UNKNOWN)
+        return entry->d_type;
+    struct stat st;
+    if(stat((dirPath + "/" + entry->d_name).c_str(), &st) != 0)
+        return DT_UNKNOWN;
+    return S_ISREG(st.st_mode) ? DT_REG : S_ISDIR(st.st_mode) ? DT_DIR : DT_UNKNOWN;
+}
+
+bool HasAnyFile(const std::string & dirPath)
+{
+    DirHandle dir(opendir(dirPath.c_str()));
+    if(!dir)
+        return false;
+    while(auto entry = readdir(dir.get()))
+    {
+        const std::string name = entry->d_name;
+        if(name == "." || name == "..")
+            continue;
+        const unsigned char type = EntryType(dirPath, entry);
+        if(type == DT_REG || (type == DT_DIR && HasAnyFile(dirPath + "/" + name)))
+            return true;
+    }
+    return false;
+}
+
+}
+
+// inherited by child screens, so only the first one forks a shell
+std::string ReadSftype()
+{
+    if(const char * env = std::getenv("OM_SFTYPE"))
+        return env;
+
+    std::string result;
+    PipeHandle pipe(popen("source /etc/preinit; script_init; echo $sftype", "r"));
+    if(pipe)
+    {
+        char buffer[32] = {0};
+        if(fgets(buffer, sizeof(buffer), pipe.get()))
+            result = buffer;
+    }
+    while(!result.empty() && (result.back() == '\n' || result.back() == '\r'))
+        result.pop_back();
+
+    setenv("OM_SFTYPE", result.c_str(), 1);
+    return result;
+}
+
+AppOptions ParseArgs(int argc, char * argv[], const std::string & optionsLocation)
+{
+    AppOptions options;
+    options.commandLocation = optionsLocation + "themes/commands/";
+    options.scriptLocation = optionsLocation + "themes/scripts/";
+
+    for(int i = 1; i < argc; ++i)
+    {
+        if(std::strcmp(argv[i], "--commandPath") == 0 && i+1 < argc)
+        {
+            options.commandLocation = argv[++i];
+            options.isRootScreen = false;
+        }
+        else if(std::strcmp(argv[i], "--scriptPath") == 0 && i+1 < argc)
+            options.scriptLocation = argv[++i];
+        else if(std::strcmp(argv[i], "--title") == 0 && i+1 < argc)
+            options.titleKey = argv[++i];
+        else if(std::strcmp(argv[i], "--layout") == 0 && i+1 < argc)
+            options.gridLayout = (std::string(argv[++i]) == "grid");
+        else if(std::strcmp(argv[i], "--folderThemes") == 0 && i+1 < argc)
+            options.folderThemesDir = argv[++i];
+        else if(std::strcmp(argv[i], "--mapping") == 0 && i+1 < argc)
+            options.folderThemesMapping = argv[++i];
+        else if(std::strcmp(argv[i], "--musicMapping") == 0 && i+1 < argc)
+            options.folderMusicMapping = argv[++i];
+        else if(std::strcmp(argv[i], "--folderChannel") == 0 && i+1 < argc)
+            options.folderMusicScreen = std::strcmp(argv[++i], "music") == 0;
+        else if(std::strcmp(argv[i], "--selectedMarker") == 0 && i+1 < argc)
+            options.selectedMarker = argv[++i];
+        else if(std::strcmp(argv[i], "--downloads") == 0)
+            options.downloadsScreen = true;
+        else if(std::strcmp(argv[i], "--themePath") == 0 && i+1 < argc)
+            options.themePath = argv[++i];
+    }
+    if(!options.commandLocation.empty() && options.commandLocation.back() != '/')
+        options.commandLocation += '/';
+    if(!options.scriptLocation.empty() && options.scriptLocation.back() != '/')
+        options.scriptLocation += '/';
+    return options;
+}
+
+std::string ReadBackStack(bool isRootScreen)
+{
+    const char * backStackEnv = std::getenv("OM_BACK_STACK");
+    return (isRootScreen && backStackEnv) ? backStackEnv : "";
+}
+
+// right after the "All" entry, otherwise in catalog order
+void MoveNewThemesUp(std::vector<Command> & commands, std::vector<ItemInfo> & items, const std::vector<bool> & allEntry)
+{
+    std::vector<size_t> order(commands.size());
+    for(size_t i = 0; i < order.size(); ++i)
+        order[i] = i;
+    auto Rank = [&](size_t i) { return !items[i].isThemeItem ? 0 : allEntry[i] ? 1 : items[i].isNew ? 2 : 3; };
+    std::stable_sort(order.begin(), order.end(), [&](size_t a, size_t b) { return Rank(a) < Rank(b); });
+
+    std::vector<Command> sortedCommands;
+    std::vector<ItemInfo> sortedItems;
+    for(size_t i : order)
+    {
+        sortedCommands.push_back(std::move(commands[i]));
+        sortedItems.push_back(std::move(items[i]));
+    }
+    commands = std::move(sortedCommands);
+    items = std::move(sortedItems);
+}
+
+bool LoadCommands(const std::string & commandLocation, const std::string & scriptLocation, const std::string & optionsLocation,
+                  const std::string & themePath, std::vector<Command> & commands, std::vector<ItemInfo> & items)
+{
+    std::vector<bool> allEntry;
+    DirHandle dir(opendir(commandLocation.c_str()));
+    if(!dir)
+    {
+        std::cerr << "Cannot open input folder.\n";
+        return false;
+    }
+
+    std::list<std::string> fileList;
+    while(auto entry = readdir(dir.get()))
+        if(entry->d_name[0] == 'c' && EntryType(commandLocation, entry) == DT_REG)
+            fileList.push_back(entry->d_name);
+    fileList.sort();
+
+    const bool usbReady = DirHandle(opendir("/media/hakchi/")) != nullptr;
+
+    std::ifstream in;
+    std::string sftype;
+    bool sftypeLoaded = false;
+    for(auto & file : fileList)
+    {
+        in.open(commandLocation + file);
+        if(!in.is_open())
+            continue;
+        Command c(in); // closes `in` itself once read
+
+        // only a leading c0000_0000 is the sentinel; later empty ones are blank slots
+        if(commands.empty() && c.command.empty())
+            continue;
+        if(c.usbOnly && !usbReady)
+            continue;
+        SelectorKeys keys = ReadSelectorKeys(commandLocation + file);
+        if(keys.nesOnly || keys.snesOnly)
+        {
+            if(!sftypeLoaded)
+            {
+                sftype = ReadSftype();
+                sftypeLoaded = true;
+            }
+            if((keys.nesOnly && sftype != "nes") || (keys.snesOnly && sftype == "nes"))
+                continue;
+        }
+        if(!c.command.empty())
+        {
+            ReplaceAll(c.command, "%options_path%", optionsLocation);
+            ReplaceAll(c.command, "%script_dir%", scriptLocation);
+            ReplaceAll(c.deleteCommand, "%options_path%", optionsLocation);
+            ReplaceAll(c.deleteCommand, "%script_dir%", scriptLocation);
+            if(c.isToggle)
+            {
+                ReplaceAll(c.stateCommand, "%options_path%", optionsLocation);
+                ReplaceAll(c.stateCommand, "%script_dir%", scriptLocation);
+                c.UpdateState();
+            }
+        }
+        commands.push_back(c);
+        const bool needsAttention = !keys.attentionPath.empty() && HasAnyFile(keys.attentionPath);
+        struct stat st;
+        const bool installed = !themePath.empty() && file.compare(0, 6, "c0010_") == 0 &&
+                               stat((themePath + "/" + file.substr(6)).c_str(), &st) == 0 && S_ISDIR(st.st_mode);
+        items.push_back({ file.compare(0, 6, "c0000_") != 0, std::move(keys.author), needsAttention, std::move(keys.attentionNotice), keys.previewAlignTop, keys.isNew, installed });
+        allEntry.push_back(file.size() > 4 && file.compare(file.size() - 4, 4, "_all") == 0);
+    }
+    MoveNewThemesUp(commands, items, allEntry);
+    return true;
+}
+
+void AppendBackNavigation(const std::string & optionsLocation, const AppOptions & options, const std::string & backStack,
+                           std::vector<Command> & commands, std::vector<ItemInfo> & items)
+{
+    std::string backCommand;
+    if(!backStack.empty())
+    {
+        std::vector<std::string> entries;
+        for(size_t start = 0; start < backStack.size();)
+        {
+            size_t sep = backStack.find(';', start);
+            if(sep == std::string::npos) sep = backStack.size();
+            entries.push_back(backStack.substr(start, sep-start));
+            start = sep+1;
+        }
+        std::string lastEntry = entries.back();
+        entries.pop_back();
+        std::string remainingStack;
+        for(size_t i = 0; i < entries.size(); ++i)
+        {
+            if(i) remainingStack += ";";
+            remainingStack += entries[i];
+        }
+
+        size_t c1 = lastEntry.find(','), c2 = lastEntry.find(',', c1+1);
+        std::string backPath = lastEntry.substr(0, c1);
+        std::string backScriptPath = lastEntry.substr(c1+1, c2-c1-1);
+        std::string backTitleKey = lastEntry.substr(c2+1);
+
+        backCommand = "rm -f " + std::string(FocusStatePrefix) + "*; usleep 50000 && OM_BACK_STACK=\"" + remainingStack + "\" " + optionsLocation + "options --commandPath " + backPath
+            + (backScriptPath.empty() ? "" : " --scriptPath " + backScriptPath)
+            + " --title \"" + backTitleKey + "\" &";
+    }
+    else if(!options.isRootScreen)
+    {
+        std::ifstream returnScript(options.scriptLocation + "om_return");
+        if(returnScript.good())
+            backCommand = "sh " + options.scriptLocation + "om_return &";
+        else
+            backCommand = "usleep 50000 && " + optionsLocation + "lib/theme_manager --title INSTALLED_THEMES --layout grid &";
+    }
+    else
+        return;
+
+    Command back;
+    back.name = "BACK";
+    back.runInternal = false;
+    back.restartUI = false;
+    back.previewImage = optionsLocation + "images/preview_placeholder.png";
+    back.command = backCommand;
+    commands.push_back(back);
+    items.push_back({ false, "", false, "", false });
+}

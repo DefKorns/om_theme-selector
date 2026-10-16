@@ -1,6 +1,6 @@
 #!/bin/sh
-# shellcheck disable=SC1090,SC2039,SC2086,SC2154
-#  Copyright (c) 2022 DefKorns (https://defkorns.github.io/LICENSE)
+# shellcheck disable=SC2086,SC2154,SC3046,SC3051
+#  Copyright (c) 2026 DefKorns (https://defkorns.github.io/LICENSE)
 #
 #  This program is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -15,10 +15,11 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
+# shellcheck source=/dev/null
 source $mountpoint/etc/options_menu/themes/scripts/om_vars
 script_init
 
-decodepng "$omLoaders/saving.png" >/dev/fb0
+"$om_scripts/gen_splash" /tmp/om_splash.png THEME_SAVING && decodepng /tmp/om_splash.png >/dev/fb0
 
 name="diy_theme"
 i=1
@@ -30,14 +31,14 @@ if [ -d "${theme_path}/${name}" ]; then
   name="${name}-${i}"
 fi
 
-cp -R "${diyThemePath}" "${theme_path}/${name}"
-remove "${diyThemePath}"
+cp -R "${diy_theme_path}" "${theme_path}/${name}"
+remove "${diy_theme_path}" "$diy_selection_path"
 
 clearList
-disable_cmds "Clear" "Preview" "DiY"
-enable_cmds "Refresh"
-remove "$omDummy"
+disableCmds "clear" "preview" "diy"
+enableCmds "refresh"
+remove "$om_dummy"
 
 loadThemeList -r
 
-$optionsMenu/options --commandPath $omModGenCmds/ --scriptPath $omModGenScripts --title "$omTitle" &
+$options_menu/lib/theme_manager --commandPath $om_mod_gen_cmds/ --scriptPath $om_mod_gen_scripts --title "$om_title" &
