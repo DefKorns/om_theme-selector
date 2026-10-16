@@ -70,6 +70,7 @@ INSTALLING_THEME=Установка
 NEW_BADGE=НОВЫЙ
 INSTALLATION_COMPLETE=Установка завершена.
 ALL_THEMES_INSTALLED=Все темы уже установлены, загружать нечего.
+DOWNLOAD_OVERWRITE_CONFIRM=Тема уже установлена. Скачать и перезаписать?
 NOT_ENOUGH_SPACE=Недостаточно свободного места, освободите место и повторите попытку.
 THEMES_FAILED=Эти темы не удалось установить:
 THEME_LIST_DOWNLOADING_LINE1=Загрузка Списка Тем

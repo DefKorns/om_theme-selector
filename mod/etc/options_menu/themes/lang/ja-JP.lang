@@ -70,6 +70,7 @@ INSTALLING_THEME=インストール中:
 NEW_BADGE=新着
 INSTALLATION_COMPLETE=インストールかんりょう
 ALL_THEMES_INSTALLED=すべてのThemeはインストールずみです. downloadするものはありません
+DOWNLOAD_OVERWRITE_CONFIRM=このThemeはインストールずみです. うわがきしますか?
 NOT_ENOUGH_SPACE=あきようりょうがたりません. ようりょうをあけて, もういちどおためしください.
 THEMES_FAILED=これらのThemeはインストールできませんでした:
 THEME_LIST_DOWNLOADING_LINE1=Themeいちらんを download しています

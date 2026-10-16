@@ -70,6 +70,7 @@ INSTALLING_THEME=Installing
 NEW_BADGE=NEW
 INSTALLATION_COMPLETE=Installation complete.
 ALL_THEMES_INSTALLED=All themes are already installed, nothing to download.
+DOWNLOAD_OVERWRITE_CONFIRM=Theme already installed. Download and overwrite it?
 NOT_ENOUGH_SPACE=Not enough free space, free some space and try again.
 THEMES_FAILED=These themes failed to install:
 THEME_LIST_DOWNLOADING_LINE1=Downloading Theme List

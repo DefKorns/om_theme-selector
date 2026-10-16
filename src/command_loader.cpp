@@ -150,6 +150,8 @@ AppOptions ParseArgs(int argc, char * argv[], const std::string & optionsLocatio
             options.selectedMarker = argv[++i];
         else if(std::strcmp(argv[i], "--downloads") == 0)
             options.downloadsScreen = true;
+        else if(std::strcmp(argv[i], "--themePath") == 0 && i+1 < argc)
+            options.themePath = argv[++i];
     }
     if(!options.commandLocation.empty() && options.commandLocation.back() != '/')
         options.commandLocation += '/';
@@ -185,7 +187,7 @@ void MoveNewThemesUp(std::vector<Command> & commands, std::vector<ItemInfo> & it
 }
 
 bool LoadCommands(const std::string & commandLocation, const std::string & scriptLocation, const std::string & optionsLocation,
-                   std::vector<Command> & commands, std::vector<ItemInfo> & items)
+                  const std::string & themePath, std::vector<Command> & commands, std::vector<ItemInfo> & items)
 {
     std::vector<bool> allEntry;
     DirHandle dir(opendir(commandLocation.c_str()));
@@ -244,7 +246,10 @@ bool LoadCommands(const std::string & commandLocation, const std::string & scrip
         }
         commands.push_back(c);
         const bool needsAttention = !keys.attentionPath.empty() && HasAnyFile(keys.attentionPath);
-        items.push_back({ file.compare(0, 6, "c0000_") != 0, std::move(keys.author), needsAttention, std::move(keys.attentionNotice), keys.previewAlignTop, keys.isNew });
+        struct stat st;
+        const bool installed = !themePath.empty() && file.compare(0, 6, "c0010_") == 0 &&
+                               stat((themePath + "/" + file.substr(6)).c_str(), &st) == 0 && S_ISDIR(st.st_mode);
+        items.push_back({ file.compare(0, 6, "c0000_") != 0, std::move(keys.author), needsAttention, std::move(keys.attentionNotice), keys.previewAlignTop, keys.isNew, installed });
         allEntry.push_back(file.size() > 4 && file.compare(file.size() - 4, 4, "_all") == 0);
     }
     MoveNewThemesUp(commands, items, allEntry);

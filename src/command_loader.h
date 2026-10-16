@@ -28,6 +28,7 @@ struct AppOptions
     bool folderMusicScreen = false;
     std::string selectedMarker;
     bool downloadsScreen = false;
+    std::string themePath;
 };
 
 // each screen remembers its last focused row here; cleared on leaving the theme manager
@@ -48,10 +49,11 @@ struct ItemInfo
     std::string attentionNotice;
     bool previewAlignTop;
     bool isNew;
+    bool installed;
 };
 
 bool LoadCommands(const std::string & commandLocation, const std::string & scriptLocation, const std::string & optionsLocation,
-                   std::vector<Command> & commands, std::vector<ItemInfo> & items);
+                   const std::string & themePath, std::vector<Command> & commands, std::vector<ItemInfo> & items);
 
 void AppendBackNavigation(const std::string & optionsLocation, const AppOptions & options, const std::string & backStack,
                            std::vector<Command> & commands, std::vector<ItemInfo> & items);

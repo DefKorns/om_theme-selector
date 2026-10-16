@@ -99,10 +99,9 @@ int ThemeManagerApp::DrawBadge(Badge & badge, int rightEdgeX)
     return badges_->Draw(badge, rightEdgeX, UiTheme::BadgeBandY);
 }
 
-bool ThemeManagerApp::ConfirmDelete(const ScreenSnapshot & background)
+bool ThemeManagerApp::Confirm(const ScreenSnapshot & background, const std::string & title)
 {
-    const std::string & confirmKey = commands_[currentCommandId_].deleteConfirmKey;
-    ConfirmDialog dialog(renderer_, *badges_, Translate(confirmKey.empty() ? "DELETE_CONFIRM_GENERIC" : confirmKey),
+    ConfirmDialog dialog(renderer_, *badges_, title,
                          badges_->Make("A", Translate("HINT_CONFIRM"), UiTheme::BadgeADark, UiTheme::BadgeA),
                          badges_->Make("B", Translate("HINT_CANCEL"), UiTheme::BadgeBDark, UiTheme::BadgeB));
     controller_->GetButtonStatus(B); // consume the still-held B from the triggering long-press
@@ -123,7 +122,13 @@ bool ThemeManagerApp::ConfirmDelete(const ScreenSnapshot & background)
         SetDrawColor(renderer_, bg_);
         sdlContext_->EndFrame();
     }
-    if(!confirmed)
+    return confirmed;
+}
+
+bool ThemeManagerApp::ConfirmDelete(const ScreenSnapshot & background)
+{
+    const std::string & confirmKey = commands_[currentCommandId_].deleteConfirmKey;
+    if(!Confirm(background, Translate(confirmKey.empty() ? "DELETE_CONFIRM_GENERIC" : confirmKey)))
         return false;
     system(commands_[currentCommandId_].deleteCommand.c_str());
     return true;
@@ -132,14 +137,21 @@ bool ThemeManagerApp::ConfirmDelete(const ScreenSnapshot & background)
 bool ThemeManagerApp::FinishFrame()
 {
     SetDrawColor(renderer_, bg_);
-    if(!deleteRequested_)
+    if(!deleteRequested_ && !overwriteRequested_)
     {
         sdlContext_->EndFrame();
         return false;
     }
-    deleteRequested_ = false;
     const ScreenSnapshot background(renderer_);
     sdlContext_->EndFrame();
+    if(overwriteRequested_)
+    {
+        overwriteRequested_ = false;
+        if(Confirm(background, Translate("DOWNLOAD_OVERWRITE_CONFIRM")))
+            RunDownload(commands_[currentCommandId_]);
+        return false;
+    }
+    deleteRequested_ = false;
     return ConfirmDelete(background);
 }
 
@@ -222,24 +234,36 @@ bool ThemeManagerApp::ActivateCommand(Command & cmd)
         system(cmd.command.c_str());
         return true;
     }
-    const ModernChrome chrome{ gearIcon_, appTitleText_, appVersionText_, creditText_ };
     if(options_.downloadsScreen && cmd.command.find("/get_all") == std::string::npos)
     {
-        const size_t index = static_cast<size_t>(&cmd - commands_.data());
-        const std::string title = cmd.name.substr(0, cmd.name.find(" ["));
-        if(RunDownloadCommand(cmd.command, Translate(title), items_[index].author, *sdlContext_, *controller_, chrome))
-            items_[index].isNew = false;
+        if(items_[static_cast<size_t>(&cmd - commands_.data())].installed)
+            overwriteRequested_ = true;
+        else
+            RunDownload(cmd);
+        return false;
     }
-    else
-    {
-        cmd.RunCommand(*sdlContext_, controller_.get(), chrome, bg_);
-        if(cmd.isToggle)
-            cmd.UpdateState();
-    }
+    const ModernChrome chrome{ gearIcon_, appTitleText_, appVersionText_, creditText_ };
+    cmd.RunCommand(*sdlContext_, controller_.get(), chrome, bg_);
+    if(cmd.isToggle)
+        cmd.UpdateState();
     // the caller's frame was cleared before the command drew over it
     SetDrawColor(renderer_, bg_);
     SDL_RenderClear(renderer_);
     return false;
+}
+
+void ThemeManagerApp::RunDownload(Command & cmd)
+{
+    const ModernChrome chrome{ gearIcon_, appTitleText_, appVersionText_, creditText_ };
+    const size_t index = static_cast<size_t>(&cmd - commands_.data());
+    const std::string title = cmd.name.substr(0, cmd.name.find(" ["));
+    if(RunDownloadCommand(cmd.command, Translate(title), items_[index].author, *sdlContext_, *controller_, chrome))
+    {
+        items_[index].isNew = false;
+        items_[index].installed = true;
+    }
+    SetDrawColor(renderer_, bg_);
+    SDL_RenderClear(renderer_);
 }
 
 void ThemeManagerApp::UpdateBButton(bool & tapped)

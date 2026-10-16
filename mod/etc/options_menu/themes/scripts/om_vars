@@ -435,7 +435,7 @@ showDownloads() {
   else
     disableCmds "clear_downloads"
   fi
-  $options_menu/lib/theme_manager --commandPath $om_mod_sub_cmds/ --scriptPath $om_mod_sub_scripts --title AVAILABLE_THEMES --downloads &
+  $options_menu/lib/theme_manager --commandPath $om_mod_sub_cmds/ --scriptPath $om_mod_sub_scripts --title AVAILABLE_THEMES --downloads --themePath "$theme_path" &
 }
 
 injectFile() {

@@ -33,7 +33,7 @@ int main(int argc, char * argv[])
 
     std::vector<Command> commands;
     std::vector<ItemInfo> items;
-    if(!LoadCommands(options.commandLocation, options.scriptLocation, optionsLocation, commands, items))
+    if(!LoadCommands(options.commandLocation, options.scriptLocation, optionsLocation, options.themePath, commands, items))
         return 1;
 
     AppendBackNavigation(optionsLocation, options, backStack, commands, items);

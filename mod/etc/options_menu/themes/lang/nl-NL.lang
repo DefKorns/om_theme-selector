@@ -70,6 +70,7 @@ INSTALLING_THEME=Installeren:
 NEW_BADGE=NIEUW
 INSTALLATION_COMPLETE=Installatie voltooid.
 ALL_THEMES_INSTALLED=Alle thema's zijn al geïnstalleerd, er is niets te downloaden.
+DOWNLOAD_OVERWRITE_CONFIRM=Thema al geïnstalleerd. Downloaden en overschrijven?
 NOT_ENOUGH_SPACE=Onvoldoende vrije ruimte, maak ruimte vrij en probeer het opnieuw.
 THEMES_FAILED=Deze thema's konden niet worden geïnstalleerd:
 THEME_LIST_DOWNLOADING_LINE1=Themalijst Wordt Gedownload

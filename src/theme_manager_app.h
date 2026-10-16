@@ -56,6 +56,7 @@ private:
     std::unique_ptr<BadgePainter> badges_;
     std::unique_ptr<StorageIndicator> storage_;
     bool deleteRequested_ = false;
+    bool overwriteRequested_ = false;
     Badge badgeA_;
     Badge badgeHold_;
     int badgeRowRightEdge_ = 0; // x just left of badge A - fixed once badgeA_ is built
@@ -67,6 +68,7 @@ private:
     void ComputePinnedAndThemeRanges();
 
     int DrawBadge(Badge & badge, int rightEdgeX);
+    bool Confirm(const ScreenSnapshot & background, const std::string & title);
     bool ConfirmDelete(const ScreenSnapshot & background);
     bool FinishFrame();
     void DrawChromeCommon();
@@ -75,6 +77,7 @@ private:
 
     FrameEvent PollFrameEvents();
     bool ActivateCommand(Command & cmd); // true if the caller's loop should break
+    void RunDownload(Command & cmd);
     void UpdateBButton(bool & tapped);
 
     void ResumeUnderlyingUi() const; // nothing else resumes it on a power-button exit
