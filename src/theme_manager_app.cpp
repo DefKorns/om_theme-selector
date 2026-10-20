@@ -257,7 +257,7 @@ void ThemeManagerApp::RunDownload(Command & cmd)
     const ModernChrome chrome{ gearIcon_, appTitleText_, appVersionText_, creditText_ };
     const size_t index = static_cast<size_t>(&cmd - commands_.data());
     const std::string title = cmd.name.substr(0, cmd.name.find(" ["));
-    if(RunDownloadCommand(cmd.command, Translate(title), items_[index].author, *sdlContext_, *controller_, chrome))
+    if(RunDownloadScreen(cmd.command, Translate("INSTALLING_THEME"), Translate(title), items_[index].author, *sdlContext_, *controller_, chrome))
     {
         items_[index].isNew = false;
         items_[index].installed = true;
