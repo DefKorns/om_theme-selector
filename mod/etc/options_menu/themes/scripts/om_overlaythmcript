@@ -93,5 +93,11 @@ themeSelector() {
 
   mountpoint -q "$original_theme" && umount "$original_theme"
   [ -d "$full_theme_path" ] && mount -t overlayfs -o lowerdir="$original_theme",upperdir="$full_theme_path" overlayfs "$original_theme"
-
+  local cl_functions="$rootfs/etc/options_menu/console_language/scripts/cl_functions"
+  if [ -f "$cl_functions" ]; then
+    source "$cl_functions"
+    cl_init
+    cl_umount_lang
+    cl_mount_lang
+  fi
 }
