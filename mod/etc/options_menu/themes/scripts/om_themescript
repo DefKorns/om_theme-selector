@@ -256,9 +256,9 @@ themeSelector() {
   local cl_functions="$rootfs/etc/options_menu/console_language/scripts/cl_functions"
   if [ -f "$cl_functions" ]; then
     source "$cl_functions"
-    cl_init
-    cl_umount_lang
-    cl_mount_lang
+    clInit
+    clUmountLang
+    clMountLang
   fi
   [ -z "$mountpoint" ] && echo "$applied" >"$applied_file"
 }
