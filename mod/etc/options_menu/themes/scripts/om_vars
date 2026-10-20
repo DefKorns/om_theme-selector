@@ -483,12 +483,9 @@ loadThemeList() {
 }
 
 themeGenerator() {
-  echo "Packaging: DefKorns"
-  translate CATEGORY_UI_MOD
-  echo ""
   translate CHECKING_THEME_FILES
-  echo ""
   theme_name="${1}"
+  [ -d "${theme_path}" ] || mkdir -p "${theme_path}"
   cd "${theme_path}" || exit
   if [ ! -x "$om_scripts/downloader" ]; then
     translate DOWNLOADER_MISSING_LINE1
