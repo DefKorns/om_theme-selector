@@ -87,6 +87,7 @@ om_audiorandomizer="$mod_state_path/om_audiorandomizer"
 om_advmusichack="$mod_state_path/om_advmusichack"
 om_firstrun="$om_mod/om_firstrun"
 om_theme_count="$mod_state_path/om_theme_count"
+om_active_theme="$mod_state_path/om_active_theme"
 
 #### SEPARATORS
 om_dummy="$om_mod_commands/c0000_0000"
@@ -306,13 +307,15 @@ themeCountChanged() {
   new_count="$(find "$theme_path" -mindepth 1 -maxdepth 1 -type d | wc -l)"
   old_count="$(cat "$om_theme_count" 2> /dev/null)"
   echo "$new_count" > "$om_theme_count"
-  [ "$new_count" != "$old_count" ]
+  [ "$new_count" != "$old_count" ] || [ "$(cat "$thm_chk" 2> /dev/null)" != "$(cat "$om_active_theme" 2> /dev/null)" ]
 }
 
 themeLoader() {
   loadingSplash
   removeRegionalTheme
   clearList
+  active_theme="$(cat "$thm_chk" 2> /dev/null)"
+  echo "$active_theme" > "$om_active_theme"
   cd "$theme_path" && find . -mindepth 1 -maxdepth 1 -type d | sed 's#^\./##' | sort -u | while IFS= read -r thm; do
     full_path="$theme_path/$thm"
     resource_path="$full_path/resources"
@@ -385,8 +388,12 @@ sleep 1
     echo "COMMAND_NAME=$cmd_name
 COMMAND_TYPE=EXTERNAL
 COMMAND_STR=sh $thm_script.sh
-PREVIEW_IMAGE=$preview_image
-DELETE_STR=rm -rf \"$full_path\" \"$full_path.png\" \"$cmd_list\" \"$thm_script.sh\" && usleep 50000 && sh %options_path%scripts/om_theme_selector &" > "$cmd_list"
+PREVIEW_IMAGE=$preview_image" > "$cmd_list"
+    if [ "${active_theme##*/}" = "$thm" ]; then
+      echo "DELETE_BLOCKED_KEY=THEME_DELETE_IN_USE" >> "$cmd_list"
+    else
+      echo "DELETE_STR=rm -rf \"$full_path\" \"$full_path.png\" \"$cmd_list\" \"$thm_script.sh\" && usleep 50000 && sh %options_path%scripts/om_theme_selector &" >> "$cmd_list"
+    fi
   done
 }
 

@@ -127,6 +127,25 @@ bool ThemeManagerApp::Confirm(const ScreenSnapshot & background, const std::stri
 
 bool ThemeManagerApp::ConfirmDelete(const ScreenSnapshot & background)
 {
+    const std::string & blockedKey = commands_[currentCommandId_].deleteBlockedKey;
+    if(!blockedKey.empty())
+    {
+        MessageDialog dialog(renderer_, *badges_, Translate(blockedKey),
+                             badges_->Make("B", Translate("HINT_BACK"), UiTheme::BadgeBDark, UiTheme::BadgeB));
+        controller_->GetButtonStatus(B);
+        for(;;)
+        {
+            controller_->Update();
+            if(controller_->GetButtonStatus(B) || controller_->GetButtonStatus(A) || controller_->GetButtonStatus(START))
+                break;
+            sdlContext_->StartFrame();
+            background.Draw();
+            dialog.Draw();
+            SetDrawColor(renderer_, bg_);
+            sdlContext_->EndFrame();
+        }
+        return false;
+    }
     const std::string & confirmKey = commands_[currentCommandId_].deleteConfirmKey;
     if(!Confirm(background, Translate(confirmKey.empty() ? "DELETE_CONFIRM_GENERIC" : confirmKey)))
         return false;
@@ -275,7 +294,7 @@ void ThemeManagerApp::UpdateBButton(bool & tapped)
         if(!bHoldFired_ && controller_->HeldMillis(B) >= BHoldThresholdMs)
         {
             bHoldFired_ = true;
-            if(!commands_[currentCommandId_].deleteCommand.empty())
+            if(!commands_[currentCommandId_].deleteCommand.empty() || !commands_[currentCommandId_].deleteBlockedKey.empty())
                 deleteRequested_ = true;
         }
     }
@@ -283,6 +302,7 @@ void ThemeManagerApp::UpdateBButton(bool & tapped)
     {
         tapped = bWasHeld_ && !bHoldFired_;
         bHoldFired_ = false;
+        controller_->HeldMillis(B); // releases the hold timer, or the next press starts already past the threshold
     }
     bWasHeld_ = bHeldNow;
 }
@@ -606,7 +626,7 @@ int ThemeManagerApp::RunGridLayout()
             int rightEdge = badgeRowRightEdge_;
             if(pinnedStartIndex_ < (int)commands_.size())
                 rightEdge = DrawBadge(badgeB, rightEdge);
-            if(!commands_[currentCommandId_].deleteCommand.empty())
+            if(!commands_[currentCommandId_].deleteCommand.empty() || !commands_[currentCommandId_].deleteBlockedKey.empty())
                 DrawBadge(badgeHold_, rightEdge);
         }
 
@@ -866,7 +886,7 @@ int ThemeManagerApp::RunListLayout()
             int rightEdge = badgeRowRightEdge_;
             if(pinnedStartIndex_ < (int)commands_.size())
                 rightEdge = DrawBadge(badgeB, rightEdge);
-            if(!commands_[currentCommandId_].deleteCommand.empty())
+            if(!commands_[currentCommandId_].deleteCommand.empty() || !commands_[currentCommandId_].deleteBlockedKey.empty())
                 DrawBadge(badgeHold_, rightEdge);
         }
 

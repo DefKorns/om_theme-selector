@@ -255,6 +255,7 @@ themeSelector() {
 
   local cl_functions="$rootfs/etc/options_menu/console_language/scripts/cl_functions"
   if [ -f "$cl_functions" ]; then
+    # shellcheck source=/dev/null
     source "$cl_functions"
     clInit
     clUmountLang
