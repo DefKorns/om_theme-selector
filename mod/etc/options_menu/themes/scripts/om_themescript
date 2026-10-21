@@ -110,7 +110,8 @@ fontBindFix() {
   [ ! -f "${font_path}/title.fnt.backup" ] && cp "${font_path}/title.fnt" "${font_path}/title.fnt.backup"
   for font_name in title s m l small medium large; do
     if [ "$1" == "backup" ] && [ -f "$full_theme_path/fonts/${font_name}.fnt" ]; then
-      cp "$full_theme_path/fonts/${font_name}.fnt" "${font_path}/${font_name}.fnt"
+      cmp -s "$full_theme_path/fonts/${font_name}.fnt" "${font_path}/${font_name}.fnt" ||
+        cp "$full_theme_path/fonts/${font_name}.fnt" "${font_path}/${font_name}.fnt"
     elif [ "$font_name" == "title" ]; then
       cp "${font_path}/title.fnt.backup" "${font_path}/title.fnt"
     else
@@ -240,8 +241,6 @@ themeSelector() {
   local full_theme_path="$themes_path/$selected_theme"
   local font_path="$mountpoint/media/$modname/fonts"
   [ ! -d "$font_path" ] && font_path="$rootfs/usr/share/fonts"
-  local title_font="$font_path/title.fnt"
-  local theme_font_path="$full_theme_path/fonts"
 
   local silent_wav="$rootfs/usr/share/themes/bgm_boot.wav"
   local music_path="$mountpoint/media/$modname/music_menu"
@@ -296,8 +295,8 @@ themeSelector() {
     return 0
   fi
 
-  if [ -d "$theme_font_path" ]; then
-    cmp -s "$title_font" "$theme_font_path/title.fnt" || fontBindFix "backup"
+  if [ -d "$full_theme_path/fonts" ]; then
+    fontBindFix "backup"
   else
     fontBindFix "restore"
   fi

@@ -90,7 +90,8 @@ fontBindFix() {
   [ ! -f "${font_path}/title.fnt.backup" ] && cp "${font_path}/title.fnt" "${font_path}/title.fnt.backup"
   for font_name in title s m l small medium large; do
     if [ "$1" == "backup" ] && [ -f "$full_theme_path/fonts/${font_name}.fnt" ]; then
-      cp "$full_theme_path/fonts/${font_name}.fnt" "${font_path}/${font_name}.fnt"
+      cmp -s "$full_theme_path/fonts/${font_name}.fnt" "${font_path}/${font_name}.fnt" ||
+        cp "$full_theme_path/fonts/${font_name}.fnt" "${font_path}/${font_name}.fnt"
     elif [ "$font_name" == "title" ]; then
       cp "${font_path}/title.fnt.backup" "${font_path}/title.fnt"
     else
@@ -146,8 +147,6 @@ themeSelector() {
 
   local font_path="$mountpoint/media/$modname/fonts"
   [ ! -d "$font_path" ] && font_path="$rootfs/usr/share/fonts"
-  local title_font="$font_path/title.fnt"
-  local title_theme_font="$full_theme_path/fonts/title.fnt"
 
   # an install leaves the placeholder until a theme is applied from the menu
   [ "$selected_theme" = "CHANGEME" ] && return 0
@@ -158,9 +157,7 @@ themeSelector() {
   fi
 
   if [ -d "$full_theme_path/fonts" ]; then
-    if [ "$(cksum "$title_font" | awk '{ print $1; }')" != "$(cksum "$title_theme_font" | awk '{ print $1; }')" ]; then
-      fontBindFix "backup"
-    fi
+    fontBindFix "backup"
   else
     fontBindFix "restore"
   fi
