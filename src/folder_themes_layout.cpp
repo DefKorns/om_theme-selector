@@ -11,6 +11,7 @@
 #include "folder_theme_model.h"
 #include "texture_utils.h"
 #include "framework/draw_helpers.h"
+#include "framework/list_screen.h"
 #include "framework/powerwatch.h"
 #include "localization.h"
 
@@ -28,7 +29,6 @@ namespace
     const int TreeIndent = 26;
     const int RowGlyphSize = 16;
     const int ValueMaxW = 250;
-    const int ChevronGap = 10;
 
     const SDL_Rect PickerRect{ DetailX - 16, UiTheme::HeaderDividerY + 14, DetailW + 32, UiTheme::FooterDividerY - UiTheme::HeaderDividerY - 28 };
     const int PickerHeaderH = 44;
@@ -71,8 +71,7 @@ int ThemeManagerApp::RunFolderThemesLayout()
     const int displayRows = std::max(1, (UiTheme::FooterDividerY - UiTheme::ListBottomMargin - UiTheme::RowFirstY) / rowPitch);
     const int pickerRows = (PickerRect.h - PickerHeaderH - 8) / PickerRowH;
 
-    Texture chevron(optionsLocation_ + UiTheme::AssetChevronRight, renderer_);
-    SetColorMod(chevron.texture.get(), UiTheme::Accent);
+    ValuePicker valuePicker(optionsLocation_, renderer_);
 
     auto MakeText = [&](const std::string & text, int size, Color color) { return Texture(text, size, renderer_, 0, 0, false, ToAbgr(color), true); };
     auto MakeBadge = [&](const char * letter, const std::string & labelKey, Color rim, Color fill)
@@ -84,7 +83,7 @@ int ThemeManagerApp::RunFolderThemesLayout()
     Badge backBadge = MakeBadge("B", "BACK", UiTheme::BadgeBDark, UiTheme::BadgeB);
     Badge cancelBadge = MakeBadge("B", "FOLDER_THEME_CANCEL", UiTheme::BadgeBDark, UiTheme::BadgeB);
     Badge autoBadge = MakeBadge("Y", "AUTOMATIC", UiTheme::BadgeYDark, UiTheme::BadgeY);
-    Texture changeLabel = MakeText(Translate("FOLDER_THEME_CHANGE"), 16, UiTheme::Text);
+    valuePicker.SetHintLabel(Translate("FOLDER_THEME_CHANGE"));
 
     auto OptionName = [&](Channel ch, const ResolvedOption & resolved)
     {
@@ -160,7 +159,7 @@ int ThemeManagerApp::RunFolderThemesLayout()
             std::string value = own >= 0 ? model.Options(channel)[own].title : AutomaticLabel(i);
             valueTex[i] = MakeText(TruncateToWidth(value, RowGlyphSize, ValueMaxW), RowGlyphSize, own >= 0 ? UiTheme::Text : UiTheme::TextDim);
             int textX = UiTheme::RowTextX + folders[i].depth * TreeIndent + (folders[i].depth > 0 ? 14 : 0);
-            int nameAvail = ListRight - 16 - valueTex[i].rect.w - 2 * (chevron.rect.w + ChevronGap) - 16 - textX;
+            int nameAvail = ListRight - 16 - valuePicker.Width(valueTex[i]) - 16 - textX;
             nameTex[i] = MakeText(TruncateToWidth(folders[i].name, RowGlyphSize, nameAvail), RowGlyphSize, UiTheme::Text);
             nameTex[i].rect.x = textX;
         }
@@ -335,17 +334,7 @@ int ThemeManagerApp::RunFolderThemesLayout()
                     rightEdge = DrawBadge(backBadge, rightEdge);
                 if(hasY)
                     rightEdge = DrawBadge(autoBadge, rightEdge);
-                int midY = UiTheme::BadgeBandY + UiTheme::BadgeOuterSize / 2;
-                int groupW = 2 * chevron.rect.w + 4 + UiTheme::BadgeLabelGap + changeLabel.rect.w;
-                int x = rightEdge - groupW;
-                chevron.rect.x = x;
-                chevron.rect.y = midY - chevron.rect.h / 2;
-                chevron.Draw(renderer_, SDL_FLIP_HORIZONTAL);
-                chevron.rect.x = x + chevron.rect.w + 4;
-                chevron.Draw(renderer_);
-                changeLabel.rect.x = chevron.rect.x + chevron.rect.w + UiTheme::BadgeLabelGap;
-                changeLabel.rect.y = midY - changeLabel.rect.h / 2;
-                changeLabel.Draw(renderer_);
+                valuePicker.DrawHint(rightEdge, UiTheme::BadgeBandY);
             }
         }
 
@@ -373,22 +362,7 @@ int ThemeManagerApp::RunFolderThemesLayout()
             nameTex[i].rect.y = midY - nameTex[i].rect.h / 2;
             nameTex[i].Draw(renderer_);
 
-            int valueRight = ListRight - 16;
-            if(isSelected && !picking)
-            {
-                chevron.rect.x = valueRight - chevron.rect.w;
-                chevron.rect.y = midY - chevron.rect.h / 2;
-                chevron.Draw(renderer_);
-                valueRight = chevron.rect.x - ChevronGap;
-            }
-            valueTex[i].rect.x = valueRight - valueTex[i].rect.w;
-            valueTex[i].rect.y = midY - valueTex[i].rect.h / 2;
-            valueTex[i].Draw(renderer_);
-            if(isSelected && !picking)
-            {
-                chevron.rect.x = valueTex[i].rect.x - ChevronGap - chevron.rect.w;
-                chevron.Draw(renderer_, SDL_FLIP_HORIZONTAL);
-            }
+            valuePicker.DrawValue(valueTex[i], ListRight - 16, midY, isSelected && !picking);
         }
         scrollArrows_->Draw(topRow > 0, topRow + displayRows < folderCount);
 
