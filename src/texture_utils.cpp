@@ -8,7 +8,6 @@
   */
 
 #include "texture_utils.h"
-#include "framework/utf8.h"
 
 #include <algorithm>
 
@@ -39,31 +38,4 @@ void FitCentered(Texture & tex, int boxX, int boxY, int boxW, int boxH, int padd
 void FitCover(Texture & tex, int boxX, int boxY, int boxW, int boxH, int padding)
 {
     FitScaled(tex, boxX, boxY, boxW, boxH, padding, true);
-}
-
-int TextWidth(const std::string & text, int glyphSize)
-{
-    return CanRenderWithTTF(text, glyphSize) ? MeasureTTFWidth(text, glyphSize) : Utf8Length(text) * glyphSize;
-}
-
-std::string TruncateToWidth(const std::string & text, int glyphSize, int available)
-{
-    std::string label = text;
-    if(CanRenderWithTTF(label, glyphSize))
-    {
-        if(MeasureTTFWidth(label, glyphSize) > available)
-        {
-            int n = Utf8Length(label);
-            while(n > 0 && MeasureTTFWidth(TruncateUtf8(label, n) + "...", glyphSize) > available)
-                --n;
-            label = TruncateUtf8(label, n) + "...";
-        }
-    }
-    else
-    {
-        int maxChars = available / glyphSize;
-        if(TruncateUtf8(label, maxChars).size() != label.size())
-            label = TruncateUtf8(label, std::max(0, maxChars - 3)) + "...";
-    }
-    return label;
 }
