@@ -1066,16 +1066,20 @@ listFolders() {
     END { walk("000", 0) }'
 }
 
+# sets title; the size suffix ("Name [12Mb]") is dropped
 themeTitle() {
-  title="$(sed -n 's/^NAME=//p' "$theme_path/$1/info" 2>/dev/null | sed 's/ \[[^]]*\]$//')"
-  echo "${title:-$1}"
+  title=""
+  [ -f "$theme_path/$1/info" ] && IFS= read -r title < "$theme_path/$1/info"
+  title="${title#NAME=}"
+  title="${title% [[]*]}"
+  [ -z "$title" ] && title="$1"
 }
 
+# sets preview
 themePreview() {
   preview="$thm_preview/$1.png"
   [ ! -f "$preview" ] && preview="$theme_path/$1.png"
   [ ! -f "$preview" ] && preview="$options_menu/images/preview_default.png"
-  echo "$preview"
 }
 
 globalTheme() {
@@ -1093,12 +1097,15 @@ folderThemesMenu() {
     printf 'home\t%s\t0\n' "$(translate HOME_FOLDER)"
     listFolders
   } >"$data_dir/folders.list"
+  music_themes="$(find "$theme_path" -mindepth 2 -type f -name "*.wav" | sed "s#^$theme_path/##; s#/.*##" | sort -u)"
   find "$theme_path" -mindepth 1 -maxdepth 1 -type d | sed 's#^.*/##' | sort | while IFS= read -r thm; do
     has_music=0
-    find "$theme_path/$thm" -type f -name "*.wav" | read -r _ && has_music=1
+    echo "$music_themes" | grep -qxF "$thm" && has_music=1
     needs_overlay=0
     [ -f "$theme_path/$thm/needs_overlay" ] && needs_overlay=1
-    printf '%s\t%s\t%s\t%s\t%s\n' "$thm" "$(themeTitle "$thm")" "$(themePreview "$thm")" "$has_music" "$needs_overlay"
+    themeTitle "$thm"
+    themePreview "$thm"
+    printf '%s\t%s\t%s\t%s\t%s\n' "$thm" "$title" "$preview" "$has_music" "$needs_overlay"
   done >"$data_dir/themes.list"
   find "$music_path" -maxdepth 1 -type f -iname "*.wav" 2>/dev/null | sed 's#^.*/##' | sort | while IFS= read -r wav; do
     printf '%s\t%s\n' "$wav" "$(echo "${wav%.*}" | sed 's/_/ /g')"
