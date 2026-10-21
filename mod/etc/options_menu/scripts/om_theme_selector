@@ -32,7 +32,7 @@ if [ "$1" = "reload" ] || [ -f "$om_firstrun" ] ; then
   remove "$om_firstrun"
   modCleanUp
 elif themeCountChanged; then
-  loadThemeList -r
+  loadThemeList -s
 else
   loadThemeList
 fi
