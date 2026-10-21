@@ -35,6 +35,77 @@ unbindThemeMounts() {
   [ -n "$mount_points" ] && echo "$mount_points" | xargs umount
 }
 
+# corrected copies of theme files, at their path under the UI; they sit on top of the theme.
+# /var is already a tmpfs at boot, where /tmp is still the NAND
+theme_fixes="$mountpoint/var/theme_fixes"
+
+themeFixesUnbind() {
+  awk -v dir="$original_theme/" 'index($5, dir) == 1 && $4 ~ /\/theme_fixes\// { print $5 }' /proc/self/mountinfo |
+    sed -n '1!G;h;$p' | while IFS= read -r fix; do
+    umount "$fix"
+  done
+  rm -rf "$theme_fixes"
+}
+
+# the USA/EUR firmwares name the s/m/l fonts *.font and the Super Famicom *.fnt;
+# the UI exits when dependencies.json lists one that isn't there
+themeDepsFix() {
+  local deps="$original_theme/dependencies.json"
+  local fixed="$theme_fixes/dependencies.json"
+  local font other
+  [ -f "$deps" ] || return 0
+  mkdir -p "$theme_fixes"
+  cp -f "$deps" "$fixed"
+  for font in $(grep -o '"/fonts/[^"]*"' "$deps" | tr -d '"'); do
+    [ -e "$original_theme/resources$font" ] && continue
+    case "$font" in
+    *.font) other="${font%.font}.fnt" ;;
+    *.fnt) other="${font%.fnt}.font" ;;
+    *) continue ;;
+    esac
+    [ -e "$original_theme/resources$other" ] && sed -i "s#\"$font\"#\"$other\"#" "$fixed"
+  done
+  if cmp -s "$deps" "$fixed"; then
+    rm -f "$fixed"
+  else
+    mount -o bind "$fixed" "$deps"
+  fi
+}
+
+# byte offset of the first occurrence of $2 in file $1
+byteOffset() {
+  local want
+  want="$(printf '%s' "$2" | od -An -tx1 | tr -d ' \n')"
+  od -An -v -tx1 "$1" | tr -s ' ' '\n' | grep . | awk -v want="$want" -v n="${#2}" '
+    { s = s $1; if (length(s) > 2 * n) s = substr(s, 3); if (s == want) { print NR - n; exit } }'
+}
+
+# each firmware reads only its own palette (env_<region>.lua loads colors_<region>); a theme made
+# for another region gets its colors_*.lua renamed in place (same length) and bound over this one
+themeColorsFix() {
+  local env_dir="$original_theme/resources/scripts/env"
+  local theme_env="$full_theme_path/resources/scripts/env"
+  local region src fixed offset
+  for region in jpn usa eur; do
+    [ -f "$env_dir/env_$region.lua" ] && break
+  done
+  [ -f "$env_dir/env_$region.lua" ] && [ ! -f "$theme_env/colors_$region.lua" ] || return 0
+  for src in usa eur jpn; do
+    [ -f "$theme_env/colors_$src.lua" ] && break
+  done
+  [ -f "$theme_env/colors_$src.lua" ] || return 0
+  fixed="$theme_fixes/resources/scripts/env/colors_$region.lua"
+  mkdir -p "${fixed%/*}"
+  cp -f "$theme_env/colors_$src.lua" "$fixed"
+  offset="$(byteOffset "$fixed" "colors_$src")"
+  if [ -z "$offset" ]; then
+    rm -f "$fixed"
+    return 0
+  fi
+  printf 'colors_%s' "$region" | dd of="$fixed" bs=1 seek="$offset" conv=notrunc 2>/dev/null
+  mount -o bind "$fixed" "$env_dir/colors_$region.lua"
+}
+
 fontBindFix() {
   [ ! -f "${font_path}/title.fnt.backup" ] && cp "${font_path}/title.fnt" "${font_path}/title.fnt.backup"
   for font_name in title s m l small medium large; do
@@ -228,6 +299,7 @@ themeSelector() {
     fontBindFix "restore"
   fi
 
+  themeFixesUnbind
   unbindThemeMounts
   while grep -q " $original_theme overlayfs " /proc/mounts; do
     umount -l "$original_theme" || break
@@ -252,6 +324,8 @@ themeSelector() {
     done
   fi
   [ -n "$assigned_music" ] && musicHackBind "$music_path/$assigned_music" "$music_path/$assigned_music" "$original_theme_audio"
+  themeDepsFix
+  themeColorsFix
 
   local cl_functions="$rootfs/etc/options_menu/console_language/scripts/cl_functions"
   if [ -f "$cl_functions" ]; then
