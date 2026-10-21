@@ -1,5 +1,5 @@
 #!/bin/sh
-# shellcheck disable=SC2034,SC2086,SC2154,SC3010,SC3046,SC3051
+# shellcheck disable=SC2034,SC2086,SC2154,SC3010,SC3043,SC3046,SC3051
 # # shellcheck disable=SC2039
 #  Copyright (c) 2026 DefKorns (https://defkorns.github.io/LICENSE)
 #
@@ -259,12 +259,6 @@ clearList() {
   remove "$om_mod_spacer"
 }
 
-clearDownloads() {
-  find "$om_mod_sub" -type f \
-    -not -name 'c000[0-8]_*' -not -name 'c999[0-9]_*' \
-    -not -name 'om_*' -not -name '_*' -not -path "$thm_preview/*" -exec rm {} +
-}
-
 toggleThemeCmds() {
   if [ -z "$(ls -A "$theme_path")" ]; then
     disableCmds "theme_generator" "clear"
@@ -302,12 +296,104 @@ enableMenuOptions() {
   fi
 }
 
-# avoids re-running the full themeLoader scan (~1.7s) when nothing changed
+# nothing installed, removed or applied since the menu was last built
 themeCountChanged() {
   new_count="$(find "$theme_path" -mindepth 1 -maxdepth 1 -type d | wc -l)"
   old_count="$(cat "$om_theme_count" 2> /dev/null)"
   echo "$new_count" > "$om_theme_count"
   [ "$new_count" != "$old_count" ] || [ "$(cat "$thm_chk" 2> /dev/null)" != "$(cat "$om_active_theme" 2> /dev/null)" ]
+}
+
+themeVars() {
+  thm="$1"
+  full_path="$theme_path/$thm"
+  cmd_list="$om_mod_commands/c0001_$thm"
+  thm_script="$om_mod_scripts/$thm"
+}
+
+# the applied theme can't be deleted
+themeDeleteLine() {
+  if [ "${active_theme##*/}" = "$thm" ]; then
+    echo "DELETE_BLOCKED_KEY=THEME_DELETE_IN_USE" >> "$cmd_list"
+  else
+    echo "DELETE_STR=rm -rf \"$full_path\" \"$full_path.png\" \"$cmd_list\" \"$thm_script.sh\" && usleep 50000 && sh %options_path%scripts/om_theme_selector &" >> "$cmd_list"
+  fi
+}
+
+# the command and apply script of one installed theme
+themeCommand() {
+  themeVars "$1"
+  resource_path="$full_path/resources"
+  sprite_path="$resource_path/sprites"
+  script_path="$resource_path/scripts"
+  tmp_thm_script="$om_theme_script"
+
+  if [ ! -f "$full_path/info" ]; then
+    thm_title="$(echo "$thm" | sed -e 's/_/ /g' | awk '{for(i=1;i<=NF;i++){$i=toupper(substr($i,1,1))substr($i,2)}}1')"
+    size="$(du -sh "$full_path" | cut -f1)"
+    echo "NAME=$thm_title [${size}b]" > "$full_path/info"
+  fi
+
+  if [ ! -f "$full_path/needs_overlay" ] && [ ! -f "$full_path/bind_ok" ]; then
+    if themeIsBindable "$full_path"; then
+      touch "$full_path/bind_ok"
+    else
+      touch "$full_path/needs_overlay"
+    fi
+  fi
+
+  if [ ! -s "$full_path.png" ]; then
+    if [ -d "$usb_path" ]; then
+      copier "$thm_preview/$thm.png" "$full_path.png"
+    else
+      link "$thm_preview/$thm.png" "$full_path.png"
+    fi
+  fi
+
+  create "$om_mod_spacer"
+
+  if [ "$sftype" = "nes" ]; then
+    sprite_src="hvc"
+    sprite_dest="nes"
+
+    if [ "$sfregion" = "jpn" ]; then
+      sprite_src="nes"
+      sprite_dest="hvc"
+    fi
+
+    for ext in "png" "json"; do
+      rename "${sprite_path}/${sprite_src}.${ext}" "${sprite_path}/${sprite_dest}.${ext}"
+    done
+    rename "${script_path}/colors_${sprite_src}.lua" "${script_path}/colors_${sprite_dest}.lua"
+  fi
+
+  copy "$om_mod_license" "$thm_script.sh"
+
+  if [ ! -d "$has_folders" ]; then
+    tmp_thm_script="$om_overlay_theme_script"
+  fi
+
+  echo "sed '1,2d' \"$tmp_thm_script\" >\"$b_file\"
+[ ! -f \"$p_file\" ] && echo themeSelector >\"$p_file\"
+sed -i \"s/selected_theme=\\\"CHANGEME\\\"/selected_theme=\\\"${thm}\\\"/g;\" \"$b_file\"
+" >> "$thm_script.sh"
+
+  echo "omSplash THEME_APPLYING_LINE1 THEME_APPLYING_LINE2
+sleep 1
+  hakchi reboot" >> "$thm_script.sh"
+
+  preview_image="$thm_preview/$thm.png"
+  [ ! -f "$preview_image" ] && preview_image="$theme_path/$thm.png"
+  [ ! -f "$preview_image" ] && [ -z "${thm##diy_theme*}" ] && preview_image="$options_menu/images/preview_diy.png"
+  [ ! -f "$preview_image" ] && preview_image="$options_menu/images/preview_default.png"
+
+  IFS= read -r cmd_name < "$full_path/info"
+  cmd_name="${cmd_name#NAME=}"
+  echo "COMMAND_NAME=$cmd_name
+COMMAND_TYPE=EXTERNAL
+COMMAND_STR=sh $thm_script.sh
+PREVIEW_IMAGE=$preview_image" > "$cmd_list"
+  themeDeleteLine
 }
 
 themeLoader() {
@@ -317,82 +403,34 @@ themeLoader() {
   active_theme="$(cat "$thm_chk" 2> /dev/null)"
   echo "$active_theme" > "$om_active_theme"
   cd "$theme_path" && find . -mindepth 1 -maxdepth 1 -type d | sed 's#^\./##' | sort -u | while IFS= read -r thm; do
-    full_path="$theme_path/$thm"
-    resource_path="$full_path/resources"
-    sprite_path="$resource_path/sprites"
-    script_path="$resource_path/scripts"
-    cmd_list="$om_mod_commands/c0001_$thm"
-    thm_script="$om_mod_scripts/$thm"
-    tmp_thm_script="$om_theme_script"
+    themeCommand "$thm"
+  done
+}
 
-    if [ ! -f "$full_path/info" ]; then
-      thm_title="$(echo "$thm" | sed -e 's/_/ /g' | awk '{for(i=1;i<=NF;i++){$i=toupper(substr($i,1,1))substr($i,2)}}1')"
-      size="$(du -sh "$full_path" | cut -f1)"
-      echo "NAME=$thm_title [${size}b]" > "$full_path/info"
-    fi
-
-    if [ ! -f "$full_path/needs_overlay" ] && [ ! -f "$full_path/bind_ok" ]; then
-      if themeIsBindable "$full_path"; then
-        touch "$full_path/bind_ok"
-      else
-        touch "$full_path/needs_overlay"
-      fi
-    fi
-
-    if [ ! -s "$full_path.png" ]; then
-      if [ -d "$usb_path" ]; then
-        copier "$thm_preview/$thm.png" "$full_path.png"
-      else
-        link "$thm_preview/$thm.png" "$full_path.png"
-      fi
-    fi
-
-    create "$om_mod_spacer"
-
-    if [ "$sftype" = "nes" ]; then
-      sprite_src="hvc"
-      sprite_dest="nes"
-
-      if [ "$sfregion" = "jpn" ]; then
-        sprite_src="nes"
-        sprite_dest="hvc"
-      fi
-
-      for ext in "png" "json"; do
-        rename "${sprite_path}/${sprite_src}.${ext}" "${sprite_path}/${sprite_dest}.${ext}"
-      done
-      rename "${script_path}/colors_${sprite_src}.lua" "${script_path}/colors_${sprite_dest}.lua"
-    fi
-
-    copy "$om_mod_license" "$thm_script.sh"
-
-    if [ ! -d "$has_folders" ]; then
-      tmp_thm_script="$om_overlay_theme_script"
-    fi
-
-    echo "sed '1,2d' \"$tmp_thm_script\" >\"$b_file\"
-  [ ! -f \"$p_file\" ] && echo themeSelector >\"$p_file\"
-sed -i \"s/selected_theme=\\\"CHANGEME\\\"/selected_theme=\\\"${thm}\\\"/g;\" \"$b_file\"
-" >> "$thm_script.sh"
-
-    echo "omSplash THEME_APPLYING_LINE1 THEME_APPLYING_LINE2
-sleep 1
-    hakchi reboot" >> "$thm_script.sh"
-
-    preview_image="$thm_preview/$thm.png"
-    [ ! -f "$preview_image" ] && preview_image="$theme_path/$thm.png"
-    [ ! -f "$preview_image" ] && [ -z "${thm##diy_theme*}" ] && preview_image="$options_menu/images/preview_diy.png"
-    [ ! -f "$preview_image" ] && preview_image="$options_menu/images/preview_default.png"
-
-    cmd_name="$(sed -r 's/NAME=//g' < "$full_path/info")"
-    echo "COMMAND_NAME=$cmd_name
-COMMAND_TYPE=EXTERNAL
-COMMAND_STR=sh $thm_script.sh
-PREVIEW_IMAGE=$preview_image" > "$cmd_list"
-    if [ "${active_theme##*/}" = "$thm" ]; then
-      echo "DELETE_BLOCKED_KEY=THEME_DELETE_IN_USE" >> "$cmd_list"
-    else
-      echo "DELETE_STR=rm -rf \"$full_path\" \"$full_path.png\" \"$cmd_list\" \"$thm_script.sh\" && usleep 50000 && sh %options_path%scripts/om_theme_selector &" >> "$cmd_list"
+# only what changed: new themes, removed ones, and the two whose delete line follows the applied theme
+themeSync() {
+  local previous
+  local missing
+  removeRegionalTheme
+  missing="$(cd "$theme_path" && for thm in */; do thm="${thm%/}"; [ -d "$thm" ] && [ ! -f "$om_mod_commands/c0001_$thm" ] && echo "$thm"; done)"
+  [ "$(echo "$missing" | grep -c .)" -ge 5 ] && loadingSplash
+  previous="$(cat "$om_active_theme" 2> /dev/null)"
+  active_theme="$(cat "$thm_chk" 2> /dev/null)"
+  echo "$active_theme" > "$om_active_theme"
+  for cmd_list in "$om_mod_commands"/c0001_*; do
+    [ -f "$cmd_list" ] || continue
+    thm="${cmd_list##*/c0001_}"
+    [ -d "$theme_path/$thm" ] || remove "$cmd_list" "$om_mod_scripts/$thm.sh"
+  done
+  echo "$missing" | while IFS= read -r thm; do
+    [ -n "$thm" ] && themeCommand "$thm"
+  done
+  [ "$previous" = "$active_theme" ] && return
+  for thm in "${previous##*/}" "${active_theme##*/}"; do
+    if [ -n "$thm" ] && [ -f "$om_mod_commands/c0001_$thm" ]; then
+      themeVars "$thm"
+      sed -i '/^DELETE_/d' "$cmd_list"
+      themeDeleteLine
     fi
   done
 }
@@ -403,6 +441,8 @@ removeRegionalTheme() {
     "$om_mod_commands/c0001_$sfregion" "$om_mod_scripts/$sfregion.sh"
 }
 
+#### DOWNLOADS
+# the catalog unpacks a command per theme (c0010_*) and its get_<theme> script into downloads/
 getThemeList() {
   omSplash THEME_LIST_DOWNLOADING_LINE1 THEME_LIST_DOWNLOADING_LINE2
   cd "$om_mod_sub" || exit
@@ -414,23 +454,29 @@ getThemeList() {
   fi
   if [ ! -e "${catalog_type}${list_name}" ]; then
     clearDownloads
-    omDownload "${catalog_type}${list_name}" "$themes_github_url/${catalog_type}${list_name}"       "$catalogs_classicmods_url/${catalog_type}${list_name}"
+    omDownload "${catalog_type}${list_name}" "$themes_github_url/${catalog_type}${list_name}" "$catalogs_classicmods_url/${catalog_type}${list_name}"
   fi
   tar -xzf "${catalog_type}${list_name}" || return
-  # shellcheck disable=SC2035
-  rm -f *.tar.gz
+  rm -f ./*.tar.gz
   markNewThemes
   removeRegionalTheme
   touch "$sub_dummy"
-  usleep 1000
+}
+
+clearDownloads() {
+  find "$om_mod_sub" -type f \
+    -not -name 'c000[0-8]_*' -not -name 'c999[0-9]_*' \
+    -not -name 'om_*' -not -name '_*' -not -path "$thm_preview/*" -exec rm {} +
 }
 
 # no seen list yet: a first run marks nothing as new
 markNewThemes() {
+  local catalog_themes
+  local theme
   catalog_themes="$(find "$om_mod_sub_cmds" -name 'c0010_*' | sed 's#.*/c0010_##' | grep -vx all)"
   if [ -f "$seen_themes" ]; then
-    for t in $catalog_themes; do
-      grep -qx "$t" "$seen_themes" || printf '\nNEW=TRUE\n' >> "$om_mod_sub_cmds/c0010_$t"
+    for theme in $catalog_themes; do
+      grep -qx "$theme" "$seen_themes" || printf '\nNEW=TRUE\n' >> "$om_mod_sub_cmds/c0010_$theme"
     done
   fi
   { cat "$seen_themes" 2> /dev/null; echo "$catalog_themes"; } | sort -u > "$seen_themes.tmp" && mv "$seen_themes.tmp" "$seen_themes"
@@ -482,9 +528,10 @@ fontFix' /bin/chmenu >/tmp/chmenu.new && cat /tmp/chmenu.new >/bin/chmenu
 loadThemeList() {
   if [ -n "$(ls -A "$theme_path")" ]; then
     create "$om_dummy"
-    if [ "$1" = "-r" ]; then
-      themeLoader
-    fi
+    case "$1" in
+    -r) themeLoader ;;
+    -s) themeSync ;;
+    esac
   else
     remove "$om_mod_spacer"
     clearList
@@ -1019,16 +1066,20 @@ listFolders() {
     END { walk("000", 0) }'
 }
 
+# sets title; the size suffix ("Name [12Mb]") is dropped
 themeTitle() {
-  title="$(sed -n 's/^NAME=//p' "$theme_path/$1/info" 2>/dev/null | sed 's/ \[[^]]*\]$//')"
-  echo "${title:-$1}"
+  title=""
+  [ -f "$theme_path/$1/info" ] && IFS= read -r title < "$theme_path/$1/info"
+  title="${title#NAME=}"
+  title="${title% [[]*]}"
+  [ -z "$title" ] && title="$1"
 }
 
+# sets preview
 themePreview() {
   preview="$thm_preview/$1.png"
   [ ! -f "$preview" ] && preview="$theme_path/$1.png"
   [ ! -f "$preview" ] && preview="$options_menu/images/preview_default.png"
-  echo "$preview"
 }
 
 globalTheme() {
@@ -1046,12 +1097,15 @@ folderThemesMenu() {
     printf 'home\t%s\t0\n' "$(translate HOME_FOLDER)"
     listFolders
   } >"$data_dir/folders.list"
+  music_themes="$(find "$theme_path" -mindepth 2 -type f -name "*.wav" | sed "s#^$theme_path/##; s#/.*##" | sort -u)"
   find "$theme_path" -mindepth 1 -maxdepth 1 -type d | sed 's#^.*/##' | sort | while IFS= read -r thm; do
     has_music=0
-    find "$theme_path/$thm" -type f -name "*.wav" | read -r _ && has_music=1
+    echo "$music_themes" | grep -qxF "$thm" && has_music=1
     needs_overlay=0
     [ -f "$theme_path/$thm/needs_overlay" ] && needs_overlay=1
-    printf '%s\t%s\t%s\t%s\t%s\n' "$thm" "$(themeTitle "$thm")" "$(themePreview "$thm")" "$has_music" "$needs_overlay"
+    themeTitle "$thm"
+    themePreview "$thm"
+    printf '%s\t%s\t%s\t%s\t%s\n' "$thm" "$title" "$preview" "$has_music" "$needs_overlay"
   done >"$data_dir/themes.list"
   find "$music_path" -maxdepth 1 -type f -iname "*.wav" 2>/dev/null | sed 's#^.*/##' | sort | while IFS= read -r wav; do
     printf '%s\t%s\n' "$wav" "$(echo "${wav%.*}" | sed 's/_/ /g')"
