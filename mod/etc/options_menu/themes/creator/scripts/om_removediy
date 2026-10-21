@@ -20,6 +20,15 @@
 source $mountpoint/etc/options_menu/themes/scripts/om_vars
 script_init
 
+# a previewed DIY stays bound over the UI until the theme is mounted again
+diy_bound=""
+awk '$4 ~ /^\/diy_theme\// { found = 1 } END { exit !found }' /proc/self/mountinfo && diy_bound=1
+
 diyThemeRemover
 
-$options_menu/lib/theme_manager --commandPath $om_mod_gen_cmds/ --scriptPath $om_mod_gen_scripts --title "$om_title" &
+if [ -n "$diy_bound" ]; then
+  "$om_scripts/gen_splash" /tmp/om_splash.png THEME_RESTORING && decodepng /tmp/om_splash.png >/dev/fb0
+  menuReloadLater
+else
+  $options_menu/lib/theme_manager --commandPath $om_mod_gen_cmds/ --scriptPath $om_mod_gen_scripts --title "$om_title" &
+fi
