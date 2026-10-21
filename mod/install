@@ -95,6 +95,14 @@ if [ -f "$theme_cfg" ] && ! grep -q "^ActiveThemeBorder=" "$theme_cfg"; then
   echo "ActiveThemeBorder=76,175,110" >> "$theme_cfg"
 fi
 
+# the previous version's uninstall strips the chmenu hook; at boot the rootfs write shows at once
+if ! grep -q "# themeselector fix" "$rootfs/bin/chmenu"; then
+  # shellcheck disable=SC1004
+  sed -i '/^overmount_games.*/a  # themeselector fix \
+themeSelector \
+fontFix' "$rootfs/bin/chmenu"
+fi
+
 sed '1,2d' "$om_themes_scripts/om_themescript" >"$b_file"
 [ ! -f "$p_file" ] && echo themeSelector >"$p_file"
 

@@ -226,7 +226,7 @@ migrateThemes() {
   for item in "$nand_theme_path"/*; do
     name="${item##*/}"
     if [ "$name" != "$sfregion" ] && [ ! -e "$theme_path/$name" ]; then
-      "$om_scripts/gen_splash" /tmp/om_splash.png THEME_MOVING_LINE1 THEME_MOVING_LINE2 && decodepng /tmp/om_splash.png > /dev/fb0
+      omSplash THEME_MOVING_LINE1 THEME_MOVING_LINE2
       break
     fi
   done
@@ -375,7 +375,7 @@ themeLoader() {
 sed -i \"s/selected_theme=\\\"CHANGEME\\\"/selected_theme=\\\"${thm}\\\"/g;\" \"$b_file\"
 " >> "$thm_script.sh"
 
-    echo "\"\$om_scripts/gen_splash\" /tmp/om_splash.png THEME_APPLYING_LINE1 THEME_APPLYING_LINE2 && decodepng /tmp/om_splash.png > /dev/fb0
+    echo "omSplash THEME_APPLYING_LINE1 THEME_APPLYING_LINE2
 sleep 1
     hakchi reboot" >> "$thm_script.sh"
 
@@ -404,11 +404,11 @@ removeRegionalTheme() {
 }
 
 getThemeList() {
-  "$om_scripts/gen_splash" /tmp/om_splash.png THEME_LIST_DOWNLOADING_LINE1 THEME_LIST_DOWNLOADING_LINE2 && decodepng /tmp/om_splash.png > /dev/fb0
+  omSplash THEME_LIST_DOWNLOADING_LINE1 THEME_LIST_DOWNLOADING_LINE2
   cd "$om_mod_sub" || exit
 
   if [ ! -x "$om_scripts/downloader" ]; then
-    "$om_scripts/gen_splash" /tmp/om_splash.png DOWNLOADER_MISSING_LINE1 DOWNLOADER_MISSING_LINE2 && decodepng /tmp/om_splash.png > /dev/fb0
+    omSplash DOWNLOADER_MISSING_LINE1 DOWNLOADER_MISSING_LINE2
     sleep 3
     return 1
   fi
@@ -459,10 +459,12 @@ injectFile() {
 
     if ! grep -q "# themeselector" "$injected_file"; then
       if [ "$scrpt" = "chmenu" ]; then
+        # sed -i gives the rootfs file a new inode, which /bin keeps hiding until a reboot
         # shellcheck disable=SC1004
-        sed -i '/^overmount_games.*/a  # themeselector fix \
+        sed '/^overmount_games.*/a  # themeselector fix \
 themeSelector \
-fontFix' "/var/lib/hakchi/rootfs/bin/chmenu"
+fontFix' /bin/chmenu >/tmp/chmenu.new && cat /tmp/chmenu.new >/bin/chmenu
+        rm -f /tmp/chmenu.new
       fi
 
       if [ "$scrpt" = "fontfix" ]; then
@@ -532,14 +534,7 @@ themeGenerator() {
   return "$rc"
 }
 
-freeSpaceKb() {
-  df -Pk "$1" | awk 'NR==2 {print $4}'
-}
 
-unpackedSizeKb() {
-  size_kb=$(( $(tail -c4 "$1" | od -An -tu4) / 1024 + 1 ))
-  echo $(( size_kb + size_kb / 10 ))
-}
 
 urlEncodeName() {
   printf '%s' "$1" | sed 's/%/%25/g; s/#/%23/g; s/?/%3F/g'
@@ -608,20 +603,10 @@ abortDownload() {
 }
 
 unpackTheme() {
-  tarball="${system_name}.$1.tar.gz"
   unpacking="$1"
-  if [ "$(freeSpaceKb .)" -lt "$(unpackedSizeKb "$tarball")" ]; then
-    dl_rc=3
-    gzip -t "$tarball" 2> /dev/null || dl_rc=1
-  elif ! tar -xzf "$tarball"; then
-    dl_rc=1
-    [ "$(freeSpaceKb .)" -lt 1024 ] && dl_rc=3
-  else
-    remove "$tarball"
-    unpacking=""
-    return 0
-  fi
-  rm -rf "$tarball" "$1" "$1.png"
+  omUnpack "${system_name}.$1.tar.gz" .
+  dl_rc=$?
+  [ "$dl_rc" = 0 ] || rm -rf "$1" "$1.png"
   unpacking=""
   return "$dl_rc"
 }
@@ -849,7 +834,7 @@ diySpriteSelector() {
 }
 
 diyThemeChecker() {
-  [ "$1" = "loader" ] && { "$om_scripts/gen_splash" /tmp/om_splash.png THEME_LOADING_ASSETS && decodepng /tmp/om_splash.png > /dev/fb0; }
+  [ "$1" = "loader" ] && omSplash THEME_LOADING_ASSETS
 
   [ ! -d "$diy_theme_path" ] && mkdir -p "$diy_theme_path"
 
