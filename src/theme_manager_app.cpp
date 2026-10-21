@@ -68,12 +68,12 @@ ThemeManagerApp::ThemeManagerApp(std::string optionsLocation, AppOptions options
     scrollArrows_ = std::make_unique<ScrollArrows>(optionsLocation_, renderer_);
     titleText_ = Texture(Translate(options_.titleKey), UiTheme::SectionTitleFontSize, renderer_, UiTheme::SectionTitleX, UiTheme::SectionTitleY, false, ToAbgr(UiTheme::Text), true);
 
-    badgeA_ = Badge{ Texture("A", 16, renderer_, 0, 0, false, ToAbgr(UiTheme::BadgeLetter), true), Texture(Translate("HINT_SELECT"), 16, renderer_, 0, 0, false, ToAbgr(UiTheme::Text), true), UiTheme::BadgeADark, UiTheme::BadgeA };
-    badgeRowRightEdge_ = UiTheme::BadgeClusterRightX - UiTheme::BadgeOuterSize - UiTheme::BadgeLabelGap - badgeA_.label.rect.w - UiTheme::BadgeGroupGap;
     badges_ = std::make_unique<BadgePainter>(optionsLocation_, renderer_);
+    badgeA_ = badges_->Make("A", Translate("HINT_SELECT"), UiTheme::BadgeADark, UiTheme::BadgeA);
+    badgeRowRightEdge_ = UiTheme::BadgeClusterRightX - UiTheme::BadgeOuterSize - UiTheme::BadgeLabelGap - badgeA_.label.rect.w - UiTheme::BadgeGroupGap;
     if(options_.downloadsScreen)
         storage_ = std::make_unique<StorageIndicator>(renderer_);
-    badgeHold_ = Badge{ Texture("B", 16, renderer_, 0, 0, false, ToAbgr(UiTheme::BadgeLetter), true), Texture(Translate("HINT_DELETE"), 16, renderer_, 0, 0, false, ToAbgr(UiTheme::Text), true), UiTheme::BadgeXDark, UiTheme::BadgeX };
+    badgeHold_ = badges_->Make("B", Translate("HINT_DELETE"), UiTheme::BadgeXDark, UiTheme::BadgeX);
 
     ComputePinnedAndThemeRanges();
 }
@@ -167,6 +167,16 @@ bool ThemeManagerApp::FinishFrame()
     }
     deleteRequested_ = false;
     return ConfirmDelete(background);
+}
+
+void ThemeManagerApp::DrawFooterBadges(Badge & badgeB)
+{
+    int rightEdge = badgeRowRightEdge_;
+    if(pinnedStartIndex_ < (int)commands_.size())
+        rightEdge = DrawBadge(badgeB, rightEdge);
+    if(!commands_[currentCommandId_].deleteCommand.empty() || !commands_[currentCommandId_].deleteBlockedKey.empty())
+        rightEdge = DrawBadge(badgeHold_, rightEdge);
+    DrawFooterDivider(renderer_, rightEdge);
 }
 
 void ThemeManagerApp::DrawChromeCommon()
@@ -401,9 +411,7 @@ int ThemeManagerApp::RunGridLayout()
     gridScrollDown.rect.y = GridBottom - 24 - gridScrollDown.rect.h;
 
     // B runs Back/Exit directly - it's a footer badge, not a chip
-    Badge badgeB{ Texture("B", 16, renderer_, 0, 0, false, ToAbgr(UiTheme::BadgeLetter), true),
-                  Texture(pinnedStartIndex_ < (int)commands_.size() ? Translate(commands_[pinnedStartIndex_].name) : "", 16, renderer_, 0, 0, false, ToAbgr(UiTheme::Text), true),
-                  UiTheme::BadgeBDark, UiTheme::BadgeB };
+    Badge badgeB = badges_->Make("B", pinnedStartIndex_ < (int)commands_.size() ? Translate(commands_[pinnedStartIndex_].name) : "", UiTheme::BadgeBDark, UiTheme::BadgeB);
 
     std::vector<Texture> chipIcons(commands_.size());
     std::vector<Texture> chipLabels(commands_.size());
@@ -610,13 +618,7 @@ int ThemeManagerApp::RunGridLayout()
 
         DrawChromeCommon();
         DrawSectionTitle();
-        {
-            int rightEdge = badgeRowRightEdge_;
-            if(pinnedStartIndex_ < (int)commands_.size())
-                rightEdge = DrawBadge(badgeB, rightEdge);
-            if(!commands_[currentCommandId_].deleteCommand.empty() || !commands_[currentCommandId_].deleteBlockedKey.empty())
-                DrawBadge(badgeHold_, rightEdge);
-        }
+        DrawFooterBadges(badgeB);
 
         {
             int x = GridLeft;
@@ -773,9 +775,7 @@ int ThemeManagerApp::RunListLayout()
     SDL_Rect selectedRowRect{ UiTheme::ListX, UiTheme::RowFirstY - 2, UiTheme::ListContentRightX - UiTheme::ListX, 0 };
 
     // B runs Back/Exit, as in the grid
-    Badge badgeB{ Texture("B", 16, renderer_, 0, 0, false, ToAbgr(UiTheme::BadgeLetter), true),
-                  Texture(pinnedStartIndex_ < (int)commands_.size() ? Translate(commands_[pinnedStartIndex_].name) : "", 16, renderer_, 0, 0, false, ToAbgr(UiTheme::Text), true),
-                  UiTheme::BadgeBDark, UiTheme::BadgeB };
+    Badge badgeB = badges_->Make("B", pinnedStartIndex_ < (int)commands_.size() ? Translate(commands_[pinnedStartIndex_].name) : "", UiTheme::BadgeBDark, UiTheme::BadgeB);
 
     const int RowGlyphSize = 16;
     const int RowTextGapPx = 16;
@@ -867,13 +867,7 @@ int ThemeManagerApp::RunListLayout()
     {
         DrawChromeCommon();
         DrawSectionTitle();
-        {
-            int rightEdge = badgeRowRightEdge_;
-            if(pinnedStartIndex_ < (int)commands_.size())
-                rightEdge = DrawBadge(badgeB, rightEdge);
-            if(!commands_[currentCommandId_].deleteCommand.empty() || !commands_[currentCommandId_].deleteBlockedKey.empty())
-                DrawBadge(badgeHold_, rightEdge);
-        }
+        DrawFooterBadges(badgeB);
 
         DrawRoundedFillRect(renderer_, selectedRowRect, UiTheme::SelectedRowBg, UiTheme::BoxRadius);
         DrawStrokeRect(renderer_, selectedRowRect, UiTheme::Accent, 2, UiTheme::BoxRadius);
