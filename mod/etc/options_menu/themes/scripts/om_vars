@@ -908,6 +908,24 @@ diyHomePreviews() {
   done
 }
 
+# the menu holds /dev/fb0, so remote-exec reloads the current folder (chmenu's hook remounts
+# the theme); chmenu refuses the folder already shown unless its state says otherwise
+menuReloadLater() {
+  menu_state="/var/saves/$modname/menu"
+  current_menu="000"
+  [ -f "$menu_state" ] && current_menu="$(cat "$menu_state")"
+  cat >/var/exec.flag.tmp <<EOF
+source /etc/preinit
+script_init
+uistop
+uiresume
+echo reload >"$menu_state"
+/bin/chmenu "$current_menu" || /bin/chmenu 000 || { echo "$current_menu" >"$menu_state"; uistart; }
+/etc/init.d/S8103OptionsMenu restart
+EOF
+  mv /var/exec.flag.tmp /var/exec.flag
+}
+
 diyThemeRemover() {
   disableCmds "diy" "del_diy" "preview"
   remove "$diy_selection_path"
