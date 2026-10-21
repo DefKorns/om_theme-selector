@@ -31,9 +31,17 @@ fi
 source "$b_file"
 themeSelector
 
-echo "usleep 20000; \
-uistart; \
-chmenu 001; \
-usleep 200000; \
-chmenu 000; \
-/etc/init.d/S8103OptionsMenu restart " >/var/exec.flag
+# chmenu refuses the folder already shown unless its state says otherwise
+menu_state="/var/saves/$modname/menu"
+current_menu="000"
+[ -f "$menu_state" ] && current_menu="$(cat "$menu_state")"
+cat >/var/exec.flag.tmp <<EOF
+source /etc/preinit
+script_init
+uistop
+uiresume
+echo reload >"$menu_state"
+/bin/chmenu "$current_menu" || /bin/chmenu 000 || { echo "$current_menu" >"$menu_state"; uistart; }
+/etc/init.d/S8103OptionsMenu restart
+EOF
+mv /var/exec.flag.tmp /var/exec.flag
