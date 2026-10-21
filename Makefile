@@ -22,7 +22,7 @@ endif
 CXXFLAGS = -std=c++14 -Os -Ivendor/OptionsMenu/src $(SDL_CFLAGS) -DMOD_VERSION=\"v$(MOD_VER)\"
 LDLIBS = $(SDL_LIBS)
 VENDOR_SRC_DIR = vendor/OptionsMenu/src
-SOURCES = src/main.cpp src/single_instance_lock.cpp src/command_loader.cpp src/texture_utils.cpp src/theme_manager_app.cpp src/folder_theme_model.cpp src/folder_themes_layout.cpp src/storage_indicator.cpp $(VENDOR_SRC_DIR)/command.cpp $(VENDOR_SRC_DIR)/download_screen.cpp $(VENDOR_SRC_DIR)/localization.cpp $(FRAMEWORK_DIR)/sdl_context.cpp $(FRAMEWORK_DIR)/texture.cpp $(FRAMEWORK_DIR)/controller.cpp $(FRAMEWORK_DIR)/powerwatch.cpp $(FRAMEWORK_DIR)/draw_helpers.cpp $(FRAMEWORK_DIR)/utf8.cpp $(FRAMEWORK_DIR)/font8x8_lookup.cpp $(FRAMEWORK_DIR)/uitheme.cpp $(FRAMEWORK_DIR)/badge.cpp $(FRAMEWORK_DIR)/dialog.cpp
+SOURCES = src/main.cpp src/single_instance_lock.cpp src/command_loader.cpp src/texture_utils.cpp src/theme_manager_app.cpp src/folder_theme_model.cpp src/folder_themes_layout.cpp src/storage_indicator.cpp $(VENDOR_SRC_DIR)/command.cpp $(VENDOR_SRC_DIR)/download_screen.cpp $(VENDOR_SRC_DIR)/localization.cpp $(FRAMEWORK_DIR)/sdl_context.cpp $(FRAMEWORK_DIR)/texture.cpp $(FRAMEWORK_DIR)/controller.cpp $(FRAMEWORK_DIR)/powerwatch.cpp $(FRAMEWORK_DIR)/draw_helpers.cpp $(FRAMEWORK_DIR)/utf8.cpp $(FRAMEWORK_DIR)/font8x8_lookup.cpp $(FRAMEWORK_DIR)/uitheme.cpp $(FRAMEWORK_DIR)/badge.cpp $(FRAMEWORK_DIR)/dialog.cpp $(FRAMEWORK_DIR)/list_screen.cpp $(FRAMEWORK_DIR)/text_layout.cpp
 OBJECTS = $(SOURCES:.cpp=.o)
 
 all: hmod

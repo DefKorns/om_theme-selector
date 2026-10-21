@@ -16,6 +16,7 @@
 #include "framework/badge.h"
 #include "framework/controller.h"
 #include "framework/dialog.h"
+#include "framework/list_screen.h"
 #include "framework/sdl_helper.h"
 
 #include <memory>
@@ -51,8 +52,10 @@ private:
     int currentCommandId_ = 0;
     Color bg_{};
 
-    Texture gearIcon_, switchOn_, switchOff_;
-    Texture appTitleText_, appVersionText_, titleText_, creditText_;
+    Texture switchOn_, switchOff_;
+    Texture titleText_;
+    std::unique_ptr<ScreenChrome> chrome_;
+    std::unique_ptr<ScrollArrows> scrollArrows_;
     std::unique_ptr<BadgePainter> badges_;
     std::unique_ptr<StorageIndicator> storage_;
     bool deleteRequested_ = false;

@@ -73,9 +73,6 @@ int ThemeManagerApp::RunFolderThemesLayout()
 
     Texture chevron(optionsLocation_ + UiTheme::AssetChevronRight, renderer_);
     SetColorMod(chevron.texture.get(), UiTheme::Accent);
-    Texture scrollUp = MakeScrollArrow(UiTheme::ScrollX, UiTheme::ScrollUpY);
-    Texture scrollDown = scrollUp;
-    scrollDown.rect.y = UiTheme::ScrollDownY;
 
     auto MakeText = [&](const std::string & text, int size, Color color) { return Texture(text, size, renderer_, 0, 0, false, ToAbgr(color), true); };
     auto MakeBadge = [&](const char * letter, const std::string & labelKey, Color rim, Color fill)
@@ -393,10 +390,7 @@ int ThemeManagerApp::RunFolderThemesLayout()
                 chevron.Draw(renderer_, SDL_FLIP_HORIZONTAL);
             }
         }
-        if(topRow > 0)
-            scrollUp.Draw(renderer_);
-        if(topRow + displayRows < folderCount)
-            scrollDown.Draw(renderer_, SDL_FLIP_VERTICAL);
+        scrollArrows_->Draw(topRow > 0, topRow + displayRows < folderCount);
 
         {
             SDL_Rect previewBox{ DetailX, UiTheme::RowFirstY, DetailW, PreviewH };

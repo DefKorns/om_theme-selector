@@ -61,16 +61,12 @@ ThemeManagerApp::ThemeManagerApp(std::string optionsLocation, AppOptions options
     bg_ = UiTheme::Bg;
     SetDrawColor(renderer_, bg_);
 
-    gearIcon_ = Texture(optionsLocation_ + UiTheme::AssetGear, renderer_, UiTheme::GearX, UiTheme::GearY);
     switchOn_ = Texture(optionsLocation_ + UiTheme::AssetSwitchOn, renderer_);
     switchOff_ = Texture(optionsLocation_ + UiTheme::AssetSwitchOff, renderer_);
 
-    appTitleText_ = Texture("Theme Manager", UiTheme::TitleFontSize, renderer_, UiTheme::TitleX, UiTheme::TitleY, false, ToAbgr(UiTheme::Text), true);
-    appTitleText_.rect.y -= appTitleText_.rect.h / 2;
-    appVersionText_ = Texture(MOD_VERSION, UiTheme::VersionFontSize, renderer_, appTitleText_.rect.x + appTitleText_.rect.w + UiTheme::VersionGap, UiTheme::TitleY, false, ToAbgr(UiTheme::Text), true);
-    appVersionText_.rect.y -= appVersionText_.rect.h / 2;
+    chrome_ = std::make_unique<ScreenChrome>(optionsLocation_, renderer_, "Theme Manager", MOD_VERSION, "Theme Manager - by DefKorns");
+    scrollArrows_ = std::make_unique<ScrollArrows>(optionsLocation_, renderer_);
     titleText_ = Texture(Translate(options_.titleKey), UiTheme::SectionTitleFontSize, renderer_, UiTheme::SectionTitleX, UiTheme::SectionTitleY, false, ToAbgr(UiTheme::Text), true);
-    creditText_ = Texture("Theme Manager - by DefKorns", 16, renderer_, UiTheme::CreditX, UiTheme::CreditY, false, ToAbgr(UiTheme::Text), true);
 
     badgeA_ = Badge{ Texture("A", 16, renderer_, 0, 0, false, ToAbgr(UiTheme::BadgeLetter), true), Texture(Translate("HINT_SELECT"), 16, renderer_, 0, 0, false, ToAbgr(UiTheme::Text), true), UiTheme::BadgeADark, UiTheme::BadgeA };
     badgeRowRightEdge_ = UiTheme::BadgeClusterRightX - UiTheme::BadgeOuterSize - UiTheme::BadgeLabelGap - badgeA_.label.rect.w - UiTheme::BadgeGroupGap;
@@ -175,14 +171,8 @@ bool ThemeManagerApp::FinishFrame()
 
 void ThemeManagerApp::DrawChromeCommon()
 {
-    DrawStrokeRect(renderer_, UiTheme::OuterRect, UiTheme::Border, UiTheme::BorderWidth, UiTheme::BorderRadius);
-    gearIcon_.Draw(renderer_);
-    appTitleText_.Draw(renderer_);
-    appVersionText_.Draw(renderer_);
-    DrawHLine(renderer_, UiTheme::HeaderDividerX, UiTheme::HeaderDividerX + UiTheme::HeaderDividerW, UiTheme::HeaderDividerY, UiTheme::Border, UiTheme::BorderWidth);
-    DrawHLine(renderer_, UiTheme::OuterRect.x, UiTheme::OuterRect.x + UiTheme::OuterRect.w, UiTheme::FooterDividerY, UiTheme::Border, UiTheme::BorderWidth);
+    chrome_->DrawFrame();
     DrawBadge(badgeA_, UiTheme::BadgeClusterRightX);
-    creditText_.Draw(renderer_);
 }
 
 void ThemeManagerApp::DrawSectionTitle()
@@ -194,7 +184,8 @@ void ThemeManagerApp::DrawSectionTitle()
 
 Texture ThemeManagerApp::MakeScrollArrow(int x, int y) const
 {
-    Texture arrow("^", 16, renderer_, x, y, false, ToAbgr(UiTheme::Text), true);
+    Texture arrow(optionsLocation_ + UiTheme::AssetChevronUp, renderer_, x, y);
+    SetColorMod(arrow.texture.get(), UiTheme::ScrollArrow);
     arrow.rect.x -= arrow.rect.w / 2;
     return arrow;
 }
@@ -260,8 +251,7 @@ bool ThemeManagerApp::ActivateCommand(Command & cmd)
             RunDownload(cmd);
         return false;
     }
-    const ModernChrome chrome{ gearIcon_, appTitleText_, appVersionText_, creditText_ };
-    cmd.RunCommand(*sdlContext_, controller_.get(), chrome, bg_);
+    cmd.RunCommand(*sdlContext_, controller_.get(), *chrome_, bg_);
     if(cmd.isToggle)
         cmd.UpdateState();
     // the caller's frame was cleared before the command drew over it
@@ -272,10 +262,9 @@ bool ThemeManagerApp::ActivateCommand(Command & cmd)
 
 void ThemeManagerApp::RunDownload(Command & cmd)
 {
-    const ModernChrome chrome{ gearIcon_, appTitleText_, appVersionText_, creditText_ };
     const size_t index = static_cast<size_t>(&cmd - commands_.data());
     const std::string title = cmd.name.substr(0, cmd.name.find(" ["));
-    if(RunDownloadScreen(cmd.command, Translate("INSTALLING_THEME"), Translate(title), items_[index].author, *sdlContext_, *controller_, chrome))
+    if(RunDownloadScreen(cmd.command, Translate("INSTALLING_THEME"), Translate(title), items_[index].author, *sdlContext_, *controller_, *chrome_))
     {
         items_[index].isNew = false;
         items_[index].installed = true;
@@ -781,9 +770,6 @@ int ThemeManagerApp::RunGridLayout()
 
 int ThemeManagerApp::RunListLayout()
 {
-    Texture scrollUp = MakeScrollArrow(UiTheme::ScrollX, UiTheme::ScrollUpY);
-    Texture scrollDown = scrollUp;
-    scrollDown.rect.y = UiTheme::ScrollDownY;
     SDL_Rect selectedRowRect{ UiTheme::ListX, UiTheme::RowFirstY - 2, UiTheme::ListContentRightX - UiTheme::ListX, 0 };
 
     // B runs Back/Exit, as in the grid
@@ -953,10 +939,7 @@ int ThemeManagerApp::RunListLayout()
             DrawRow(commands_[i+topListItemNumber], (i+topListItemNumber) == pinnedStartIndex_-1);
 
         // bounded by pinnedStartIndex_, not commands_.size() - pinned rows need no scroll
-        if(topListItemNumber != 0)
-            scrollUp.Draw(renderer_);
-        if((topListItemNumber + DisplayItemCount) < pinnedStartIndex_)
-            scrollDown.Draw(renderer_, SDL_FLIP_VERTICAL);
+        scrollArrows_->Draw(topListItemNumber != 0, (topListItemNumber + DisplayItemCount) < pinnedStartIndex_);
 
         if(FinishFrame())
             break;
