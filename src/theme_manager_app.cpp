@@ -54,10 +54,9 @@ ThemeManagerApp::ThemeManagerApp(std::string optionsLocation, AppOptions options
 {
     LoadActiveThemeBorderColor(optionsLocation_);
 
-    // std::make_unique is C++14; this project builds as C++11
-    sdlContext_.reset(new SDL_Context(std::chrono::milliseconds(33), false));
+    sdlContext_ = std::make_unique<SDL_Context>(std::chrono::milliseconds(33), false);
     renderer_ = sdlContext_->renderer;
-    controller_.reset(new Controller(1));
+    controller_ = std::make_unique<Controller>(1);
 
     bg_ = UiTheme::Bg;
     SetDrawColor(renderer_, bg_);
@@ -75,9 +74,9 @@ ThemeManagerApp::ThemeManagerApp(std::string optionsLocation, AppOptions options
 
     badgeA_ = Badge{ Texture("A", 16, renderer_, 0, 0, false, ToAbgr(UiTheme::BadgeLetter), true), Texture(Translate("HINT_SELECT"), 16, renderer_, 0, 0, false, ToAbgr(UiTheme::Text), true), UiTheme::BadgeADark, UiTheme::BadgeA };
     badgeRowRightEdge_ = UiTheme::BadgeClusterRightX - UiTheme::BadgeOuterSize - UiTheme::BadgeLabelGap - badgeA_.label.rect.w - UiTheme::BadgeGroupGap;
-    badges_.reset(new BadgePainter(optionsLocation_, renderer_));
+    badges_ = std::make_unique<BadgePainter>(optionsLocation_, renderer_);
     if(options_.downloadsScreen)
-        storage_.reset(new StorageIndicator(renderer_));
+        storage_ = std::make_unique<StorageIndicator>(renderer_);
     badgeHold_ = Badge{ Texture("B", 16, renderer_, 0, 0, false, ToAbgr(UiTheme::BadgeLetter), true), Texture(Translate("HINT_DELETE"), 16, renderer_, 0, 0, false, ToAbgr(UiTheme::Text), true), UiTheme::BadgeXDark, UiTheme::BadgeX };
 
     ComputePinnedAndThemeRanges();
