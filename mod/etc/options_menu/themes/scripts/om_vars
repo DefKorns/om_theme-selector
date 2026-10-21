@@ -226,7 +226,7 @@ migrateThemes() {
   for item in "$nand_theme_path"/*; do
     name="${item##*/}"
     if [ "$name" != "$sfregion" ] && [ ! -e "$theme_path/$name" ]; then
-      "$om_scripts/gen_splash" /tmp/om_splash.png THEME_MOVING_LINE1 THEME_MOVING_LINE2 && decodepng /tmp/om_splash.png > /dev/fb0
+      omSplash THEME_MOVING_LINE1 THEME_MOVING_LINE2
       break
     fi
   done
@@ -375,7 +375,7 @@ themeLoader() {
 sed -i \"s/selected_theme=\\\"CHANGEME\\\"/selected_theme=\\\"${thm}\\\"/g;\" \"$b_file\"
 " >> "$thm_script.sh"
 
-    echo "\"\$om_scripts/gen_splash\" /tmp/om_splash.png THEME_APPLYING_LINE1 THEME_APPLYING_LINE2 && decodepng /tmp/om_splash.png > /dev/fb0
+    echo "omSplash THEME_APPLYING_LINE1 THEME_APPLYING_LINE2
 sleep 1
     hakchi reboot" >> "$thm_script.sh"
 
@@ -404,11 +404,11 @@ removeRegionalTheme() {
 }
 
 getThemeList() {
-  "$om_scripts/gen_splash" /tmp/om_splash.png THEME_LIST_DOWNLOADING_LINE1 THEME_LIST_DOWNLOADING_LINE2 && decodepng /tmp/om_splash.png > /dev/fb0
+  omSplash THEME_LIST_DOWNLOADING_LINE1 THEME_LIST_DOWNLOADING_LINE2
   cd "$om_mod_sub" || exit
 
   if [ ! -x "$om_scripts/downloader" ]; then
-    "$om_scripts/gen_splash" /tmp/om_splash.png DOWNLOADER_MISSING_LINE1 DOWNLOADER_MISSING_LINE2 && decodepng /tmp/om_splash.png > /dev/fb0
+    omSplash DOWNLOADER_MISSING_LINE1 DOWNLOADER_MISSING_LINE2
     sleep 3
     return 1
   fi
@@ -534,14 +534,7 @@ themeGenerator() {
   return "$rc"
 }
 
-freeSpaceKb() {
-  df -Pk "$1" | awk 'NR==2 {print $4}'
-}
 
-unpackedSizeKb() {
-  size_kb=$(( $(tail -c4 "$1" | od -An -tu4) / 1024 + 1 ))
-  echo $(( size_kb + size_kb / 10 ))
-}
 
 urlEncodeName() {
   printf '%s' "$1" | sed 's/%/%25/g; s/#/%23/g; s/?/%3F/g'
@@ -610,20 +603,10 @@ abortDownload() {
 }
 
 unpackTheme() {
-  tarball="${system_name}.$1.tar.gz"
   unpacking="$1"
-  if [ "$(freeSpaceKb .)" -lt "$(unpackedSizeKb "$tarball")" ]; then
-    dl_rc=3
-    gzip -t "$tarball" 2> /dev/null || dl_rc=1
-  elif ! tar -xzf "$tarball"; then
-    dl_rc=1
-    [ "$(freeSpaceKb .)" -lt 1024 ] && dl_rc=3
-  else
-    remove "$tarball"
-    unpacking=""
-    return 0
-  fi
-  rm -rf "$tarball" "$1" "$1.png"
+  omUnpack "${system_name}.$1.tar.gz" .
+  dl_rc=$?
+  [ "$dl_rc" = 0 ] || rm -rf "$1" "$1.png"
   unpacking=""
   return "$dl_rc"
 }
@@ -851,7 +834,7 @@ diySpriteSelector() {
 }
 
 diyThemeChecker() {
-  [ "$1" = "loader" ] && { "$om_scripts/gen_splash" /tmp/om_splash.png THEME_LOADING_ASSETS && decodepng /tmp/om_splash.png > /dev/fb0; }
+  [ "$1" = "loader" ] && omSplash THEME_LOADING_ASSETS
 
   [ ! -d "$diy_theme_path" ] && mkdir -p "$diy_theme_path"
 
@@ -906,24 +889,6 @@ diyHomePreviews() {
     home_preview="$(printf '%s' "$home_preview" | sed 's/[&#\\]/\\&/g')"
     sed -i -e '/^PREVIEW_NEAREST=/d' -e "s#^PREVIEW_IMAGE=.*#PREVIEW_IMAGE=$home_preview$home_nearest#" "$home_cmd"
   done
-}
-
-# the menu holds /dev/fb0, so remote-exec reloads the current folder (chmenu's hook remounts
-# the theme); chmenu refuses the folder already shown unless its state says otherwise
-menuReloadLater() {
-  menu_state="/var/saves/$modname/menu"
-  current_menu="000"
-  [ -f "$menu_state" ] && current_menu="$(cat "$menu_state")"
-  cat >/var/exec.flag.tmp <<EOF
-source /etc/preinit
-script_init
-uistop
-uiresume
-echo reload >"$menu_state"
-/bin/chmenu "$current_menu" || /bin/chmenu 000 || { echo "$current_menu" >"$menu_state"; uistart; }
-/etc/init.d/S8103OptionsMenu restart
-EOF
-  mv /var/exec.flag.tmp /var/exec.flag
 }
 
 diyThemeRemover() {

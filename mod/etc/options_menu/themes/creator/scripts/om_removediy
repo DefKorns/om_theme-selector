@@ -27,8 +27,8 @@ awk '$4 ~ /^\/diy_theme\// { found = 1 } END { exit !found }' /proc/self/mountin
 diyThemeRemover
 
 if [ -n "$diy_bound" ]; then
-  "$om_scripts/gen_splash" /tmp/om_splash.png THEME_RESTORING && decodepng /tmp/om_splash.png >/dev/fb0
-  menuReloadLater
+  omSplash THEME_RESTORING
+  omReloadMenuLater /etc/init.d/S8103OptionsMenu restart
 else
   $options_menu/lib/theme_manager --commandPath $om_mod_gen_cmds/ --scriptPath $om_mod_gen_scripts --title "$om_title" &
 fi

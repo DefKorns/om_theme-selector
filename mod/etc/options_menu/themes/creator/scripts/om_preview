@@ -20,7 +20,7 @@
 source $mountpoint/etc/options_menu/themes/scripts/om_vars
 script_init
 
-"$om_scripts/gen_splash" /tmp/om_splash.png THEME_PREVIEW_LOADING && decodepng /tmp/om_splash.png >/dev/fb0
+omSplash THEME_PREVIEW_LOADING
 if [ ! -f "$b_file" ]; then
   sed '1,2d' $om_theme_script >"$b_file"
   echo "themeSelector" >"$p_file"
@@ -31,4 +31,4 @@ fi
 source "$b_file"
 themeSelector
 
-menuReloadLater
+omReloadMenuLater /etc/init.d/S8103OptionsMenu restart
