@@ -149,6 +149,9 @@ themeSelector() {
   local title_font="$font_path/title.fnt"
   local title_theme_font="$full_theme_path/fonts/title.fnt"
 
+  # an install leaves the placeholder until a theme is applied from the menu
+  [ "$selected_theme" = "CHANGEME" ] && return 0
+
   if [ "$selected_theme" != "$previous_theme" ] || [ ! -f "$last_theme" ] || [ ! -f "$active_theme_file" ]; then
     echo "$selected_theme" >"$last_theme"
     echo "$full_theme_path" >"$active_theme_file"

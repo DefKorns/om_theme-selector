@@ -281,6 +281,9 @@ themeSelector() {
     full_theme_path="$diy_theme"
   fi
 
+  # an install leaves the placeholder until a theme is applied from the menu
+  [ "$selected_theme" = "CHANGEME" ] && [ "$full_theme_path" != "$diy_theme" ] && return 0
+
   if [ "$selected_theme" != "$previous_theme" ] || [ ! -f "$last_theme" ] || [ ! -f "$active_theme_file" ]; then
     echo "$selected_theme" >"$last_theme"
     echo "$full_theme_path" >"$active_theme_file"
