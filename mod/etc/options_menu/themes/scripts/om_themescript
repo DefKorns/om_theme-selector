@@ -258,8 +258,13 @@ themeSelector() {
     # shellcheck source=/dev/null
     source "$cl_functions"
     clInit
-    clUmountLang
-    clMountLang
+    # older Console Language releases have no clRebind
+    if type clRebind >/dev/null 2>&1; then
+      clRebind
+    else
+      clUmountLang
+      clMountLang
+    fi
   fi
   [ -z "$mountpoint" ] && echo "$applied" >"$applied_file"
 }
