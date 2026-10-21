@@ -459,10 +459,12 @@ injectFile() {
 
     if ! grep -q "# themeselector" "$injected_file"; then
       if [ "$scrpt" = "chmenu" ]; then
+        # sed -i gives the rootfs file a new inode, which /bin keeps hiding until a reboot
         # shellcheck disable=SC1004
-        sed -i '/^overmount_games.*/a  # themeselector fix \
+        sed '/^overmount_games.*/a  # themeselector fix \
 themeSelector \
-fontFix' "/var/lib/hakchi/rootfs/bin/chmenu"
+fontFix' /bin/chmenu >/tmp/chmenu.new && cat /tmp/chmenu.new >/bin/chmenu
+        rm -f /tmp/chmenu.new
       fi
 
       if [ "$scrpt" = "fontfix" ]; then
