@@ -76,7 +76,7 @@ int ThemeManagerApp::RunFolderThemesLayout()
     auto MakeText = [&](const std::string & text, int size, Color color) { return Texture(text, size, renderer_, 0, 0, false, ToAbgr(color), true); };
     auto MakeBadge = [&](const char * letter, const std::string & labelKey, Color rim, Color fill)
     {
-        return Badge{ MakeText(letter, 16, UiTheme::BadgeLetter), MakeText(Translate(labelKey), 16, UiTheme::Text), rim, fill };
+        return badges_->Make(letter, Translate(labelKey), rim, fill);
     };
     const Badge listBadgeA = MakeBadge("A", "FOLDER_THEME_LIST", UiTheme::BadgeADark, UiTheme::BadgeA);
     const Badge pickBadgeA = MakeBadge("A", "HINT_SELECT", UiTheme::BadgeADark, UiTheme::BadgeA);
