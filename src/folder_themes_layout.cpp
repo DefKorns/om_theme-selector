@@ -327,15 +327,16 @@ int ThemeManagerApp::RunFolderThemesLayout()
         {
             int rightEdge = UiTheme::BadgeClusterRightX - UiTheme::BadgeOuterSize - UiTheme::BadgeLabelGap - badgeA_.label.rect.w - UiTheme::BadgeGroupGap;
             if(picking)
-                DrawBadge(cancelBadge, rightEdge);
+                rightEdge = DrawBadge(cancelBadge, rightEdge);
             else
             {
                 if(hasBack)
                     rightEdge = DrawBadge(backBadge, rightEdge);
                 if(hasY)
                     rightEdge = DrawBadge(autoBadge, rightEdge);
-                valuePicker.DrawHint(rightEdge, UiTheme::BadgeBandY);
+                rightEdge = valuePicker.DrawHint(rightEdge, UiTheme::BadgeBandY);
             }
+            DrawFooterDivider(renderer_, rightEdge);
         }
 
         for(int row = 0; row < displayRows && topRow + row < folderCount; ++row)

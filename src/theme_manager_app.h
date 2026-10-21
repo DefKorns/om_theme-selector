@@ -71,6 +71,7 @@ private:
     void ComputePinnedAndThemeRanges();
 
     int DrawBadge(Badge & badge, int rightEdgeX);
+    void DrawFooterBadges(Badge & badgeB);
     bool Confirm(const ScreenSnapshot & background, const std::string & title);
     bool ConfirmDelete(const ScreenSnapshot & background);
     bool FinishFrame();

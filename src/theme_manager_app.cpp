@@ -169,6 +169,16 @@ bool ThemeManagerApp::FinishFrame()
     return ConfirmDelete(background);
 }
 
+void ThemeManagerApp::DrawFooterBadges(Badge & badgeB)
+{
+    int rightEdge = badgeRowRightEdge_;
+    if(pinnedStartIndex_ < (int)commands_.size())
+        rightEdge = DrawBadge(badgeB, rightEdge);
+    if(!commands_[currentCommandId_].deleteCommand.empty() || !commands_[currentCommandId_].deleteBlockedKey.empty())
+        rightEdge = DrawBadge(badgeHold_, rightEdge);
+    DrawFooterDivider(renderer_, rightEdge);
+}
+
 void ThemeManagerApp::DrawChromeCommon()
 {
     chrome_->DrawFrame();
@@ -608,13 +618,7 @@ int ThemeManagerApp::RunGridLayout()
 
         DrawChromeCommon();
         DrawSectionTitle();
-        {
-            int rightEdge = badgeRowRightEdge_;
-            if(pinnedStartIndex_ < (int)commands_.size())
-                rightEdge = DrawBadge(badgeB, rightEdge);
-            if(!commands_[currentCommandId_].deleteCommand.empty() || !commands_[currentCommandId_].deleteBlockedKey.empty())
-                DrawBadge(badgeHold_, rightEdge);
-        }
+        DrawFooterBadges(badgeB);
 
         {
             int x = GridLeft;
@@ -863,13 +867,7 @@ int ThemeManagerApp::RunListLayout()
     {
         DrawChromeCommon();
         DrawSectionTitle();
-        {
-            int rightEdge = badgeRowRightEdge_;
-            if(pinnedStartIndex_ < (int)commands_.size())
-                rightEdge = DrawBadge(badgeB, rightEdge);
-            if(!commands_[currentCommandId_].deleteCommand.empty() || !commands_[currentCommandId_].deleteBlockedKey.empty())
-                DrawBadge(badgeHold_, rightEdge);
-        }
+        DrawFooterBadges(badgeB);
 
         DrawRoundedFillRect(renderer_, selectedRowRect, UiTheme::SelectedRowBg, UiTheme::BoxRadius);
         DrawStrokeRect(renderer_, selectedRowRect, UiTheme::Accent, 2, UiTheme::BoxRadius);
