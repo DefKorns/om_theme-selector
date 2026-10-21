@@ -1,5 +1,5 @@
 #!/bin/sh
-# shellcheck disable=SC2034,SC2086,SC2154,SC3010,SC3046,SC3051
+# shellcheck disable=SC2034,SC2086,SC2154,SC3010,SC3043,SC3046,SC3051
 # # shellcheck disable=SC2039
 #  Copyright (c) 2026 DefKorns (https://defkorns.github.io/LICENSE)
 #
@@ -259,12 +259,6 @@ clearList() {
   remove "$om_mod_spacer"
 }
 
-clearDownloads() {
-  find "$om_mod_sub" -type f \
-    -not -name 'c000[0-8]_*' -not -name 'c999[0-9]_*' \
-    -not -name 'om_*' -not -name '_*' -not -path "$thm_preview/*" -exec rm {} +
-}
-
 toggleThemeCmds() {
   if [ -z "$(ls -A "$theme_path")" ]; then
     disableCmds "theme_generator" "clear"
@@ -403,6 +397,8 @@ removeRegionalTheme() {
     "$om_mod_commands/c0001_$sfregion" "$om_mod_scripts/$sfregion.sh"
 }
 
+#### DOWNLOADS
+# the catalog unpacks a command per theme (c0010_*) and its get_<theme> script into downloads/
 getThemeList() {
   omSplash THEME_LIST_DOWNLOADING_LINE1 THEME_LIST_DOWNLOADING_LINE2
   cd "$om_mod_sub" || exit
@@ -414,23 +410,29 @@ getThemeList() {
   fi
   if [ ! -e "${catalog_type}${list_name}" ]; then
     clearDownloads
-    omDownload "${catalog_type}${list_name}" "$themes_github_url/${catalog_type}${list_name}"       "$catalogs_classicmods_url/${catalog_type}${list_name}"
+    omDownload "${catalog_type}${list_name}" "$themes_github_url/${catalog_type}${list_name}" "$catalogs_classicmods_url/${catalog_type}${list_name}"
   fi
   tar -xzf "${catalog_type}${list_name}" || return
-  # shellcheck disable=SC2035
-  rm -f *.tar.gz
+  rm -f ./*.tar.gz
   markNewThemes
   removeRegionalTheme
   touch "$sub_dummy"
-  usleep 1000
+}
+
+clearDownloads() {
+  find "$om_mod_sub" -type f \
+    -not -name 'c000[0-8]_*' -not -name 'c999[0-9]_*' \
+    -not -name 'om_*' -not -name '_*' -not -path "$thm_preview/*" -exec rm {} +
 }
 
 # no seen list yet: a first run marks nothing as new
 markNewThemes() {
+  local catalog_themes
+  local theme
   catalog_themes="$(find "$om_mod_sub_cmds" -name 'c0010_*' | sed 's#.*/c0010_##' | grep -vx all)"
   if [ -f "$seen_themes" ]; then
-    for t in $catalog_themes; do
-      grep -qx "$t" "$seen_themes" || printf '\nNEW=TRUE\n' >> "$om_mod_sub_cmds/c0010_$t"
+    for theme in $catalog_themes; do
+      grep -qx "$theme" "$seen_themes" || printf '\nNEW=TRUE\n' >> "$om_mod_sub_cmds/c0010_$theme"
     done
   fi
   { cat "$seen_themes" 2> /dev/null; echo "$catalog_themes"; } | sort -u > "$seen_themes.tmp" && mv "$seen_themes.tmp" "$seen_themes"
