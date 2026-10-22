@@ -483,6 +483,7 @@ loadThemeList() {
 #### DOWNLOADS
 getThemeList() {
   local catalog="${catalog_type}${list_name}"
+  local hash="${catalog_type}-list-v2.md5"
   omSplash THEME_LIST_DOWNLOADING_LINE1 THEME_LIST_DOWNLOADING_LINE2
   cd "$om_mod_sub" || exit
 
@@ -491,9 +492,16 @@ getThemeList() {
     sleep 3
     return 1
   fi
+  rm -f "/tmp/$hash"
+  if "$om_scripts/downloader" "/tmp/$hash" "$themes_github_url/$hash" > /dev/null 2>&1 && cmp -s "/tmp/$hash" "$hash"; then
+    rm -f "/tmp/$hash"
+    touch "$sub_dummy"
+    return 0
+  fi
   omDownload "$catalog" "$themes_github_url/$catalog" "$catalogs_classicmods_url/$catalog" || return
   clearDownloads
   omUnpack "$catalog" . || return
+  [ -f "/tmp/$hash" ] && mv "/tmp/$hash" "$hash"
   markNewThemes
   removeRegionalTheme
   touch "$sub_dummy"
