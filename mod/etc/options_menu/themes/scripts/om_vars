@@ -91,7 +91,7 @@ om_active_theme="$mod_state_path/om_active_theme"
 om_dummy="$om_mod_commands/c0000_0000"
 sub_dummy="$om_mod_sub_cmds/c0000_0000"
 om_mod_spacer="$om_mod_commands/c0000_separator"
-om_mod_settings_spacer="$om_mod_settings/c0001_separator"
+om_mod_settings_spacer="$om_mod_settings_cmds/c0001_separator"
 #### ENABLE/DISABLE
 enable_downloads="$om_mod_commands/c0000_2_download"
 disable_downloads="$om_mod_commands/_2_download"
@@ -111,8 +111,6 @@ enable_music_per_folder="$om_mod_settings_cmds/c0001_musicperfolder"
 disable_music_per_folder="$om_mod_settings_cmds/_musicperfolder"
 enable_folder_music="$om_mod_settings_cmds/c0001_musicperfolder_assign"
 disable_folder_music="$om_mod_settings_cmds/_musicperfolder_assign"
-enable_theme_setting="$om_mod_settings_cmds/c0000_themerandomizer"
-disable_theme_setting="$om_mod_settings_cmds/_themerandomizer"
 enable_system_clean_up="$om_mod_settings_cmds/c0001_systemcleanup"
 disable_system_clean_up="$om_mod_settings_cmds/_systemcleanup"
 enable_theme_generator="$om_mod_commands/c0000_3_generatetheme"
@@ -940,74 +938,64 @@ diyThemeRemover() {
 
 }
 
+#### SETTINGS
+toggleFlag() {
+  if [ -f "$1" ]; then
+    remove "$1"
+  else
+    touch "$1"
+  fi
+}
+
+themeSettings() {
+  case "$1" in
+    tpf) toggleFlag "$om_themeperfolder" ;;
+    mpf) toggleFlag "$om_musicperfolder" ;;
+    *) toggleFlag "$om_themerandomizer" ;;
+  esac
+}
+
+# music for every folder needs the random music on
+audioSettings() {
+  if [ "$1" = "-amh" ]; then
+    toggleFlag "$om_advmusichack"
+    [ -f "$om_advmusichack" ] && touch "$om_audiorandomizer"
+  else
+    toggleFlag "$om_audiorandomizer"
+    [ -f "$om_audiorandomizer" ] || remove "$om_advmusichack"
+  fi
+}
+
+hasCleanUpItems() {
+  local item
+  for item in $items_to_delete; do
+    [ -e "$item" ] && return 0
+  done
+  return 1
+}
+
 modCleanUp() {
   for item in $items_to_delete; do
     remove "$item"
   done
-  hasItemsToCleanUp "system_clean_up"
+  settingsRows
 }
 
-themeSettings() {
-  if [ "$1" = "tpf" ] || [ "$1" = "mpf" ]; then
-    flag="$om_themeperfolder"
-    [ "$1" = "mpf" ] && flag="$om_musicperfolder"
-    if [ ! -f "$flag" ]; then
-      settingsOptionChecker "on" "$flag"
-    else
-      settingsOptionChecker "off" "$flag"
-    fi
+settingsRows() {
+  if hasCleanUpItems; then
+    enableCmds "system_clean_up"
   else
-    if [ ! -f "$om_themerandomizer" ]; then
-      settingsOptionChecker "on" "$om_themerandomizer"
-    else
-      settingsOptionChecker "off" "$om_themerandomizer"
-    fi
+    disableCmds "system_clean_up"
   fi
-}
-
-audioSettings() {
-  if [ "$1" = "-amh" ]; then
-    toggleOptions "$om_advmusichack" "$om_audiorandomizer"
+  if [ -f "$b_file" ] && [ -f "$p_file" ]; then
+    enableCmds "uninstaller"
   else
-    if [ ! -f "$om_audiorandomizer" ]; then
-      settingsOptionChecker "on" "$om_audiorandomizer"
-    else
-      settingsOptionChecker "off" "$om_audiorandomizer"
-      settingsOptionChecker "off" "$om_advmusichack"
-    fi
+    disableCmds "uninstaller"
   fi
-}
-
-toggleOptions() {
-  if [ ! -f "$1" ]; then
-    settingsOptionChecker "on" "$1"
-    [ -z "$3" ] && [ ! -f "$2" ] && settingsOptionChecker "on" "$2"
+  if [ -f "$enable_system_clean_up" ] || [ -f "$enable_uninstaller" ]; then
+    create "$om_mod_settings_spacer"
   else
-    remove "$1"
-  fi
-}
-
-settingsOptionChecker() {
-  if [ "$1" = "off" ]; then
-    remove "$2"
-  else
-    touch "$2"
-  fi
-}
-
-hasItemsToCleanUp() {
-  for item in $items_to_delete; do
-    if [ -e "$item" ]; then
-      has_non_system_files="true"
-      break
-    fi
-  done
-  if [ "$has_non_system_files" = "true" ]; then
-    enableCmds "$1"
-    [ ! -f "$om_mod_settings_spacer" ] && touch "$om_mod_settings_spacer"
-  else
-    disableCmds "$1"
-    [ ! -f "$enable_uninstaller" ] && remove "$om_mod_settings_spacer"
+    remove "$om_mod_settings_spacer"
   fi
 }
 
