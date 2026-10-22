@@ -1,6 +1,6 @@
 #!/bin/bash
 # shellcheck disable=SC2154,SC2038,SC2143
-#  Copyright (c) 2022 DefKorns (https://defkorns.github.io/LICENSE)
+#  Copyright (c) 2026 DefKorns (https://defkorns.github.io/LICENSE)
 #
 #  This program is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -15,82 +15,169 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
-font_bind_fix() {
-  [ "$1" == "backup" ] && FONT_TYPE="title s m l small medium large"
-  [ "$1" == "restore" ] && FONT_TYPE="s m l small medium large"
-  [ "$1" == "restore" ] && [ -f "$TITLE_FONT_BACKUP" ] && mv "$TITLE_FONT_BACKUP" "$TITLE_FONT"
-  for FONT in $FONT_TYPE; do
-    [ "$1" == "backup" ] && [ ! -f "$TITLE_FONT_BACKUP" ] && mv "${FONT_PATH}/${FONT}.fnt" "${FONT_PATH}/${FONT}.fnt.backup"
-    [ "$1" == "backup" ] && cp "$FULL_THEME_PATH/fonts/${FONT}.fnt" "${FONT_PATH}/${FONT}.fnt"
-    [ "$1" == "restore" ] && umount "${ORIGINAL_THEME}/resources/fonts/${UI1}/${FONT}.fnt"
-    [ "$1" == "restore" ] && rm "${FONT_PATH}/${FONT}.fnt"
+# corrected copies of theme files, at their path under the UI; they sit on top of the theme.
+# /var is already a tmpfs at boot, where /tmp is still the NAND
+theme_fixes="$mountpoint/var/theme_fixes"
+
+themeFixesUnbind() {
+  awk -v dir="$original_theme/" 'index($5, dir) == 1 && $4 ~ /\/theme_fixes\// { print $5 }' /proc/self/mountinfo |
+    sed -n '1!G;h;$p' | while IFS= read -r fix; do
+    umount "$fix"
+  done
+  rm -rf "$theme_fixes"
+}
+
+# the USA/EUR firmwares name the s/m/l fonts *.font and the Super Famicom *.fnt;
+# the UI exits when dependencies.json lists one that isn't there
+themeDepsFix() {
+  local deps="$original_theme/dependencies.json"
+  local fixed="$theme_fixes/dependencies.json"
+  local font other
+  [ -f "$deps" ] || return 0
+  mkdir -p "$theme_fixes"
+  cp -f "$deps" "$fixed"
+  for font in $(grep -o '"/fonts/[^"]*"' "$deps" | tr -d '"'); do
+    [ -e "$original_theme/resources$font" ] && continue
+    case "$font" in
+    *.font) other="${font%.font}.fnt" ;;
+    *.fnt) other="${font%.fnt}.font" ;;
+    *) continue ;;
+    esac
+    [ -e "$original_theme/resources$other" ] && sed -i "s#\"$font\"#\"$other\"#" "$fixed"
+  done
+  if cmp -s "$deps" "$fixed"; then
+    rm -f "$fixed"
+  else
+    mount -o bind "$fixed" "$deps"
+  fi
+}
+
+# byte offset of the first occurrence of $2 in file $1
+byteOffset() {
+  local want
+  want="$(printf '%s' "$2" | od -An -tx1 | tr -d ' \n')"
+  od -An -v -tx1 "$1" | tr -s ' ' '\n' | grep . | awk -v want="$want" -v n="${#2}" '
+    { s = s $1; if (length(s) > 2 * n) s = substr(s, 3); if (s == want) { print NR - n; exit } }'
+}
+
+# each firmware reads only its own palette (env_<region>.lua loads colors_<region>); a theme made
+# for another region gets its colors_*.lua renamed in place (same length) and bound over this one
+themeColorsFix() {
+  local env_dir="$original_theme/resources/scripts/env"
+  local theme_env="$full_theme_path/resources/scripts/env"
+  local region src fixed offset
+  for region in jpn usa eur; do
+    [ -f "$env_dir/env_$region.lua" ] && break
+  done
+  [ -f "$env_dir/env_$region.lua" ] && [ ! -f "$theme_env/colors_$region.lua" ] || return 0
+  for src in usa eur jpn; do
+    [ -f "$theme_env/colors_$src.lua" ] && break
+  done
+  [ -f "$theme_env/colors_$src.lua" ] || return 0
+  fixed="$theme_fixes/resources/scripts/env/colors_$region.lua"
+  mkdir -p "${fixed%/*}"
+  cp -f "$theme_env/colors_$src.lua" "$fixed"
+  offset="$(byteOffset "$fixed" "colors_$src")"
+  if [ -z "$offset" ]; then
+    rm -f "$fixed"
+    return 0
+  fi
+  printf 'colors_%s' "$region" | dd of="$fixed" bs=1 seek="$offset" conv=notrunc 2>/dev/null
+  mount -o bind "$fixed" "$env_dir/colors_$region.lua"
+}
+
+fontBindFix() {
+  [ ! -f "${font_path}/title.fnt.backup" ] && cp "${font_path}/title.fnt" "${font_path}/title.fnt.backup"
+  for font_name in title s m l small medium large; do
+    if [ "$1" == "backup" ] && [ -f "$full_theme_path/fonts/${font_name}.fnt" ]; then
+      cmp -s "$full_theme_path/fonts/${font_name}.fnt" "${font_path}/${font_name}.fnt" ||
+        cp "$full_theme_path/fonts/${font_name}.fnt" "${font_path}/${font_name}.fnt"
+    elif [ "$font_name" == "title" ]; then
+      cp "${font_path}/title.fnt.backup" "${font_path}/title.fnt"
+    else
+      umount "${original_theme}/resources/fonts/${ui_subdir}/${font_name}.fnt" 2>/dev/null
+      rm -f "${font_path}/${font_name}.fnt"
+    fi
   done
 }
 
 themeSelector() {
-  local UI0="ui/$sftype-$sfregion"
-  local UI1=""
-  local SYSTEM_TYPE="$sftype"
+  local ui_dir="ui/$sftype-$sfregion"
+  local ui_subdir=""
+  local system_type="$sftype"
 
   case "$sftype" in
   hvcj)
-    UI0="ui/hvc"
-    SYSTEM_TYPE="shonen"
+    ui_dir="ui/hvc"
+    system_type="shonen"
     ;;
   nes)
-    UI0="clover-ui"
-    UI1="nes/"
+    ui_dir="clover-ui"
+    ui_subdir="nes/"
     if [ "$sfregion" = "jpn" ]; then
-      UI0="clover-ui"
-      UI1="hvc"
-      SYSTEM_TYPE="$UI1"
+      ui_dir="clover-ui"
+      ui_subdir="hvc"
+      system_type="$ui_subdir"
     fi
     ;;
   snes)
-    [ "$sfregion" = "jpn" ] && UI0="ui/shvc"
+    [ "$sfregion" = "jpn" ] && ui_dir="ui/shvc"
     ;;
   esac
-  local ORIGINAL_THEME="$mountpoint/usr/share/$UI0"
+  local original_theme="$mountpoint/usr/share/$ui_dir"
 
-  local THEMES_PATH="$mountpoint/media/$modname/themes/$SYSTEM_TYPE"
-  [ ! -d "$THEMES_PATH" ] && THEMES_PATH="$rootfs/usr/share/themes/$SYSTEM_TYPE"
+  local themes_path="$mountpoint/media/$modname/themes/$system_type"
+  [ ! -d "$themes_path" ] && themes_path="$rootfs/usr/share/themes/$system_type"
 
-  local STATE_PATH="$mountpoint$profilepath/$modname"
-  local LAST_THEME="$STATE_PATH/lastTheme"
-  local ACTIVE_THEME="$STATE_PATH/activeTheme"
-  local SELECTED_THEME="CHANGEME"
+  local theme_state_path="$mountpoint$profilepath/$modname"
+  local last_theme="$theme_state_path/lastTheme"
+  local active_theme_file="$theme_state_path/active_theme"
+  local selected_theme="CHANGEME"
 
-  if [ -f "$STATE_PATH/om_themerandomizer" ]; then
-    SELECTED_THEME="$PREVIOUS_THEME"
+  if [ -f "$theme_state_path/om_themerandomizer" ]; then
+    selected_theme="$previous_theme"
     local n="0"
-    while [ "$SELECTED_THEME" == "$PREVIOUS_THEME" ] && [ "$n" -lt 3 ]; do
+    while [ "$selected_theme" == "$previous_theme" ] && [ "$n" -lt 3 ]; do
       n=$((n + 1))
-      SELECTED_THEME="$(find "$THEMES_PATH" -maxdepth 1 -type d | shuf | head -n1 | xargs -n 1 basename)"
+      selected_theme="$(find "$themes_path" -maxdepth 1 -type d | shuf | head -n1 | xargs -n 1 basename)"
     done
   fi
 
-  local FULL_THEME_PATH="$THEMES_PATH/$SELECTED_THEME"
+  local full_theme_path="$themes_path/$selected_theme"
 
-  local FONT_PATH="$mountpoint/media/$modname/fonts"
-  [ ! -d "$FONT_PATH" ] && FONT_PATH="$rootfs/usr/share/fonts"
-  local TITLE_FONT="$FONT_PATH/title.fnt"
-  local TITLE_FONT_BACKUP="${TITLE_FONT}.backup"
-  local TITLE_THEME_FONT="$FULL_THEME_PATH/fonts/title.fnt"
+  local font_path="$mountpoint/media/$modname/fonts"
+  [ ! -d "$font_path" ] && font_path="$rootfs/usr/share/fonts"
 
-  if [ "$SELECTED_THEME" != "$PREVIOUS_THEME" ] || [ ! -f "$LAST_THEME" ] || [ ! -f "$ACTIVE_THEME" ]; then
-    echo "$SELECTED_THEME" >"$LAST_THEME"
-    echo "$FULL_THEME_PATH" >"$ACTIVE_THEME"
+  # an install leaves the placeholder until a theme is applied from the menu
+  [ "$selected_theme" = "CHANGEME" ] && return 0
+
+  if [ "$selected_theme" != "$previous_theme" ] || [ ! -f "$last_theme" ] || [ ! -f "$active_theme_file" ]; then
+    echo "$selected_theme" >"$last_theme"
+    echo "$full_theme_path" >"$active_theme_file"
   fi
 
-  if [ -d "$FULL_THEME_PATH/fonts" ]; then
-    if [ "$(cksum "$TITLE_FONT" | awk '{ print $1; }')" != "$(cksum "$TITLE_THEME_FONT" | awk '{ print $1; }')" ]; then
-      font_bind_fix "backup"
-    fi
+  if [ -d "$full_theme_path/fonts" ]; then
+    fontBindFix "backup"
   else
-    font_bind_fix "restore"
+    fontBindFix "restore"
   fi
 
-  mountpoint -q "$ORIGINAL_THEME" && umount "$ORIGINAL_THEME"
-  [ -d "$FULL_THEME_PATH" ] && mount -t overlayfs -o lowerdir="$ORIGINAL_THEME",upperdir="$FULL_THEME_PATH" overlayfs "$ORIGINAL_THEME"
-
+  themeFixesUnbind
+  mountpoint -q "$original_theme" && umount "$original_theme"
+  [ -d "$full_theme_path" ] && mount -t overlayfs -o lowerdir="$original_theme",upperdir="$full_theme_path" overlayfs "$original_theme"
+  themeDepsFix
+  themeColorsFix
+  local cl_functions="$rootfs/etc/options_menu/console_language/scripts/cl_functions"
+  if [ -f "$cl_functions" ]; then
+    # shellcheck source=/dev/null
+    source "$cl_functions"
+    clInit
+    # older Console Language releases have no clRebind
+    if type clRebind >/dev/null 2>&1; then
+      clRebind
+    else
+      clUmountLang
+      clMountLang
+    fi
+  fi
 }

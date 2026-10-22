@@ -1,7 +1,5 @@
-COMMAND_NAME=Reset Settings
+COMMAND_NAME=RESET_SETTINGS
 COMMAND_TYPE=INTERNAL
 RESTART_UI=FALSE
 COMMAND_STR=usleep 50000 && sh %script_dir%/om_reset
-PREVIEW_IMAGE=/etc/options_menu/images/uninstall.png
-PREVIEW_IMAGE_X=920
-PREVIEW_IMAGE_Y=262
+PREVIEW_IMAGE=/etc/options_menu/images/preview_uninstall.png

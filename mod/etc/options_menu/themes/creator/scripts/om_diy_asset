@@ -1,6 +1,7 @@
 #!/bin/bash
+# shellcheck disable=SC2086,SC2154,SC3046,SC3051
 #
-#  Copyright (c) 2022 DefKorns (https://defkorns.github.io/LICENSE)
+#  Copyright (c) 2026 DefKorns (https://defkorns.github.io/LICENSE)
 #
 #  This program is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -15,45 +16,60 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
+# shellcheck source=/dev/null
 source $mountpoint/etc/options_menu/themes/scripts/om_vars
 script_init
 
 case "$1" in
 luigi)
-  diy_om_sprite_path="$omModLuigi"
+  diy_om_sprite_path="$om_mod_luigi"
+  diy_title="DEMO_CHARACTER_2"
   ;;
 pole)
-  diy_om_sprite_path="$omModPole"
+  diy_om_sprite_path="$om_mod_pole"
+  diy_title="DEMO_POLE"
   ;;
 wall)
-  diy_om_sprite_path="$omModWall"
+  diy_om_sprite_path="$om_mod_wall"
+  diy_title="BACKGROUND"
   ;;
 wall_near)
-  diy_om_sprite_path="$omModWallN"
+  diy_om_sprite_path="$om_mod_wall_n"
+  diy_title="DEMO_BACKGROUND_NEAR"
   ;;
 wall_far)
-  diy_om_sprite_path="$omModWallF"
+  diy_om_sprite_path="$om_mod_wall_f"
+  diy_title="DEMO_BACKGROUND_FAR"
   ;;
 packed)
-  diy_om_sprite_path="$omModPacked"
+  diy_om_sprite_path="$om_mod_packed"
+  diy_title="BASE_UI"
   ;;
 mario)
-  diy_om_sprite_path="$omModMario"
+  diy_om_sprite_path="$om_mod_mario"
+  diy_title="DEMO_CHARACTER_1"
   ;;
 colors)
-  diy_om_sprite_path="$omModColors"
+  diy_om_sprite_path="$om_mod_colors"
+  diy_title="COLORS"
   ;;
 colors_nes)
-  diy_om_sprite_path="$omModColorsNes"
+  diy_om_sprite_path="$om_mod_colors_nes"
+  diy_title="BACKGROUND_COLOR"
   ;;
 packed_nes)
-  diy_om_sprite_path="$omModPackedNes"
+  diy_om_sprite_path="$om_mod_packed_nes"
+  diy_title="BASE_UI"
   ;;
 sbm)
-  diy_om_sprite_path="$omModSbm"
+  diy_om_sprite_path="$om_mod_sbm"
+  diy_title="DEMO_CHARACTERS"
   ;;
 esac
 
-find_diy_asset "$1"
+# skip the rescan unless $2=force or nothing's been scanned yet
+if [ "$2" = "force" ] || ! find "$diy_om_sprite_path/commands" -maxdepth 1 -name 'c0001_*' 2>/dev/null | read -r _; then
+  findDiyAsset "$1"
+fi
 
-$optionsMenu/options --commandPath $diy_om_sprite_path/commands/ --scriptPath $diy_om_sprite_path/scripts --title "$omTitle" &
+$options_menu/lib/theme_manager --commandPath $diy_om_sprite_path/commands/ --scriptPath $diy_om_sprite_path/scripts --title $diy_title --selectedMarker "$diy_selection_path/$1" &
