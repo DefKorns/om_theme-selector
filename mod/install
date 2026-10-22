@@ -86,6 +86,17 @@ for legacy_img in back chip_apply chip_clear chip_diy chip_download chip_preview
   del "$rootfs/etc/options_menu/images/$legacy_img.png"
 done
 find "$rootfs/etc/options_menu/themes/creator/sprites" -path '*/commands/c0001_*' -type f -exec rm {} + 2>/dev/null
+del "$rootfs/etc/options_menu/themes/settings/commands/c0000_themeperfolder_1assign"
+ts_root="etc/options_menu/themes"
+for shipped_cmd in "$transferpath/$ts_root/commands/"* "$transferpath/$ts_root/"*/commands/*; do
+  cmd_name="${shipped_cmd##*/}"
+  cmd_dir="${shipped_cmd%/*}"
+  cmd_dir="$rootfs/${cmd_dir#"$transferpath/"}"
+  case "$cmd_name" in
+    _*) for renamed_cmd in "$cmd_dir"/c[0-9][0-9][0-9][0-9]"$cmd_name"; do del "$renamed_cmd"; done ;;
+    c[0-9][0-9][0-9][0-9]_*) del "$cmd_dir/_${cmd_name#*_}" ;;
+  esac
+done
 chmod +x "$rootfs/bin/sprite_crop"
 del "$rootfs/bin/theme_downloader"
 chmod +x "$rootfs/etc/options_menu/lib/theme_manager"
