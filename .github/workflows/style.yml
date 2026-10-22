@@ -1,0 +1,17 @@
+name: Style
+
+# checks only the lines a pull request adds, so older files never fail a PR they didn't touch
+on:
+  pull_request:
+
+jobs:
+  changed-lines:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Trailing whitespace, line endings and indentation
+        env:
+          BASE: origin/${{ github.base_ref }}
+        run: sh .github/check_style.sh "$BASE"
