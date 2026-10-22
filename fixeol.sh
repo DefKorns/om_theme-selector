@@ -1,3 +1,4 @@
+#!/bin/sh
 git config core.eol lf
 git config core.autocrlf input
 git rm --cached -rf .

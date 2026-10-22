@@ -120,9 +120,12 @@ int ThemeManagerApp::RunFolderThemesLayout()
             for(int i = 0; i < static_cast<int>(previews.size()); ++i)
                 if(previewLoaded[i] && i != theme && (oldest < 0 || previewUsed[i] < previewUsed[oldest]))
                     oldest = i;
-            previews[oldest] = Texture();
-            previewLoaded[oldest] = 0;
-            --previewCount;
+            if(oldest >= 0)
+            {
+                previews[oldest] = Texture();
+                previewLoaded[oldest] = 0;
+                --previewCount;
+            }
         }
         if(!loaded)
         {

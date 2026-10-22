@@ -18,4 +18,4 @@
 #
 # shellcheck source=/dev/null
 source $mountpoint/etc/options_menu/themes/scripts/om_vars
-script_init 
+script_init
