@@ -2,7 +2,7 @@
 
 **Requires [my Options Menu fork](https://github.com/DefKorns/OptionsMenu/releases) as a base — not compatible with any other UI.**
 
-[![Theme Selector](https://i.imgur.com/7JgP6JI.png)](https://youtu.be/3UilWr1NvFA)
+[![Theme Selector](https://raw.githubusercontent.com/wiki/DefKorns/om_theme-selector/images/demo_video.png)](https://youtu.be/3UilWr1NvFA)
 
 ## What is it?
 
@@ -27,9 +27,9 @@ Full guides: [github.com/DefKorns/om_theme-selector/wiki](https://github.com/Def
 
 ## Getting themes
 
-**From the console** (needs the Wi-Fi mod): go to **Themes → Download Themes**, select **Update Theme List**, then pick a theme and press **A**. Back in **Installed Themes**, select it and press **A** to apply it.
+**From the console** (needs the Wi-Fi mod): go to **Themes → Download Themes**, select **Update Theme List**, then pick a theme and press **A**; a progress bar shows the download. Back in **Installed Themes**, select it and press **A** to apply it.
 
-**By hand:** copy a theme folder, or a catalog package such as `SNES.<name>.tar.gz` from [om-theme-downloads](https://github.com/DefKorns/om-theme-downloads/releases/tag/themes-v1), into your themes folder (see below), then select **Refresh** in **Themes**.
+**By hand:** copy a theme folder, or a catalog package such as `SNES.<name>.tar.gz` from [om-theme-downloads](https://github.com/DefKorns/om-theme-downloads/releases/tag/themes-v1), into your themes folder (see below), then open **Themes**: packages are unpacked and new themes added on their own.
 
 ## Theme and music per folder
 
@@ -42,8 +42,10 @@ A theme named after a folder (lower snake_case, e.g. `nintendo_-_nintendo_entert
 ## Requirements
 
 - [Hakchi2 CE](https://github.com/TeamShinkansen/hakchi2/releases/latest)
-- [My Options Menu fork](https://github.com/DefKorns/OptionsMenu/releases) v2.0.0-beta1 or newer
-- [Hakchi Wi-Fi mod (WPA Supplicant)](https://hakchi.net/hakchi/hmods/wpa-supplicant.hmod) — only to download themes from the console
+- [My Options Menu fork](https://github.com/DefKorns/OptionsMenu/releases) v2.0.1 or newer
+- Hakchi Wi-Fi mod (WPA Supplicant), from KMFDManic's store in hakchi — only to download themes from the console
+  - Recommended adapter: TP-Link TL-WN725N (Realtek 8188 chipset). Other adapters may work, but aren't guaranteed to.
+- Font Remount mod (`font_remount`), one of hakchi's built-in mods — applies the theme fonts
 - A USB/SD drive is recommended: themes are often 5–30 MB each
 
 ## Where things live
