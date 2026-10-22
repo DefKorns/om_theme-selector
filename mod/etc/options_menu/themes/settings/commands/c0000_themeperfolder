@@ -1,6 +1,6 @@
 COMMAND_NAME=THEME_PER_FOLDER
-COMMAND_TYPE=EXTERNAL
+COMMAND_TYPE=INTERNAL
 RESTART_UI=FALSE
-COMMAND_STR=sh %script_dir%/om_theme tpf
+COMMAND_STR=sh %script_dir%/om_toggle tpf
 STATE_STR=sh %script_dir%/om_state theme_per_folder
 PREVIEW_IMAGE=/etc/options_menu/images/preview_randtheme.png

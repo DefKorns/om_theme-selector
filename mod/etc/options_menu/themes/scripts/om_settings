@@ -23,15 +23,7 @@ script_init
 # cached for om_state: one lookup instead of one per toggle row
 echo "$mod_state_path" > /tmp/om_state_path
 
-hasItemsToCleanUp "system_clean_up"
+settingsRows
 folderThemesRow
-
-if [ -f "$b_file" ] && [ -f "$p_file" ]; then
-  enableCmds "uninstaller"
-  [ ! -f "$om_mod_settings_spacer" ] && touch "$om_mod_settings_spacer"
-else
-  disableCmds "uninstaller"
-  [ ! -f "$enable_system_clean_up" ] && remove "$om_mod_settings_spacer"
-fi
 
 $options_menu/lib/theme_manager --commandPath $om_mod_settings_cmds/ --scriptPath $om_mod_settings_scripts --title THEME_SETTINGS --layout list &

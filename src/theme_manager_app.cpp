@@ -270,6 +270,20 @@ bool ThemeManagerApp::ActivateCommand(Command & cmd)
     return false;
 }
 
+void ThemeManagerApp::ReloadCommands()
+{
+    std::vector<Command> commands;
+    std::vector<ItemInfo> items;
+    if(!LoadCommands(options_.commandLocation, options_.scriptLocation, optionsLocation_, options_.themePath, commands, items))
+        return;
+    AppendBackNavigation(optionsLocation_, options_, ReadBackStack(options_.isRootScreen), commands, items);
+    if(commands.empty())
+        return;
+    commands_ = std::move(commands);
+    items_ = std::move(items);
+    ComputePinnedAndThemeRanges();
+}
+
 void ThemeManagerApp::RunDownload(Command & cmd)
 {
     const size_t index = static_cast<size_t>(&cmd - commands_.data());
@@ -780,17 +794,22 @@ int ThemeManagerApp::RunListLayout()
     const int RowGlyphSize = 16;
     const int RowTextGapPx = 16;
     const int ChildIndent = 4*16;
-    for(Command & c : commands_)
+    auto BuildRowTextures = [&]()
     {
-        int textX = UiTheme::RowTextX + (c.child ? ChildIndent : 0);
-        std::string label = TruncateToWidth(Translate(c.name), RowGlyphSize, UiTheme::RowControlRightX - RowTextGapPx - textX);
-        c.texture = Texture(label, RowGlyphSize, renderer_, textX, 0, false, ToAbgr(UiTheme::Text), true);
-    }
+        for(Command & c : commands_)
+        {
+            int textX = UiTheme::RowTextX + (c.child ? ChildIndent : 0);
+            std::string label = TruncateToWidth(Translate(c.name), RowGlyphSize, UiTheme::RowControlRightX - RowTextGapPx - textX);
+            c.texture = Texture(label, RowGlyphSize, renderer_, textX, 0, false, ToAbgr(UiTheme::Text), true);
+        }
+    };
+    BuildRowTextures();
 
     const int modernRowPitch = std::max(UiTheme::RowPitch, GetTTFLineHeight(RowGlyphSize));
     const int DisplayItemCount = std::max(1, (UiTheme::FooterDividerY - UiTheme::ListBottomMargin - UiTheme::RowFirstY) / modernRowPitch);
 
     int topListItemNumber = pinnedStartIndex_ + 1; // forces the first SetCurrentCommand to lay out row positions
+    bool rowsReloaded = false;
     std::shared_ptr<Texture> PreviewImage;
     auto SetCurrentCommand = [&] (int newCommandId)
     {
@@ -800,7 +819,8 @@ int ThemeManagerApp::RunListLayout()
         // pinned rows don't affect scroll position
         int scrollTarget = std::min(currentCommandId_, std::max(0, pinnedStartIndex_-1));
 
-        bool updateCommandYPos = false;
+        bool updateCommandYPos = rowsReloaded;
+        rowsReloaded = false;
         if(scrollTarget < topListItemNumber)
         {
             topListItemNumber = scrollTarget;
@@ -893,8 +913,24 @@ int ThemeManagerApp::RunListLayout()
 
         if(controller_->GetButtonStatus(A) || controller_->GetButtonStatus(START))
         {
+            const bool isInternalToggle = commands_[currentCommandId_].runInternal && commands_[currentCommandId_].isToggle;
+            const std::string focusedName = commands_[currentCommandId_].name;
             if(ActivateCommand(commands_[currentCommandId_]))
                 break;
+            if(isInternalToggle)
+            {
+                ReloadCommands();
+                BuildRowTextures();
+                int focusId = std::min(currentCommandId_, std::max(0, pinnedStartIndex_-1));
+                for(int i = 0; i < pinnedStartIndex_; ++i)
+                    if(commands_[i].name == focusedName)
+                    {
+                        focusId = i;
+                        break;
+                    }
+                rowsReloaded = true;
+                SetCurrentCommand(focusId);
+            }
         }
         else if(controller_->HeldRepeat(UP) && pinnedStartIndex_ > 0)
         {
