@@ -6,7 +6,7 @@
 **Requires [my Options Menu fork](https://github.com/DefKorns/OptionsMenu/releases) as a base — not compatible with any other UI.**
 
 `Click the image below to view it on YouTube.`
-[![Theme Selector - Demo](https://i.imgur.com/7JgP6JI.png)](https://youtu.be/3UilWr1NvFA "Theme Selector - Demo")
+[![Theme Selector - Demo](https://raw.githubusercontent.com/wiki/DefKorns/om_theme-selector/images/demo_video.png)](https://youtu.be/3UilWr1NvFA "Theme Selector - Demo")
 
 ## What is it?
 
@@ -42,7 +42,7 @@ Full guides are on the **[wiki](https://github.com/DefKorns/om_theme-selector/wi
 
 ## Install
 
-**From my Mod Hub (recommended):** in hakchi open **Manage repositories**, add `https://defkorns.github.io/hakchi-repo/`, then install **Options Menu** and **Options Menu - Theme Selector** from it. Updates show up there automatically.
+**From my Mod Hub (recommended):** in hakchi choose **Modules → Manage mod repositories** and add `https://defkorns.github.io/hakchi-repo/`. Then open **Modules → DefKorns Store** and install **Options Menu** (from the *Options Menu* tab) and **Options Menu - Theme Selector** (from the *Options Menu - Addons* tab). Updates show up there automatically.
 
 **By hand:** download `om_theme-selector.hmod` from [Releases](https://github.com/DefKorns/om_theme-selector/releases), put it in hakchi's `user_mods` folder (or drag and drop it onto the hakchi window), then install it from hakchi (**Modules → Install extra modules**).
 

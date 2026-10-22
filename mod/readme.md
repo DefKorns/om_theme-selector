@@ -2,7 +2,7 @@
 
 **Requires [my Options Menu fork](https://github.com/DefKorns/OptionsMenu/releases) as a base — not compatible with any other UI.**
 
-[![Theme Selector](https://i.imgur.com/7JgP6JI.png)](https://youtu.be/3UilWr1NvFA)
+[![Theme Selector](https://raw.githubusercontent.com/wiki/DefKorns/om_theme-selector/images/demo_video.png)](https://youtu.be/3UilWr1NvFA)
 
 ## What is it?
 
