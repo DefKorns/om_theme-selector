@@ -32,7 +32,7 @@ hmod_dir="$mountpoint/var/lib/hakchi/hmod"
 b_file="$pre_initd/b8024_themeselector"
 p_file="$pre_initd/p8024_themeselector"
 
-# Uninstall any previous or legacy install (Theme Randomizer, Advanced Music Hack) 
+# Uninstall any previous or legacy install (Theme Randomizer, Advanced Music Hack)
 ts_state="$mountpoint/$profilepath/$modname"
 ts_backup="$installpath/om_ts_backup"
 rm -rf "$ts_backup"

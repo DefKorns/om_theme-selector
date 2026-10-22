@@ -5,6 +5,7 @@ failed=0
 
 error() {
   echo "::error file=$1::$2"
+  echo "$1: $2"
   failed=1
 }
 
@@ -12,6 +13,7 @@ git diff --check "$base...HEAD" -- . ':!*.md' || failed=1
 
 files=$(git diff --name-only --diff-filter=ACMR "$base...HEAD")
 for file in $files; do
+  [ -f "$file" ] || continue
   case "$file" in
   *.png | *.ttf | *.hmod | *.xz | *.pem) continue ;;
   esac
