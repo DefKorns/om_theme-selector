@@ -1,0 +1,31 @@
+name: Feature request
+description: An idea for Theme Selector
+labels: [enhancement]
+body:
+  - type: textarea
+    id: need
+    attributes:
+      label: What would you like to do?
+      description: The problem or the situation, not the solution yet.
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: How could Theme Selector help?
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Anything you tried or considered?
+  - type: dropdown
+    id: consoles
+    attributes:
+      label: Consoles it matters for
+      multiple: true
+      options:
+        - All
+        - SNES Classic
+        - Super Famicom Classic
+        - NES Classic
+        - Famicom Classic
+        - Famicom Shonen Jump

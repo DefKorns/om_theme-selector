@@ -1,0 +1,61 @@
+name: Bug report
+description: Something in Theme Selector doesn't work as it should
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report this. The more of the fields below you fill in, the faster it can be fixed.
+  - type: dropdown
+    id: console
+    attributes:
+      label: Console
+      options:
+        - SNES Classic (USA)
+        - SNES Classic (EUR)
+        - Super Famicom Classic
+        - NES Classic
+        - Famicom Classic
+        - Famicom Shonen Jump
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Theme Selector version
+      description: In hakchi, **Modules → Uninstall extra modules** lists the installed version.
+      placeholder: e.g. 1.0.0
+    validations:
+      required: true
+  - type: input
+    id: om-version
+    attributes:
+      label: Options Menu version
+      description: Shown next to the title at the top of the Options Menu.
+      placeholder: e.g. 2.1.0
+    validations:
+      required: true
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What you did, what you expected, and what you got instead.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. ...
+        2. ...
+  - type: textarea
+    id: mods
+    attributes:
+      label: Other mods installed
+      description: In hakchi, **Modules → Generate modules report**, then paste it here or attach the file.
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs and screenshots
+      description: Attach any logs, or a photo or screenshot of the problem, by dragging them here.

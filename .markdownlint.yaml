@@ -1,0 +1,5 @@
+# long lines read fine in rendered markdown
+MD013: false
+# the same heading under different parents (e.g. "Building") is fine
+MD024:
+  siblings_only: true

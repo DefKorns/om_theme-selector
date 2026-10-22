@@ -1,0 +1,9 @@
+# source (vs POSIX .) is the established convention across this repo's
+# scripts and works fine on the target's ash - not a real bug here.
+disable=SC3046
+# set by the scripts that source these ones, which shellcheck can't follow
+disable=SC1091,SC2154
+# local and source work on the console's ash
+disable=SC3043,SC3051
+# [ ] with ==, which the console's ash accepts
+disable=SC3014
