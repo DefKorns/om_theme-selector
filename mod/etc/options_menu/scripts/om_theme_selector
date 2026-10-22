@@ -19,7 +19,7 @@
 source $mountpoint/etc/options_menu/themes/scripts/om_vars
 script_init
 
-injectFile "chmenu"
+hookChmenu
 migrateThemes && set -- reload
 hasThemesToInstall
 enableMenuOptions
