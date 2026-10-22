@@ -42,7 +42,7 @@ A theme named after a folder (lower snake_case, e.g. `nintendo_-_nintendo_entert
 ## Requirements
 
 - [Hakchi2 CE](https://github.com/TeamShinkansen/hakchi2/releases/latest)
-- [My Options Menu fork](https://github.com/DefKorns/OptionsMenu/releases) v2.0.1 or newer
+- [My Options Menu fork](https://github.com/DefKorns/OptionsMenu/releases) v2.1.0 or newer
 - Hakchi Wi-Fi mod (WPA Supplicant), from KMFDManic's store in hakchi — only to download themes from the console
   - Recommended adapter: TP-Link TL-WN725N (Realtek 8188 chipset). Other adapters may work, but aren't guaranteed to.
 - Font Remount mod (`font_remount`), one of hakchi's built-in mods — applies the theme fonts
