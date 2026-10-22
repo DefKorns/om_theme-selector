@@ -34,8 +34,10 @@ Full guides are on the **[wiki](https://github.com/DefKorns/om_theme-selector/wi
 ## Requirements
 
 - [Hakchi2 CE](https://github.com/TeamShinkansen/hakchi2/releases/latest)
-- [My Options Menu fork](https://github.com/DefKorns/OptionsMenu/releases) v2.0.0-beta1 or newer — the base UI this mod plugs into
-- [Hakchi Wi-Fi mod (WPA Supplicant)](https://hakchi.net/hakchi/hmods/wpa-supplicant.hmod) — only to download themes from the console
+- [My Options Menu fork](https://github.com/DefKorns/OptionsMenu/releases) v2.0.1 or newer — the base UI this mod plugs into
+- Hakchi Wi-Fi mod (WPA Supplicant), from KMFDManic's store in hakchi — only to download themes from the console
+  - Recommended adapter: TP-Link TL-WN725N (Realtek 8188 chipset). Other adapters may work, but aren't guaranteed to.
+- Font Remount mod (`font_remount`), one of hakchi's built-in mods — applies the theme fonts
 - A USB/SD drive is recommended: themes are often 5–30 MB each
 
 ## Install
@@ -51,12 +53,12 @@ Then open the Options Menu (hold **L+R** on a SNES/Super Famicom, **B+Down** on 
 **From the console** (needs the Wi-Fi mod):
 
 1. Go to **Themes → Download Themes** and select **Update Theme List**.
-2. Pick a theme from the grid — each one shows its preview, size and author — and press **A**. Press **B** when the download log finishes.
+2. Pick a theme from the grid — each one shows its preview, size and author — and press **A**. A progress bar shows the download, and you're back in the list once the theme is installed.
 3. Back in **Installed Themes**, select the new theme and press **A** to apply it. The console reboots with it.
 
-**All SNES Themes** / **All NES Themes** downloads the whole catalog at once. It's several hundred MB, so it only shows up when a USB/SD drive is connected.
+**All SNES Themes** / **All NES Themes** downloads the whole catalog at once, with a log of each theme. It's several hundred MB, so it only shows up when a USB/SD drive is connected.
 
-**By hand:** copy a theme folder, or a catalog package such as `SNES.<name>.tar.gz`, into the themes folder for your console (see [Where things live](#where-things-live)), then select **Refresh** in **Themes**. Packages are in the [om-theme-downloads release](https://github.com/DefKorns/om-theme-downloads/releases/tag/themes-v1); the prefix (`SNES.`, `NES.`, `SHONEN.`) must match your console.
+**By hand:** copy a theme folder, or a catalog package such as `SNES.<name>.tar.gz`, into the themes folder for your console (see [Where things live](#where-things-live)), then open **Themes**: packages are unpacked and new themes added on their own. Packages are in the [om-theme-downloads release](https://github.com/DefKorns/om-theme-downloads/releases/tag/themes-v1); the prefix (`SNES.`, `NES.`, `SHONEN.`) must match your console.
 
 More: [Usage → Downloading themes](https://github.com/DefKorns/om_theme-selector/wiki/Usage#downloading-themes) and [Adding themes by hand](https://github.com/DefKorns/om_theme-selector/wiki/Usage#adding-themes-by-hand).
 
