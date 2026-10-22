@@ -46,6 +46,7 @@
 *.o
 [Dd]ebug*/
 [Rr]elease*/
+!release-notes/
 *.mode*
 *.app/
 *.pyc
