@@ -196,10 +196,12 @@ esac
 original_theme_path="$mountpoint/usr/share/$original_theme_ui0"
 
 #### MAIN MENU
+# one bar per script, or two would draw over each other
 loadingSplash() {
   [ -n "$loading_splash" ] && return
   loading_splash=1
-  "$om_scripts/gen_splash" --loading 2> /dev/null
+  [ $# -gt 0 ] || set -- LOADING
+  omLoading "$@"
 }
 
 hookChmenu() {
@@ -218,7 +220,7 @@ migrateThemes() {
   for item in "$nand_theme_path"/*; do
     name="${item##*/}"
     if [ "$name" != "$sfregion" ] && [ ! -e "$theme_path/$name" ]; then
-      omSplash THEME_MOVING_LINE1 THEME_MOVING_LINE2
+      loadingSplash THEME_MOVING_LINE1 THEME_MOVING_LINE2
       break
     fi
   done
@@ -370,7 +372,7 @@ themeCommand() {
 sed -i \"s/selected_theme=\\\"CHANGEME\\\"/selected_theme=\\\"${thm}\\\"/g;\" \"$b_file\"
 " >> "$thm_script.sh"
 
-  echo "omSplash THEME_APPLYING_LINE1 THEME_APPLYING_LINE2
+  echo "loadingSplash THEME_APPLYING_LINE1 THEME_APPLYING_LINE2
 sleep 1
   hakchi reboot" >> "$thm_script.sh"
 
@@ -451,14 +453,13 @@ loadThemeList() {
 getThemeList() {
   local catalog="${catalog_type}${list_name}"
   local hash="${catalog_type}-list-v2.md5"
-  omSplash THEME_LIST_DOWNLOADING_LINE1 THEME_LIST_DOWNLOADING_LINE2
-  cd "$om_mod_sub" || exit
-
   if [ ! -x "$om_scripts/downloader" ]; then
     omSplash DOWNLOADER_MISSING_LINE1 DOWNLOADER_MISSING_LINE2
     sleep 3
     return 1
   fi
+  loadingSplash THEME_LIST_DOWNLOADING_LINE1 THEME_LIST_DOWNLOADING_LINE2
+  cd "$om_mod_sub" || exit
   rm -f "/tmp/$hash"
   if "$om_scripts/downloader" "/tmp/$hash" "$themes_github_url/$hash" > /dev/null 2>&1 && cmp -s "/tmp/$hash" "$hash"; then
     rm -f "/tmp/$hash"
@@ -841,7 +842,7 @@ diySpriteSelector() {
 }
 
 diyThemeChecker() {
-  [ "$1" = "loader" ] && omSplash THEME_LOADING_ASSETS
+  [ "$1" = "loader" ] && loadingSplash THEME_LOADING_ASSETS
 
   [ ! -d "$diy_theme_path" ] && mkdir -p "$diy_theme_path"
 

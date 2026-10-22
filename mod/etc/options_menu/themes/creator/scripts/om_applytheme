@@ -19,7 +19,7 @@
 source $mountpoint/etc/options_menu/themes/scripts/om_vars
 script_init
 
-omSplash THEME_SAVING
+loadingSplash THEME_SAVING
 
 name="diy_theme"
 i=1
