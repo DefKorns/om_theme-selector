@@ -81,6 +81,7 @@ private:
 
     FrameEvent PollFrameEvents();
     bool ActivateCommand(Command & cmd); // true if the caller's loop should break
+    void ReloadCommands();
     void RunDownload(Command & cmd);
     void UpdateBButton(bool & tapped);
 
