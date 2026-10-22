@@ -1,6 +1,5 @@
 #!/bin/sh
 # shellcheck disable=SC2034,SC2086,SC2154,SC3010,SC3043,SC3046,SC3051
-# # shellcheck disable=SC2039
 #  Copyright (c) 2026 DefKorns (https://defkorns.github.io/LICENSE)
 #
 #  This program is free software: you can redistribute it and/or modify
@@ -28,12 +27,11 @@ fontfix_file="$mountpoint/etc/preinit.d/b8025_fontfix"
 chmenu_file="$root_bin/chmenu"
 has_folders="${game_storage}/001"
 
-# Options Menu
 om_mod="$options_menu/$modtitle"
 om_mod_imgs="$options_menu/images"
 om_mod_commands="$om_mod/commands"
 om_mod_scripts="$om_mod/scripts"
-om_mod_fnts="$om_mod/fonts" # verify
+om_mod_fnts="$om_mod/fonts"
 om_mod_sub="$om_mod/downloads"
 om_mod_sub_cmds="$om_mod_sub/commands"
 om_mod_sub_scripts="$om_mod_sub/scripts"
@@ -154,7 +152,6 @@ themes_github_url="https://github.com/DefKorns/om-theme-downloads/releases/downl
 themes_classicmods_url="http://classicmods.net/files/themes/themeselector"
 catalogs_classicmods_url="http://classicmods.net/files/themes/themeselector-scripts"
 
-# SHARED
 thm_chk="$mountpoint$profilepath/$modname/active_theme"
 catalog_type="$s_type"
 [ "$s_type" = "hvc" ] && catalog_type="nes"
@@ -178,7 +175,7 @@ shonen_theme_path="${om_mod_path}/shonen"
 snes_theme_path="${om_mod_path}/snes"
 
 #### ARRAYS
-diy_asset_array="diy_packed diy_wall diy_wall_far diy_wall_near diy_mario diy_luigi diy_colors diy_pole" # verify
+diy_asset_array="diy_packed diy_wall diy_wall_far diy_wall_near diy_mario diy_luigi diy_colors diy_pole"
 del_shared="$nes_theme_path $disable_smb $disable_packed_nes $disable_colors_nes $om_mod_packed_nes $om_mod_sbm $om_mod_colors_nes $disable_color $om_mod_colors"
 
 del_on_nes="$snes_theme_path $shonen_theme_path $disable_color $disable_pole $disable_mario $disable_luigi $disable_packed $disable_wall $disable_wall_far $disable_wall_near $om_mod_pole $om_mod_mario $om_mod_luigi $om_mod_wall $om_mod_wall_n $om_mod_wall_f $om_mod_packed $om_mod_colors"
@@ -189,7 +186,6 @@ items_to_delete="$del_on_snes"
 # shellcheck disable=SC2012
 has_theme="$(ls -1 "$theme_path/$system_name".*.tar.gz 2> /dev/null | wc -l)"
 
-################
 original_theme_ui0="ui/$sftype-$sfregion"
 case "$sftype" in
   hvcj)
@@ -296,7 +292,6 @@ enableMenuOptions() {
   fi
 }
 
-# nothing installed, removed or applied since the menu was last built
 themeCountChanged() {
   new_count="$(find "$theme_path" -mindepth 1 -maxdepth 1 -type d | wc -l)"
   old_count="$(cat "$om_theme_count" 2> /dev/null)"
@@ -311,7 +306,6 @@ themeVars() {
   thm_script="$om_mod_scripts/$thm"
 }
 
-# the applied theme can't be deleted
 themeDeleteLine() {
   if [ "${active_theme##*/}" = "$thm" ]; then
     echo "DELETE_BLOCKED_KEY=THEME_DELETE_IN_USE" >> "$cmd_list"
@@ -320,7 +314,6 @@ themeDeleteLine() {
   fi
 }
 
-# the command and apply script of one installed theme
 themeCommand() {
   themeVars "$1"
   resource_path="$full_path/resources"
@@ -407,7 +400,6 @@ themeLoader() {
   done
 }
 
-# only what changed: new themes, removed ones, and the two whose delete line follows the applied theme
 themeSync() {
   local previous
   local missing
@@ -439,56 +431,6 @@ removeRegionalTheme() {
   [ "$(globalTheme)" = "$sfregion" ] && return
   remove "$theme_path/$sfregion" "$theme_path/$sfregion.png" \
     "$om_mod_commands/c0001_$sfregion" "$om_mod_scripts/$sfregion.sh"
-}
-
-#### DOWNLOADS
-# the catalog unpacks a command per theme (c0010_*) and its get_<theme> script into downloads/
-getThemeList() {
-  omSplash THEME_LIST_DOWNLOADING_LINE1 THEME_LIST_DOWNLOADING_LINE2
-  cd "$om_mod_sub" || exit
-
-  if [ ! -x "$om_scripts/downloader" ]; then
-    omSplash DOWNLOADER_MISSING_LINE1 DOWNLOADER_MISSING_LINE2
-    sleep 3
-    return 1
-  fi
-  if [ ! -e "${catalog_type}${list_name}" ]; then
-    clearDownloads
-    omDownload "${catalog_type}${list_name}" "$themes_github_url/${catalog_type}${list_name}" "$catalogs_classicmods_url/${catalog_type}${list_name}"
-  fi
-  tar -xzf "${catalog_type}${list_name}" || return
-  rm -f ./*.tar.gz
-  markNewThemes
-  removeRegionalTheme
-  touch "$sub_dummy"
-}
-
-clearDownloads() {
-  find "$om_mod_sub" -type f \
-    -not -name 'c000[0-8]_*' -not -name 'c999[0-9]_*' \
-    -not -name 'om_*' -not -name '_*' -not -path "$thm_preview/*" -exec rm {} +
-}
-
-# no seen list yet: a first run marks nothing as new
-markNewThemes() {
-  local catalog_themes
-  local theme
-  catalog_themes="$(find "$om_mod_sub_cmds" -name 'c0010_*' | sed 's#.*/c0010_##' | grep -vx all)"
-  if [ -f "$seen_themes" ]; then
-    for theme in $catalog_themes; do
-      grep -qx "$theme" "$seen_themes" || printf '\nNEW=TRUE\n' >> "$om_mod_sub_cmds/c0010_$theme"
-    done
-  fi
-  { cat "$seen_themes" 2> /dev/null; echo "$catalog_themes"; } | sort -u > "$seen_themes.tmp" && mv "$seen_themes.tmp" "$seen_themes"
-}
-
-showDownloads() {
-  if ls "$om_mod_sub_cmds"/c0010_* > /dev/null 2>&1; then
-    enableCmds "clear_downloads"
-  else
-    disableCmds "clear_downloads"
-  fi
-  $options_menu/lib/theme_manager --commandPath $om_mod_sub_cmds/ --scriptPath $om_mod_sub_scripts --title AVAILABLE_THEMES --downloads --themePath "$theme_path" &
 }
 
 injectFile() {
@@ -538,9 +480,58 @@ loadThemeList() {
   fi
 }
 
+#### DOWNLOADS
+getThemeList() {
+  local catalog="${catalog_type}${list_name}"
+  omSplash THEME_LIST_DOWNLOADING_LINE1 THEME_LIST_DOWNLOADING_LINE2
+  cd "$om_mod_sub" || exit
+
+  if [ ! -x "$om_scripts/downloader" ]; then
+    omSplash DOWNLOADER_MISSING_LINE1 DOWNLOADER_MISSING_LINE2
+    sleep 3
+    return 1
+  fi
+  omDownload "$catalog" "$themes_github_url/$catalog" "$catalogs_classicmods_url/$catalog" || return
+  clearDownloads
+  omUnpack "$catalog" . || return
+  markNewThemes
+  removeRegionalTheme
+  touch "$sub_dummy"
+}
+
+clearDownloads() {
+  find "$om_mod_sub" -type f \
+    -not -name 'c000[0-8]_*' -not -name 'c999[0-9]_*' -not -name "${catalog_type}${list_name}" \
+    -not -name 'om_*' -not -name '_*' -not -path "$thm_preview/*" -exec rm {} +
+}
+
+# no seen list yet: a first run marks nothing as new
+markNewThemes() {
+  local catalog_themes
+  local theme
+  catalog_themes="$(find "$om_mod_sub_cmds" -name 'c0010_*' | sed 's#.*/c0010_##' | grep -vx all)"
+  if [ -f "$seen_themes" ]; then
+    for theme in $catalog_themes; do
+      grep -qx "$theme" "$seen_themes" || printf '\nNEW=TRUE\n' >> "$om_mod_sub_cmds/c0010_$theme"
+    done
+  fi
+  { cat "$seen_themes" 2> /dev/null; echo "$catalog_themes"; } | sort -u > "$seen_themes.tmp" && mv "$seen_themes.tmp" "$seen_themes"
+}
+
+showDownloads() {
+  if ls "$om_mod_sub_cmds"/c0010_* > /dev/null 2>&1; then
+    enableCmds "clear_downloads"
+  else
+    disableCmds "clear_downloads"
+  fi
+  $options_menu/lib/theme_manager --commandPath $om_mod_sub_cmds/ --scriptPath $om_mod_sub_scripts --title AVAILABLE_THEMES --downloads --themePath "$theme_path" &
+}
+
+# the catalog's get_<theme> scripts call this by name
 themeGenerator() {
   translate CHECKING_THEME_FILES
   theme_name="${1}"
+  failed=""
   [ -d "${theme_path}" ] || mkdir -p "${theme_path}"
   cd "${theme_path}" || exit
   if [ ! -x "$om_scripts/downloader" ]; then
@@ -554,7 +545,6 @@ themeGenerator() {
   if [ "${theme_name}" = "all" ]; then
     omDownload "${catalog_type}-all" "$themes_github_url/${catalog_type}-all" "$catalogs_classicmods_url/${catalog_type}-all"
     rc=$?
-    failed=""
     if [ "$rc" = 0 ]; then
       downloadThemes "${catalog_type}-all"
       rc=$?
@@ -580,8 +570,6 @@ themeGenerator() {
   fi
   return "$rc"
 }
-
-
 
 urlEncodeName() {
   printf '%s' "$1" | sed 's/%/%25/g; s/#/%23/g; s/?/%3F/g'
@@ -658,6 +646,7 @@ unpackTheme() {
   return "$dl_rc"
 }
 
+#### DIY
 diyAssetSpec() {
   diy_file="${1}.png"
   diy_sprite="$om_mod_sprites/${1}"
@@ -693,7 +682,7 @@ diyAssetSpec() {
     packed)
       asset_path="sprites"
       preview_square="1"
-      preview_cols="4" # full UI screenshots - too detailed to shrink to 7 cols
+      preview_cols="4"
       preview_top="1"
       theme_preview="extras/preview_baseui.png"
       ;;
@@ -703,7 +692,7 @@ diyAssetSpec() {
       asset_path="sprites"
       asset="$diy_file"
       preview_square="1"
-      preview_cols="4" # full UI screenshots - too detailed to shrink to 7 cols
+      preview_cols="4"
       preview_top="1"
       theme_preview="extras/preview_baseui.png"
       ;;
@@ -755,7 +744,6 @@ findDiyAsset() {
     -not -name 'om_*' -not -name 'c999[0-9]_*' -not -name 'c0000_*' \
     -not -name 'c0001_*' -not -name '_*' -exec rm {} +
 
-  # one read instead of a stat per theme (slow on USB/SD)
   existing_cmds="$(ls -1 "$diy_sprite/commands" 2>/dev/null)"
   existing_scripts="$(ls -1 "$diy_sprite/scripts" 2>/dev/null)"
   if [ "$preview_top" = "1" ] && [ -n "$existing_cmds" ]; then
@@ -765,7 +753,7 @@ findDiyAsset() {
   fi
 
   diy_crop_batch=0
-  diy_seen_hashes="" # skips assets identical to one already listed
+  diy_seen_hashes=""
   for p in $paths_to_search; do
     if [ "$(ls -A "$p")" ]; then
       # shellcheck disable=SC2038
@@ -784,13 +772,12 @@ findDiyAsset() {
         if [ $has_sprite = "1" ] && [ "$asset_name" = "${asset_name#diy_theme}" ]; then
           cmd_file="$diy_sprite/commands/c0001_$asset_name"
           sprite_script="$diy_sprite/scripts/$asset_name"
-          info_path="$full_asset_path" # theme root, before the next line repoints full_asset_path
+          info_path="$full_asset_path"
 
           [ "$p" = "$theme_path" ] && full_asset_path="$resource_path/$asset_path"
 
           preview_image="$full_asset_path/$diy_file"
 
-          # hashed pre-crop, so it doesn't wait on the crop job
           if [ -f "$preview_image" ]; then
             sprite_hash="$(md5sum "$preview_image" | cut -d' ' -f1)"
             if printf '%s\n' "$diy_seen_hashes" | grep -qxF "$sprite_hash"; then
@@ -810,10 +797,9 @@ $sprite_hash"
           own_preview=""
           [ -n "$theme_preview" ] && [ "$p" = "$theme_path" ] && [ -f "$info_path/$theme_preview" ] && own_preview="$info_path/$theme_preview"
           if [ -n "$own_preview" ]; then
-            preview_image="$own_preview" # for atlases a fixed crop can't show
+            preview_image="$own_preview"
           elif [ "$colors" = "0" ] && [ "$chars" != "1" ] && [ -n "$diy_crop_x" ]; then
             if [ ! -f "$temp_preview" ]; then
-              # 4 at a time (core count)
               sprite_crop "$preview_image" "$diy_crop_x" "$diy_crop_y" "$diy_crop_w" "$diy_crop_h" "$temp_preview" &
               diy_crop_batch=$((diy_crop_batch + 1))
               if [ "$diy_crop_batch" -ge 4 ]; then
@@ -822,7 +808,7 @@ $sprite_hash"
               fi
               usleep 1000
             fi
-            preview_image="$temp_preview" # cropped copy, queued above or already cached
+            preview_image="$temp_preview"
           fi
 
           if ! printf '%s\n' "$existing_cmds" | grep -qxF "c0001_$asset_name" || ! printf '%s\n' "$existing_scripts" | grep -qxF "$asset_name.sh" ||
@@ -831,7 +817,6 @@ $sprite_hash"
             cmd_name="$(echo "$asset_name" | sed -e 's/_/ /g' | awk '{for(i=1;i<=NF;i++){$i=toupper(substr($i,1,1))substr($i,2)}}1')"
             [ "$p" = "$theme_path" ] && cmd_name="$(sed -r 's/NAME=//g' < "$info_path/info" | awk '{$NF="";sub(/[ \t]+$/,"")}1')"
 
-            # chars=1: tiny sprites blown up a lot, nearest keeps them crisp
             preview_nearest=""
             [ "$chars" = "1" ] && preview_nearest="
 PREVIEW_NEAREST=TRUE"
@@ -861,7 +846,7 @@ PREVIEW_IMAGE=$preview_image${preview_nearest}${preview_square_str}${preview_col
       remove /tmp/diy_asset_list
     fi
   done
-  wait # catch whatever's left of the last batch before returning
+  wait
 }
 
 diySpriteSelector() {
@@ -986,7 +971,6 @@ audioSettings() {
 }
 
 toggleOptions() {
-  # $1=this flag file, $2=paired parent/child flag file, $3=set to skip the cascade
   if [ ! -f "$1" ]; then
     settingsOptionChecker "on" "$1"
     [ -z "$3" ] && [ ! -f "$2" ] && settingsOptionChecker "on" "$2"
@@ -1066,7 +1050,6 @@ listFolders() {
     END { walk("000", 0) }'
 }
 
-# sets title; the size suffix ("Name [12Mb]") is dropped
 themeTitle() {
   title=""
   [ -f "$theme_path/$1/info" ] && IFS= read -r title < "$theme_path/$1/info"
@@ -1075,7 +1058,6 @@ themeTitle() {
   [ -z "$title" ] && title="$1"
 }
 
-# sets preview
 themePreview() {
   preview="$thm_preview/$1.png"
   [ ! -f "$preview" ] && preview="$theme_path/$1.png"
