@@ -2,6 +2,7 @@
 
 [![Build](https://github.com/DefKorns/om_theme-selector/actions/workflows/build.yml/badge.svg)](https://github.com/DefKorns/om_theme-selector/actions/workflows/build.yml)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
+[![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit)](https://github.com/pre-commit/pre-commit)
 
 **Requires [my Options Menu fork](https://github.com/DefKorns/OptionsMenu/releases) as a base — not compatible with any other UI.**
 
