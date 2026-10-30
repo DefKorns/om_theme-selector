@@ -8,7 +8,7 @@ on:
 
 jobs:
     hmod:
-        uses: DefKorns/hmod-build/.github/workflows/hmod.yml@v1.7.0
+        uses: DefKorns/hmod-build/.github/workflows/hmod.yml@v1.7.1
         with:
             release-name: Theme Selector
             docker: true
